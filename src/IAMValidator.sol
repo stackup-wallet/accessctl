@@ -4,10 +4,26 @@ pragma solidity ^0.8.23;
 import { ERC7579ValidatorBase } from "modulekit/Modules.sol";
 import { PackedUserOperation } from "modulekit/external/ERC4337.sol";
 
+struct Signer {
+    uint256 x;
+    uint256 y;
+}
+
 contract IAMValidator is ERC7579ValidatorBase {
     /*//////////////////////////////////////////////////////////////////////////
                             CONSTANTS & STORAGE
     //////////////////////////////////////////////////////////////////////////*/
+    event SignerAdded(address indexed account, bytes3 indexed signerId, uint256 x, uint256 y);
+
+    error SignerAlreadyAdded(address account, bytes3 signerId);
+    error SignerNotAdded(address account, bytes3 signerId);
+    /**
+     * @dev A register to determine if a given signer has been linked to an
+     * account. The key is equal to concat(install count, signerId).
+     */
+
+    mapping(bytes4 installCountAndSignerId => mapping(address account => Signer s)) public
+        SignerRegister;
 
     /*//////////////////////////////////////////////////////////////////////////
                                      CONFIG
@@ -86,6 +102,24 @@ contract IAMValidator is ERC7579ValidatorBase {
         returns (bytes4 sigValidationResult)
     {
         return EIP1271_FAILED;
+    }
+
+    /**
+     * @dev Registers a new public key to the account. Emits a SignerAdded
+     * event on success. Reverts with SignerAlreadyAdded if the key has
+     * been initialized for the account.
+     */
+    function addSigner(uint256 x, uint256 y) external {
+        if (
+            SignerRegister[bytes4(0)][msg.sender].x == x
+                && SignerRegister[bytes4(0)][msg.sender].y == y
+        ) {
+            revert SignerNotAdded(msg.sender, bytes3(0));
+        }
+        SignerRegister[bytes4(0)][msg.sender].x = x;
+        SignerRegister[bytes4(0)][msg.sender].y = y;
+
+        emit SignerAdded(msg.sender, bytes3(0), x, y);
     }
 
     /*//////////////////////////////////////////////////////////////////////////

@@ -63,4 +63,22 @@ contract IAMValidatorTest is RhinestoneModuleKit, Test {
         // Check if the balance of the target has increased
         assertEq(target.balance, prevBalance + value);
     }
+
+    event SignerAdded(address indexed account, bytes3 indexed signerId, uint256 x, uint256 y);
+
+    function testAddSignerThatDoesNotExist() public {
+        (uint256 x1, uint256 y1) = validator.SignerRegister(bytes4(0), address(instance.account));
+        assertEq(x1, 0);
+        assertEq(y1, 0);
+
+        instance.exec({
+            target: address(validator),
+            callData: abi.encodeWithSelector(IAMValidator.addSigner.selector, uint256(1), uint256(3))
+        });
+
+        (uint256 x2, uint256 y2) = validator.SignerRegister(bytes4(0), address(instance.account));
+
+        assertEq(x2, 1);
+        assertEq(y2, 3);
+    }
 }
