@@ -10,9 +10,11 @@ import {
     UserOpData
 } from "modulekit/ModuleKit.sol";
 import { MODULE_TYPE_VALIDATOR } from "modulekit/external/ERC7579.sol";
-import { IAMValidator } from "src/IAMValidator.sol";
+import { IAMValidator, Signer } from "src/IAMValidator.sol";
 
 contract IAMValidatorTest is RhinestoneModuleKit, Test {
+    event SignerAdded(address indexed account, uint24 indexed signerId, uint256 x, uint256 y);
+
     using ModuleKitHelpers for *;
     using ModuleKitUserOp for *;
 
@@ -64,21 +66,37 @@ contract IAMValidatorTest is RhinestoneModuleKit, Test {
         assertEq(target.balance, prevBalance + value);
     }
 
-    event SignerAdded(address indexed account, bytes3 indexed signerId, uint256 x, uint256 y);
-
-    function testAddSignerThatDoesNotExist() public {
-        (uint256 x1, uint256 y1) = validator.SignerRegister(bytes4(0), address(instance.account));
-        assertEq(x1, 0);
-        assertEq(y1, 0);
+    function testAddSignerWritesToState() public {
+        uint24 expectedSignerId = 0;
+        uint256 expectedPubKeyX = 1;
+        uint256 expectedPubKeyY = 2;
+        Signer memory s = validator.getSigner(address(instance.account), expectedSignerId);
+        assertEqUint(s.x, 0);
+        assertEqUint(s.y, 0);
 
         instance.exec({
             target: address(validator),
-            callData: abi.encodeWithSelector(IAMValidator.addSigner.selector, uint256(1), uint256(3))
+            callData: abi.encodeWithSelector(IAMValidator.addSigner.selector, expectedPubKeyX, expectedPubKeyY)
         });
 
-        (uint256 x2, uint256 y2) = validator.SignerRegister(bytes4(0), address(instance.account));
+        s = validator.getSigner(address(instance.account), expectedSignerId);
+        assertEqUint(s.x, expectedPubKeyX);
+        assertEqUint(s.y, expectedPubKeyY);
+    }
 
-        assertEq(x2, 1);
-        assertEq(y2, 3);
+    function testAddSignerEmitsEvent() public {
+        uint24 expectedSignerId = 0;
+        uint256 expectedPubKeyX = 1;
+        uint256 expectedPubKeyY = 2;
+        vm.expectEmit(true, true, true, true, address(validator));
+        emit SignerAdded(address(this), expectedSignerId, expectedPubKeyX, expectedPubKeyY);
+        validator.addSigner(1, 2);
+
+        uint24 expectedSignerId1 = 1;
+        uint256 expectedPubKeyX1 = 2;
+        uint256 expectedPubKeyY1 = 2;
+        vm.expectEmit(true, true, true, true, address(validator));
+        emit SignerAdded(address(this), expectedSignerId1, expectedPubKeyX1, expectedPubKeyY1);
+        validator.addSigner(2,2);
     }
 }

@@ -13,16 +13,25 @@ contract IAMValidator is ERC7579ValidatorBase {
     /*//////////////////////////////////////////////////////////////////////////
                             CONSTANTS & STORAGE
     //////////////////////////////////////////////////////////////////////////*/
-    event SignerAdded(address indexed account, bytes3 indexed signerId, uint256 x, uint256 y);
+    event SignerAdded(address indexed account, uint24 indexed signerId, uint256 x, uint256 y);
 
-    error SignerAlreadyAdded(address account, bytes3 signerId);
-    error SignerNotAdded(address account, bytes3 signerId);
+    /**
+     * @dev A monotonically increasing 3 dimensional value. It is 8 bytes and
+     * composed of:
+     *    1 bytes: times installed (max 255)
+     *    3 bytes: total signers added (i.e. signerId, max 16,777,215)
+     *    4 bytes: total policies added (i.e. policyId, max 4,294,967,295)
+     * These values allow for efficient read/writes to the below mappings. For
+     * instance, 1 byte install count ensures that an account state is
+     * effectively reset during a reinstall without requiring any iterations.
+     */
+    mapping(address account => uint64 cnt) Counters;
+
     /**
      * @dev A register to determine if a given signer has been linked to an
      * account. The key is equal to concat(install count, signerId).
      */
-
-    mapping(bytes4 installCountAndSignerId => mapping(address account => Signer s)) public
+    mapping(uint32 installCountAndSignerId => mapping(address account => Signer s)) public
         SignerRegister;
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -104,22 +113,40 @@ contract IAMValidator is ERC7579ValidatorBase {
         return EIP1271_FAILED;
     }
 
-    /**
-     * @dev Registers a new public key to the account. Emits a SignerAdded
-     * event on success. Reverts with SignerAlreadyAdded if the key has
-     * been initialized for the account.
-     */
-    function addSigner(uint256 x, uint256 y) external {
-        if (
-            SignerRegister[bytes4(0)][msg.sender].x == x
-                && SignerRegister[bytes4(0)][msg.sender].y == y
-        ) {
-            revert SignerNotAdded(msg.sender, bytes3(0));
-        }
-        SignerRegister[bytes4(0)][msg.sender].x = x;
-        SignerRegister[bytes4(0)][msg.sender].y = y;
+    function _packCounter(uint8 installCount, uint24 signerId, uint32 policyId) private view returns(uint64) {
+        return uint64(installCount) |
+            (uint64(signerId) << 8) |
+            (uint64(policyId) << (8 + 24));
+    }
 
-        emit SignerAdded(msg.sender, bytes3(0), x, y);
+    function _parseCounter(uint64 counter) private view returns (uint8 installCount, uint24 signerId, uint32 policyId) {
+        installCount = uint8(counter);
+        signerId = uint24(counter >> 8);
+        policyId = uint32(counter >> (8 + 24));
+    }
+
+    function _packInstallCountAndSignerId(uint8 installCount, uint24 signerId) private view returns(uint32) {
+        return uint32(installCount) |
+            (uint32(signerId) << 8);
+    }
+
+    function getSigner(address account, uint24 signerId) public view returns (Signer memory) {
+        (uint8 installCount,,) = _parseCounter(Counters[account]);
+        return SignerRegister[_packInstallCountAndSignerId(installCount, signerId)][account];
+    }
+    /**
+     * @dev Registers a public key to the account under a unique signerId. Emits a SignerAdded
+     * event on success.
+     */
+
+    function addSigner(uint256 x, uint256 y) external {
+        (uint8 installCount, uint24 signerId, uint32 policyId) = _parseCounter(Counters[msg.sender]);
+        uint32 key = _packInstallCountAndSignerId(installCount, signerId);
+        Signer memory signer = Signer(x, y);
+
+        SignerRegister[key][msg.sender] = signer;
+        emit SignerAdded(msg.sender, signerId, x, y);
+        Counters[msg.sender] = _packCounter(installCount, signerId+1, policyId);
     }
 
     /*//////////////////////////////////////////////////////////////////////////
