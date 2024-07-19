@@ -15,6 +15,10 @@ contract IAMValidator is ERC7579ValidatorBase {
     //////////////////////////////////////////////////////////////////////////*/
     event SignerAdded(address indexed account, uint24 indexed signerId, uint256 x, uint256 y);
 
+    error SignerNotAdded(address account, uint24 signerId);
+
+    event SignerRemoved(address indexed account, uint24 indexed signerId);
+
     /**
      * @dev A monotonically increasing 3 dimensional value. It is 8 bytes and
      * composed of:
@@ -113,21 +117,37 @@ contract IAMValidator is ERC7579ValidatorBase {
         return EIP1271_FAILED;
     }
 
-    function _packCounter(uint8 installCount, uint24 signerId, uint32 policyId) private view returns(uint64) {
-        return uint64(installCount) |
-            (uint64(signerId) << 8) |
-            (uint64(policyId) << (8 + 24));
+    function _packCounter(
+        uint8 installCount,
+        uint24 signerId,
+        uint32 policyId
+    )
+        private
+        view
+        returns (uint64)
+    {
+        return uint64(installCount) | (uint64(signerId) << 8) | (uint64(policyId) << (8 + 24));
     }
 
-    function _parseCounter(uint64 counter) private view returns (uint8 installCount, uint24 signerId, uint32 policyId) {
+    function _parseCounter(uint64 counter)
+        private
+        view
+        returns (uint8 installCount, uint24 signerId, uint32 policyId)
+    {
         installCount = uint8(counter);
         signerId = uint24(counter >> 8);
         policyId = uint32(counter >> (8 + 24));
     }
 
-    function _packInstallCountAndSignerId(uint8 installCount, uint24 signerId) private view returns(uint32) {
-        return uint32(installCount) |
-            (uint32(signerId) << 8);
+    function _packInstallCountAndSignerId(
+        uint8 installCount,
+        uint24 signerId
+    )
+        private
+        view
+        returns (uint32)
+    {
+        return uint32(installCount) | (uint32(signerId) << 8);
     }
 
     function getSigner(address account, uint24 signerId) public view returns (Signer memory) {
@@ -146,7 +166,19 @@ contract IAMValidator is ERC7579ValidatorBase {
 
         SignerRegister[key][msg.sender] = signer;
         emit SignerAdded(msg.sender, signerId, x, y);
-        Counters[msg.sender] = _packCounter(installCount, signerId+1, policyId);
+        Counters[msg.sender] = _packCounter(installCount, signerId + 1, policyId);
+    }
+
+    function removeSigner(uint24 signerId) external {
+        (uint8 installCount, uint24 signerId, uint32 policyId) = _parseCounter(Counters[msg.sender]);
+        uint32 key = _packInstallCountAndSignerId(installCount, signerId);
+        if (SignerRegister[key][msg.sender].y == 0 && SignerRegister[key][msg.sender].x == 0) {
+            revert SignerNotAdded(msg.sender, signerId);
+        }
+        SignerRegister[key][msg.sender].x = 0;
+        SignerRegister[key][msg.sender].y = 0;
+
+        emit SignerRemoved(msg.sender, signerId);
     }
 
     /*//////////////////////////////////////////////////////////////////////////

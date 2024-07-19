@@ -76,7 +76,9 @@ contract IAMValidatorTest is RhinestoneModuleKit, Test {
 
         instance.exec({
             target: address(validator),
-            callData: abi.encodeWithSelector(IAMValidator.addSigner.selector, expectedPubKeyX, expectedPubKeyY)
+            callData: abi.encodeWithSelector(
+                IAMValidator.addSigner.selector, expectedPubKeyX, expectedPubKeyY
+            )
         });
 
         s = validator.getSigner(address(instance.account), expectedSignerId);
@@ -97,6 +99,37 @@ contract IAMValidatorTest is RhinestoneModuleKit, Test {
         uint256 expectedPubKeyY1 = 2;
         vm.expectEmit(true, true, true, true, address(validator));
         emit SignerAdded(address(this), expectedSignerId1, expectedPubKeyX1, expectedPubKeyY1);
-        validator.addSigner(2,2);
+        validator.addSigner(2, 2);
+    }
+
+    function testRemoveSigner() public {
+        uint24 expectedSignerId = 0;
+        uint256 expectedPubKeyX = 1;
+        uint256 expectedPubKeyY = 2;
+        Signer memory s = validator.getSigner(address(instance.account), expectedSignerId);
+        assertEqUint(s.x, 0);
+        assertEqUint(s.y, 0);
+
+        // add the signer in
+        instance.exec({
+            target: address(validator),
+            callData: abi.encodeWithSelector(
+                IAMValidator.addSigner.selector, expectedPubKeyX, expectedPubKeyY
+            )
+        });
+
+        s = validator.getSigner(address(instance.account), expectedSignerId);
+        assertEqUint(s.x, expectedPubKeyX);
+        assertEqUint(s.y, expectedPubKeyY);
+
+        // now Remove the signer
+        uint24 expectedRemovedSignerId = 0;
+
+        instance.exec({
+            target: address(validator),
+            callData: abi.encodeWithSelector(
+                IAMValidator.removeSigner.selector, expectedRemovedSignerId
+            )
+        });
     }
 }
