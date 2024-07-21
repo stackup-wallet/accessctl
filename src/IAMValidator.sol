@@ -170,13 +170,13 @@ contract IAMValidator is ERC7579ValidatorBase {
     }
 
     function removeSigner(uint24 signerId) external {
-        (uint8 installCount, uint24 signerId, uint32 policyId) = _parseCounter(Counters[msg.sender]);
+        (uint8 installCount,,) = _parseCounter(Counters[msg.sender]);
         uint32 key = _packInstallCountAndSignerId(installCount, signerId);
-        if (SignerRegister[key][msg.sender].y == 0 && SignerRegister[key][msg.sender].x == 0) {
+
+        if (SignerRegister[key][msg.sender].x == 0 && SignerRegister[key][msg.sender].y == 0) {
             revert SignerNotAdded(msg.sender, signerId);
         }
-        SignerRegister[key][msg.sender].x = 0;
-        SignerRegister[key][msg.sender].y = 0;
+        delete SignerRegister[key][msg.sender];
 
         emit SignerRemoved(msg.sender, signerId);
     }

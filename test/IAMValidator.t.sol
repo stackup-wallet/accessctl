@@ -106,10 +106,6 @@ contract IAMValidatorTest is RhinestoneModuleKit, Test {
         uint24 expectedSignerId = 0;
         uint256 expectedPubKeyX = 1;
         uint256 expectedPubKeyY = 2;
-        Signer memory s = validator.getSigner(address(instance.account), expectedSignerId);
-        assertEqUint(s.x, 0);
-        assertEqUint(s.y, 0);
-
         // add the signer in
         instance.exec({
             target: address(validator),
@@ -118,7 +114,7 @@ contract IAMValidatorTest is RhinestoneModuleKit, Test {
             )
         });
 
-        s = validator.getSigner(address(instance.account), expectedSignerId);
+        Signer memory s = validator.getSigner(address(instance.account), expectedSignerId);
         assertEqUint(s.x, expectedPubKeyX);
         assertEqUint(s.y, expectedPubKeyY);
 
@@ -131,5 +127,12 @@ contract IAMValidatorTest is RhinestoneModuleKit, Test {
                 IAMValidator.removeSigner.selector, expectedRemovedSignerId
             )
         });
+
+        uint256 expectedPubKeyX1 = 0;
+        uint256 expectedPubKeyY1 = 0;
+
+        s = validator.getSigner(address(instance.account), expectedRemovedSignerId);
+        assertEqUint(s.x, expectedPubKeyX1);
+        assertEqUint(s.y, expectedPubKeyY1);
     }
 }
