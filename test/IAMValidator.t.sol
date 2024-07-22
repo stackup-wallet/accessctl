@@ -14,6 +14,7 @@ import { IAMValidator, Signer } from "src/IAMValidator.sol";
 
 contract IAMValidatorTest is RhinestoneModuleKit, Test {
     event SignerAdded(address indexed account, uint24 indexed signerId, uint256 x, uint256 y);
+    event SignerRemoved(address indexed account, uint24 indexed signerId);
 
     using ModuleKitHelpers for *;
     using ModuleKitUserOp for *;
@@ -102,37 +103,35 @@ contract IAMValidatorTest is RhinestoneModuleKit, Test {
         validator.addSigner(2, 2);
     }
 
-    function testRemoveSigner() public {
+    function testRemoveSignerWritesToState() public {
         uint24 expectedSignerId = 0;
         uint256 expectedPubKeyX = 1;
         uint256 expectedPubKeyY = 2;
-        // add the signer in
         instance.exec({
             target: address(validator),
             callData: abi.encodeWithSelector(
                 IAMValidator.addSigner.selector, expectedPubKeyX, expectedPubKeyY
             )
         });
-
         Signer memory s = validator.getSigner(address(instance.account), expectedSignerId);
         assertEqUint(s.x, expectedPubKeyX);
         assertEqUint(s.y, expectedPubKeyY);
 
-        // now Remove the signer
-        uint24 expectedRemovedSignerId = 0;
-
-        instance.exec({
-            target: address(validator),
-            callData: abi.encodeWithSelector(
-                IAMValidator.removeSigner.selector, expectedRemovedSignerId
-            )
-        });
-
         uint256 expectedPubKeyX1 = 0;
         uint256 expectedPubKeyY1 = 0;
-
-        s = validator.getSigner(address(instance.account), expectedRemovedSignerId);
+        instance.exec({
+            target: address(validator),
+            callData: abi.encodeWithSelector(IAMValidator.removeSigner.selector, expectedSignerId)
+        });
+        s = validator.getSigner(address(instance.account), expectedSignerId);
         assertEqUint(s.x, expectedPubKeyX1);
         assertEqUint(s.y, expectedPubKeyY1);
+    }
+
+    function testRemoveSignerEmitsEvent() public {
+        uint24 expectedSignerId = 0;
+        vm.expectEmit(true, true, true, true, address(validator));
+        emit SignerRemoved(address(this), expectedSignerId);
+        validator.removeSigner(expectedSignerId);
     }
 }

@@ -14,9 +14,6 @@ contract IAMValidator is ERC7579ValidatorBase {
                             CONSTANTS & STORAGE
     //////////////////////////////////////////////////////////////////////////*/
     event SignerAdded(address indexed account, uint24 indexed signerId, uint256 x, uint256 y);
-
-    error SignerNotAdded(address account, uint24 signerId);
-
     event SignerRemoved(address indexed account, uint24 indexed signerId);
 
     /**
@@ -117,12 +114,60 @@ contract IAMValidator is ERC7579ValidatorBase {
         return EIP1271_FAILED;
     }
 
+    /**
+     * @dev Gets the public key for a given account and signerId. Emits.
+     *
+     * @param account The address of the modular smart account.
+     * @param signerId A unique uint24 value assgined to the public key during
+     * registration.
+     */
+    function getSigner(address account, uint24 signerId) public view returns (Signer memory) {
+        (uint8 installCount,,) = _parseCounter(Counters[account]);
+        return SignerRegister[_packInstallCountAndSignerId(installCount, signerId)][account];
+    }
+
+    /**
+     * @dev Registers a public key to the account under a unique signerId. Emits
+     * a SignerAdded event on success.
+     *
+     * @param x The x-coordinate of the public key.
+     * @param y The y-coordinate of the public key.
+     */
+    function addSigner(uint256 x, uint256 y) external {
+        (uint8 installCount, uint24 signerId, uint32 policyId) = _parseCounter(Counters[msg.sender]);
+        uint32 key = _packInstallCountAndSignerId(installCount, signerId);
+        Signer memory signer = Signer(x, y);
+
+        SignerRegister[key][msg.sender] = signer;
+        emit SignerAdded(msg.sender, signerId, x, y);
+        Counters[msg.sender] = _packCounter(installCount, signerId + 1, policyId);
+    }
+
+    /**
+     * @dev Deletes a public key registered to the account under a unique signerId.
+     * Emits a SignerRemoved event on success.
+     *
+     * @param signerId A unique uint24 value assgined to the public key during
+     * registration.
+     */
+    function removeSigner(uint24 signerId) external {
+        (uint8 installCount,,) = _parseCounter(Counters[msg.sender]);
+        uint32 key = _packInstallCountAndSignerId(installCount, signerId);
+
+        delete SignerRegister[key][msg.sender];
+        emit SignerRemoved(msg.sender, signerId);
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                     INTERNAL
+    //////////////////////////////////////////////////////////////////////////*/
+
     function _packCounter(
         uint8 installCount,
         uint24 signerId,
         uint32 policyId
     )
-        private
+        internal
         view
         returns (uint64)
     {
@@ -130,7 +175,7 @@ contract IAMValidator is ERC7579ValidatorBase {
     }
 
     function _parseCounter(uint64 counter)
-        private
+        internal
         view
         returns (uint8 installCount, uint24 signerId, uint32 policyId)
     {
@@ -143,47 +188,12 @@ contract IAMValidator is ERC7579ValidatorBase {
         uint8 installCount,
         uint24 signerId
     )
-        private
+        internal
         view
         returns (uint32)
     {
         return uint32(installCount) | (uint32(signerId) << 8);
     }
-
-    function getSigner(address account, uint24 signerId) public view returns (Signer memory) {
-        (uint8 installCount,,) = _parseCounter(Counters[account]);
-        return SignerRegister[_packInstallCountAndSignerId(installCount, signerId)][account];
-    }
-    /**
-     * @dev Registers a public key to the account under a unique signerId. Emits a SignerAdded
-     * event on success.
-     */
-
-    function addSigner(uint256 x, uint256 y) external {
-        (uint8 installCount, uint24 signerId, uint32 policyId) = _parseCounter(Counters[msg.sender]);
-        uint32 key = _packInstallCountAndSignerId(installCount, signerId);
-        Signer memory signer = Signer(x, y);
-
-        SignerRegister[key][msg.sender] = signer;
-        emit SignerAdded(msg.sender, signerId, x, y);
-        Counters[msg.sender] = _packCounter(installCount, signerId + 1, policyId);
-    }
-
-    function removeSigner(uint24 signerId) external {
-        (uint8 installCount,,) = _parseCounter(Counters[msg.sender]);
-        uint32 key = _packInstallCountAndSignerId(installCount, signerId);
-
-        if (SignerRegister[key][msg.sender].x == 0 && SignerRegister[key][msg.sender].y == 0) {
-            revert SignerNotAdded(msg.sender, signerId);
-        }
-        delete SignerRegister[key][msg.sender];
-
-        emit SignerRemoved(msg.sender, signerId);
-    }
-
-    /*//////////////////////////////////////////////////////////////////////////
-                                     INTERNAL
-    //////////////////////////////////////////////////////////////////////////*/
 
     /*//////////////////////////////////////////////////////////////////////////
                                      METADATA
