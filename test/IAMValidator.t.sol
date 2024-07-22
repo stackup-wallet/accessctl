@@ -25,6 +25,20 @@ contract IAMValidatorTest is RhinestoneModuleKit, Test {
     AccountInstance internal instance;
     IAMValidator internal validator;
 
+    uint256 constant testP256PrivateKey1 =
+        0x605e0a63a358c3060f9ea4b3ee7737f21e4dc49755f90ae4ad12ffcbe71a26ef;
+    uint256 constant testP256PubKeyX1 =
+        0x1b0f2d89ae560071a013a47d440532c606cc7753dc38e95760895f5822de97a9;
+    uint256 constant testP256PubKeyY1 =
+        0xe4d714fa24d1f9d2173a18f627d73ea17307ad285bf08823bdd9bc89ff4fa3c6;
+
+    uint256 constant testP256PrivateKey2 =
+        0x982642594965c2f0998a0db98748ff267995965605a3902c11a96d304305d727;
+    uint256 constant testP256PubKeyX2 =
+        0xbe5627cf6a968b258bbf73c0c180dbd1f657c9852b9494fee2a56d8c2021db17;
+    uint256 constant testP256PubKeyY2 =
+        0x6f8ced2c10424a460bbec2099ed6688ee8d4ad9df325be516917bafcb21fe55a;
+
     function setUp() public {
         init();
 
@@ -71,8 +85,6 @@ contract IAMValidatorTest is RhinestoneModuleKit, Test {
 
     function testAddSignerWritesToState() public {
         uint24 expectedSignerId = 0;
-        uint256 expectedPubKeyX = 1;
-        uint256 expectedPubKeyY = 2;
         Signer memory s = validator.getSigner(address(instance.account), expectedSignerId);
         assertEqUint(s.x, 0);
         assertEqUint(s.y, 0);
@@ -80,54 +92,43 @@ contract IAMValidatorTest is RhinestoneModuleKit, Test {
         instance.exec({
             target: address(validator),
             callData: abi.encodeWithSelector(
-                IAMValidator.addSigner.selector, expectedPubKeyX, expectedPubKeyY
+                IAMValidator.addSigner.selector, testP256PubKeyX1, testP256PubKeyY1
             )
         });
 
         s = validator.getSigner(address(instance.account), expectedSignerId);
-        assertEqUint(s.x, expectedPubKeyX);
-        assertEqUint(s.y, expectedPubKeyY);
+        assertEqUint(s.x, testP256PubKeyX1);
+        assertEqUint(s.y, testP256PubKeyY1);
     }
 
     function testAddSignerEmitsEvent() public {
         uint24 expectedSignerId = 0;
-        uint256 expectedPubKeyX = 1;
-        uint256 expectedPubKeyY = 2;
         vm.expectEmit(true, true, true, true, address(validator));
-        emit SignerAdded(address(this), expectedSignerId, expectedPubKeyX, expectedPubKeyY);
-        validator.addSigner(1, 2);
+        emit SignerAdded(address(this), expectedSignerId, testP256PubKeyX1, testP256PubKeyY1);
+        validator.addSigner(testP256PubKeyX1, testP256PubKeyY1);
 
         uint24 expectedSignerId1 = 1;
-        uint256 expectedPubKeyX1 = 2;
-        uint256 expectedPubKeyY1 = 2;
         vm.expectEmit(true, true, true, true, address(validator));
-        emit SignerAdded(address(this), expectedSignerId1, expectedPubKeyX1, expectedPubKeyY1);
-        validator.addSigner(2, 2);
+        emit SignerAdded(address(this), expectedSignerId1, testP256PubKeyX2, testP256PubKeyY2);
+        validator.addSigner(testP256PubKeyX2, testP256PubKeyY2);
     }
 
     function testRemoveSignerWritesToState() public {
         uint24 expectedSignerId = 0;
-        uint256 expectedPubKeyX = 1;
-        uint256 expectedPubKeyY = 2;
         instance.exec({
             target: address(validator),
             callData: abi.encodeWithSelector(
-                IAMValidator.addSigner.selector, expectedPubKeyX, expectedPubKeyY
+                IAMValidator.addSigner.selector, testP256PubKeyX1, testP256PubKeyY1
             )
         });
-        Signer memory s = validator.getSigner(address(instance.account), expectedSignerId);
-        assertEqUint(s.x, expectedPubKeyX);
-        assertEqUint(s.y, expectedPubKeyY);
 
-        uint256 expectedPubKeyX1 = 0;
-        uint256 expectedPubKeyY1 = 0;
         instance.exec({
             target: address(validator),
             callData: abi.encodeWithSelector(IAMValidator.removeSigner.selector, expectedSignerId)
         });
-        s = validator.getSigner(address(instance.account), expectedSignerId);
-        assertEqUint(s.x, expectedPubKeyX1);
-        assertEqUint(s.y, expectedPubKeyY1);
+        Signer memory s = validator.getSigner(address(instance.account), expectedSignerId);
+        assertEqUint(s.x, 0);
+        assertEqUint(s.y, 0);
     }
 
     function testRemoveSignerEmitsEvent() public {
@@ -138,18 +139,14 @@ contract IAMValidatorTest is RhinestoneModuleKit, Test {
     }
 
     function testVerify() public {
-        uint256 pk = 0x605e0a63a358c3060f9ea4b3ee7737f21e4dc49755f90ae4ad12ffcbe71a26ef;
         bytes32 hash = 0x3a34e26c4380493f710261d1535694f66f9de5d2da2dddc60fce50aa7b702f81;
-        uint256 x = 0x1b0f2d89ae560071a013a47d440532c606cc7753dc38e95760895f5822de97a9;
-        uint256 y = 0xe4d714fa24d1f9d2173a18f627d73ea17307ad285bf08823bdd9bc89ff4fa3c6;
+        (bytes32 r, bytes32 s) = vm.signP256(testP256PrivateKey1, hash);
+        bool valid =
+            SCL_RIP7212.verify(hash, uint256(r), uint256(s), testP256PubKeyX1, testP256PubKeyY1);
+        assertTrue(valid);
 
-        (bytes32 r, bytes32 s) = vm.signP256(pk, hash);
-        console.logBytes32(r);
-        console.logBytes32(s);
-        console.logUint(x);
-        console.logUint(y);
-
-        bool valid = SCL_RIP7212.verify(hash, uint256(r), uint256(s), x, y);
+        (r, s) = vm.signP256(testP256PrivateKey2, hash);
+        valid = SCL_RIP7212.verify(hash, uint256(r), uint256(s), testP256PubKeyX2, testP256PubKeyY2);
         assertTrue(valid);
     }
 }
