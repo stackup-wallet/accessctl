@@ -11,6 +11,8 @@ import {
 } from "modulekit/ModuleKit.sol";
 import { MODULE_TYPE_VALIDATOR } from "modulekit/external/ERC7579.sol";
 import { IAMValidator, Signer } from "src/IAMValidator.sol";
+import "forge-std/console.sol";
+import { SCL_RIP7212 } from "crypto-lib/lib/libSCL_RIP7212.sol";
 
 contract IAMValidatorTest is RhinestoneModuleKit, Test {
     event SignerAdded(address indexed account, uint24 indexed signerId, uint256 x, uint256 y);
@@ -133,5 +135,21 @@ contract IAMValidatorTest is RhinestoneModuleKit, Test {
         vm.expectEmit(true, true, true, true, address(validator));
         emit SignerRemoved(address(this), expectedSignerId);
         validator.removeSigner(expectedSignerId);
+    }
+
+    function testVerify() public {
+        uint256 pk = 0x605e0a63a358c3060f9ea4b3ee7737f21e4dc49755f90ae4ad12ffcbe71a26ef;
+        bytes32 hash = 0x3a34e26c4380493f710261d1535694f66f9de5d2da2dddc60fce50aa7b702f81;
+        uint256 x = 0x1b0f2d89ae560071a013a47d440532c606cc7753dc38e95760895f5822de97a9;
+        uint256 y = 0xe4d714fa24d1f9d2173a18f627d73ea17307ad285bf08823bdd9bc89ff4fa3c6;
+
+        (bytes32 r, bytes32 s) = vm.signP256(pk, hash);
+        console.logBytes32(r);
+        console.logBytes32(s);
+        console.logUint(x);
+        console.logUint(y);
+
+        bool valid = SCL_RIP7212.verify(hash, uint256(r), uint256(s), x, y);
+        assertTrue(valid);
     }
 }
