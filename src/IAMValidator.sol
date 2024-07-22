@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 import { ERC7579ValidatorBase } from "modulekit/Modules.sol";
 import { PackedUserOperation } from "modulekit/external/ERC4337.sol";
+import { SCL_RIP7212 } from "crypto-lib/lib/libSCL_RIP7212.sol";
 
 struct Signer {
     uint256 x;
@@ -86,7 +87,14 @@ contract IAMValidator is ERC7579ValidatorBase {
         override
         returns (ValidationData)
     {
-        return ValidationData.wrap(0);
+        (uint24 signerId, bytes32 r, bytes32 s) =
+            abi.decode(userOp.signature, (uint24, bytes32, bytes32));
+        Signer memory signer = getSigner(msg.sender, signerId);
+        if(SCL_RIP7212.verify(userOpHash, uint256(r), uint256(s), signer.x, signer.y)){
+            return ValidationData.wrap(0);
+        }else {
+            return ValidationData.wrap(1);
+        }
     }
 
     /**
