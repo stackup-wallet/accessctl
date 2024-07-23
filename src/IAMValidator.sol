@@ -87,14 +87,13 @@ contract IAMValidator is ERC7579ValidatorBase {
         override
         returns (ValidationData)
     {
-        (uint24 signerId, bytes32 r, bytes32 s) =
-            abi.decode(userOp.signature, (uint24, bytes32, bytes32));
+        (uint24 signerId, uint256 r, uint256 s) =
+            abi.decode(userOp.signature, (uint24, uint256, uint256));
         Signer memory signer = getSigner(msg.sender, signerId);
-        if(SCL_RIP7212.verify(userOpHash, uint256(r), uint256(s), signer.x, signer.y)){
-            return ValidationData.wrap(0);
-        }else {
-            return ValidationData.wrap(1);
-        }
+
+        return SCL_RIP7212.verify(userOpHash, r, s, signer.x, signer.y)
+            ? ValidationData.wrap(0)
+            : ValidationData.wrap(1);
     }
 
     /**
