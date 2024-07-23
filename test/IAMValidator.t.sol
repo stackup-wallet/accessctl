@@ -64,7 +64,7 @@ contract IAMValidatorTest is RhinestoneModuleKit, Test {
         });
     }
 
-    function _execOpsWithValidator(bytes memory data) public {
+    function _execOpsWithValidator(bytes memory data) internal {
         UserOpData memory userOpData = instance.getExecOps({
             target: address(0),
             value: 0,
