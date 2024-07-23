@@ -4,7 +4,6 @@ pragma solidity ^0.8.23;
 import { ERC7579ValidatorBase } from "modulekit/Modules.sol";
 import { PackedUserOperation } from "modulekit/external/ERC4337.sol";
 import { SCL_RIP7212 } from "crypto-lib/lib/libSCL_RIP7212.sol";
-import "forge-std/console.sol";
 
 struct Signer {
     uint256 x;
@@ -69,7 +68,6 @@ contract IAMValidator is ERC7579ValidatorBase {
      */
     function isInitialized(address smartAccount) external view returns (bool) {
         (, uint24 signerId,) = _parseCounter(Counters[smartAccount]);
-        console.logUint(signerId);
         return signerId > 0;
     }
 
