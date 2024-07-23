@@ -55,13 +55,25 @@ contract IAMValidatorTest is RhinestoneModuleKit, Test {
         vm.label(address(validator), "IAMValidator");
 
         // Create the account and install the validator
-        instance = makeAccountInstance("IAMValidator");
+        instance = makeAccountInstance("MainAccount");
         vm.deal(address(instance.account), 10 ether);
         instance.installModule({
             moduleTypeId: MODULE_TYPE_VALIDATOR,
             module: address(validator),
             data: abi.encode(testP256PublicKeyXRoot, testP256PublicKeyYRoot)
         });
+    }
+
+    function _execOpsWithValidator(bytes calldata data) internal {
+        UserOpData memory userOpData = instance.getExecOps({
+            target: 0,
+            value: 0,
+            callData: data,
+            txValidator: address(validator)
+        });
+        (bytes32 r, bytes32 s) = vm.signP256(testP256PrivateKeyRoot, userOpData.userOpHash);
+        userOpData.userOp.signature = abi.encode(rootSignerId, uint256(r), uint256(s));
+        userOpData.execUserOps();
     }
 
     function testExec() public {
@@ -156,5 +168,64 @@ contract IAMValidatorTest is RhinestoneModuleKit, Test {
         (r, s) = vm.signP256(testP256PrivateKey2, hash);
         valid = SCL_RIP7212.verify(hash, uint256(r), uint256(s), testP256PubKeyX2, testP256PubKeyY2);
         assertTrue(valid);
+    }
+
+    function testReinstallResetsState() public {
+        _execOpsWithValidator(
+            abi.encodeWithSelector(
+                IAMValidator.addSigner.selector, testP256PubKeyX1, testP256PubKeyY1
+            )
+        );
+        instance.exec({
+            target: address(validator),
+            callData: abi.encodeWithSelector(
+                IAMValidator.addSigner.selector, testP256PubKeyX2, testP256PubKeyY2
+            )
+        });
+        instance.uninstallModule({
+            moduleTypeId: MODULE_TYPE_VALIDATOR,
+            module: address(validator),
+            data: ""
+        });
+        Signer memory sRoot = validator.getSigner(address(instance.account), rootSignerId);
+        Signer memory s1 = validator.getSigner(address(instance.account), rootSignerId + 1);
+        Signer memory s2 = validator.getSigner(address(instance.account), rootSignerId + 2);
+        assertEqUint(sRoot.x, 0);
+        assertEqUint(sRoot.y, 0);
+        assertEqUint(s1.x, 0);
+        assertEqUint(s1.y, 0);
+        assertEqUint(s2.x, 0);
+        assertEqUint(s2.y, 0);
+
+        // add root (should have failed since not installed...)
+        instance.exec({
+            target: address(validator),
+            callData: abi.encodeWithSelector(
+                IAMValidator.addSigner.selector, testP256PublicKeyXRoot, testP256PublicKeyYRoot
+            )
+        });
+
+        instance.exec({
+            target: address(validator),
+            callData: abi.encodeWithSelector(
+                IAMValidator.addSigner.selector, testP256PubKeyX1, testP256PubKeyY1
+            )
+        });
+        instance.exec({
+            target: address(validator),
+            callData: abi.encodeWithSelector(
+                IAMValidator.addSigner.selector, testP256PubKeyX2, testP256PubKeyY2
+            )
+        });
+
+        sRoot = validator.getSigner(address(instance.account), rootSignerId);
+        s1 = validator.getSigner(address(instance.account), rootSignerId + 1);
+        s2 = validator.getSigner(address(instance.account), rootSignerId + 2);
+        assertEqUint(sRoot.x, testP256PublicKeyXRoot);
+        assertEqUint(sRoot.y, testP256PublicKeyYRoot);
+        assertEqUint(s1.x, testP256PubKeyX1);
+        assertEqUint(s1.y, testP256PubKeyY1);
+        assertEqUint(s2.x, testP256PubKeyX2);
+        assertEqUint(s2.y, testP256PubKeyY2);
     }
 }
