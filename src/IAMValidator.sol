@@ -45,7 +45,10 @@ contract IAMValidator is ERC7579ValidatorBase {
      *
      * @param data The data to initialize the module with
      */
-    function onInstall(bytes calldata data) external override { }
+    function onInstall(bytes calldata data) external override {
+        (uint256 x, uint256 y) = abi.decode(data, (uint256, uint256));
+        _addSigner(x, y);
+    }
 
     /**
      * De-initialize the module with the given data
@@ -141,13 +144,7 @@ contract IAMValidator is ERC7579ValidatorBase {
      * @param y The y-coordinate of the public key.
      */
     function addSigner(uint256 x, uint256 y) external {
-        (uint8 installCount, uint24 signerId, uint32 policyId) = _parseCounter(Counters[msg.sender]);
-        uint32 key = _packInstallCountAndSignerId(installCount, signerId);
-        Signer memory signer = Signer(x, y);
-
-        SignerRegister[key][msg.sender] = signer;
-        emit SignerAdded(msg.sender, signerId, x, y);
-        Counters[msg.sender] = _packCounter(installCount, signerId + 1, policyId);
+        _addSigner(x, y);
     }
 
     /**
@@ -168,6 +165,16 @@ contract IAMValidator is ERC7579ValidatorBase {
     /*//////////////////////////////////////////////////////////////////////////
                                      INTERNAL
     //////////////////////////////////////////////////////////////////////////*/
+
+    function _addSigner(uint256 x, uint256 y) internal {
+        (uint8 installCount, uint24 signerId, uint32 policyId) = _parseCounter(Counters[msg.sender]);
+        uint32 key = _packInstallCountAndSignerId(installCount, signerId);
+        Signer memory signer = Signer(x, y);
+
+        SignerRegister[key][msg.sender] = signer;
+        emit SignerAdded(msg.sender, signerId, x, y);
+        Counters[msg.sender] = _packCounter(installCount, signerId + 1, policyId);
+    }
 
     function _packCounter(
         uint8 installCount,

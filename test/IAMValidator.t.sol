@@ -25,6 +25,14 @@ contract IAMValidatorTest is RhinestoneModuleKit, Test {
     AccountInstance internal instance;
     IAMValidator internal validator;
 
+    uint256 constant testP256PrivateKeyRoot =
+        0x9b6949ce4e9f7958797d91a4a51a96e9361b94451b88791d8784d8331b46c32d;
+    uint256 constant testP256PublicKeyXRoot =
+        0xf24b7cd0e0d84317f2fbba39add412ddd3df7cb84be213b67fb340373e9275ec;
+    uint256 constant testP256PublicKeyYRoot =
+        0x255417d4c6780a9db69e2023685c95a344f3e59e930e758f3829b0b10bf87ebc;
+    uint24 constant rootSignerId = 0;
+
     uint256 constant testP256PrivateKey1 =
         0x605e0a63a358c3060f9ea4b3ee7737f21e4dc49755f90ae4ad12ffcbe71a26ef;
     uint256 constant testP256PubKeyX1 =
@@ -52,7 +60,7 @@ contract IAMValidatorTest is RhinestoneModuleKit, Test {
         instance.installModule({
             moduleTypeId: MODULE_TYPE_VALIDATOR,
             module: address(validator),
-            data: ""
+            data: abi.encode(testP256PublicKeyXRoot, testP256PublicKeyYRoot)
         });
     }
 
@@ -73,8 +81,8 @@ contract IAMValidatorTest is RhinestoneModuleKit, Test {
         });
 
         // Set the signature
-        bytes memory signature = hex"414141";
-        userOpData.userOp.signature = signature;
+        (bytes32 r, bytes32 s) = vm.signP256(testP256PrivateKeyRoot, userOpData.userOpHash);
+        userOpData.userOp.signature = abi.encode(rootSignerId, uint256(r), uint256(s));
 
         // Execute the UserOp
         userOpData.execUserOps();
@@ -84,7 +92,7 @@ contract IAMValidatorTest is RhinestoneModuleKit, Test {
     }
 
     function testAddSignerWritesToState() public {
-        uint24 expectedSignerId = 0;
+        uint24 expectedSignerId = rootSignerId + 1;
         Signer memory s = validator.getSigner(address(instance.account), expectedSignerId);
         assertEqUint(s.x, 0);
         assertEqUint(s.y, 0);
@@ -114,7 +122,7 @@ contract IAMValidatorTest is RhinestoneModuleKit, Test {
     }
 
     function testRemoveSignerWritesToState() public {
-        uint24 expectedSignerId = 0;
+        uint24 expectedSignerId = rootSignerId + 1;
         instance.exec({
             target: address(validator),
             callData: abi.encodeWithSelector(
