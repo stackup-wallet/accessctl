@@ -27,7 +27,7 @@ contract IAMValidator is ERC7579ValidatorBase {
      * instance, 1 byte install count ensures that an account state is
      * effectively reset during a reinstall without requiring any iterations.
      */
-    mapping(address account => uint64 cnt) Counters;
+    mapping(address account => uint64 cnt) public Counters;
 
     /**
      * @dev A register to determine if a given signer has been linked to an
