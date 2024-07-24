@@ -127,7 +127,7 @@ contract IAMValidator is ERC7579ValidatorBase {
     }
 
     /**
-     * @dev Gets the public key for a given account and signerId. Emits.
+     * Gets the public key for a given account and signerId.
      *
      * @param account The address of the modular smart account.
      * @param signerId A unique uint24 value assgined to the public key during
@@ -139,8 +139,8 @@ contract IAMValidator is ERC7579ValidatorBase {
     }
 
     /**
-     * @dev Registers a public key to the account under a unique signerId. Emits
-     * a SignerAdded event on success.
+     * Registers a public key to the account under a unique signerId. Emits a
+     * SignerAdded event on success.
      *
      * @param x The x-coordinate of the public key.
      * @param y The y-coordinate of the public key.
@@ -150,7 +150,7 @@ contract IAMValidator is ERC7579ValidatorBase {
     }
 
     /**
-     * @dev Deletes a public key registered to the account under a unique signerId.
+     * Deletes a public key registered to the account under a unique signerId.
      * Emits a SignerRemoved event on success.
      *
      * @param signerId A unique uint24 value assgined to the public key during
