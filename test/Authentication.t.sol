@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.23;
 
 import { TestHelper } from "test/TestHelper.sol";
-import { IAMValidator, Signer } from "src/IAMValidator.sol";
+import { IAMValidator } from "src/IAMValidator.sol";
+import { Signer } from "src/Signer.sol";
 
 contract AuthenticationTest is TestHelper {
     function testAddSignerWritesToState() public {

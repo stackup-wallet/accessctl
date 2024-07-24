@@ -1,14 +1,10 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.23;
 
 import { ERC7579ValidatorBase } from "modulekit/Modules.sol";
 import { PackedUserOperation } from "modulekit/external/ERC4337.sol";
 import { SCL_RIP7212 } from "crypto-lib/lib/libSCL_RIP7212.sol";
-
-struct Signer {
-    uint256 x;
-    uint256 y;
-}
+import { Signer } from "src/Signer.sol";
 
 contract IAMValidator is ERC7579ValidatorBase {
     /*//////////////////////////////////////////////////////////////////////////
