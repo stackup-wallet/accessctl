@@ -59,13 +59,13 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
 
     function _verifyEIP1271Signature(
         address sender,
-        bytes32 _hash,
-        bytes memory _signature
+        bytes32 hash,
+        bytes memory signature
     )
         internal
         returns (bool)
     {
-        return instance.isValidSignature(sender, _hash, _signature);
+        return instance.isValidSignature(sender, hash, signature);
     }
 
     function _installModule() internal {
