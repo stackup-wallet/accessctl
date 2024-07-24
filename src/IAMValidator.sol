@@ -1,14 +1,10 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.23;
 
 import { ERC7579ValidatorBase } from "modulekit/Modules.sol";
 import { PackedUserOperation } from "modulekit/external/ERC4337.sol";
 import { SCL_RIP7212 } from "crypto-lib/lib/libSCL_RIP7212.sol";
-
-struct Signer {
-    uint256 x;
-    uint256 y;
-}
+import { Signer } from "src/Signer.sol";
 
 contract IAMValidator is ERC7579ValidatorBase {
     /*//////////////////////////////////////////////////////////////////////////
@@ -27,7 +23,7 @@ contract IAMValidator is ERC7579ValidatorBase {
      * instance, 1 byte install count ensures that an account state is
      * effectively reset during a reinstall without requiring any iterations.
      */
-    mapping(address account => uint64 cnt) Counters;
+    mapping(address account => uint64 cnt) public Counters;
 
     /**
      * @dev A register to determine if a given signer has been linked to an
@@ -131,7 +127,7 @@ contract IAMValidator is ERC7579ValidatorBase {
     }
 
     /**
-     * @dev Gets the public key for a given account and signerId. Emits.
+     * Gets the public key for a given account and signerId.
      *
      * @param account The address of the modular smart account.
      * @param signerId A unique uint24 value assgined to the public key during
@@ -143,8 +139,8 @@ contract IAMValidator is ERC7579ValidatorBase {
     }
 
     /**
-     * @dev Registers a public key to the account under a unique signerId. Emits
-     * a SignerAdded event on success.
+     * Registers a public key to the account under a unique signerId. Emits a
+     * SignerAdded event on success.
      *
      * @param x The x-coordinate of the public key.
      * @param y The y-coordinate of the public key.
@@ -154,7 +150,7 @@ contract IAMValidator is ERC7579ValidatorBase {
     }
 
     /**
-     * @dev Deletes a public key registered to the account under a unique signerId.
+     * Deletes a public key registered to the account under a unique signerId.
      * Emits a SignerRemoved event on success.
      *
      * @param signerId A unique uint24 value assgined to the public key during
@@ -188,7 +184,7 @@ contract IAMValidator is ERC7579ValidatorBase {
         uint32 policyId
     )
         internal
-        view
+        pure
         returns (uint64)
     {
         return uint64(installCount) | (uint64(signerId) << 8) | (uint64(policyId) << (8 + 24));
@@ -196,7 +192,7 @@ contract IAMValidator is ERC7579ValidatorBase {
 
     function _parseCounter(uint64 counter)
         internal
-        view
+        pure
         returns (uint8 installCount, uint24 signerId, uint32 policyId)
     {
         installCount = uint8(counter);
@@ -209,7 +205,7 @@ contract IAMValidator is ERC7579ValidatorBase {
         uint24 signerId
     )
         internal
-        view
+        pure
         returns (uint32)
     {
         return uint32(installCount) | (uint32(signerId) << 8);
