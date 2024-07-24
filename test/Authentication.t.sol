@@ -63,4 +63,25 @@ contract AuthenticationTest is TestHelper {
         emit SignerRemoved(address(this), expectedSignerId);
         validator.removeSigner(expectedSignerId);
     }
+
+    function testValidSig() public virtual {
+        bytes32 message = hex"dead";
+        (bytes32 r, bytes32 s) = vm.signP256(testP256PrivateKeyRoot, message);
+        bytes memory signature = abi.encode(rootSignerId, uint256(r), uint256(s));
+
+        bool valid = _verifyEIP1271Signature(address(validator), message, signature);
+
+        assertTrue(valid);
+    }
+
+    function testInValidSig() public virtual {
+        uint24 invalidSignerId = 3;
+        bytes32 message = bytes32(keccak256("hash"));
+        (bytes32 r, bytes32 s) = vm.signP256(testP256PubKeyX1, message);
+        bytes memory signature = abi.encode(invalidSignerId, uint256(r), uint256(s));
+
+        bool valid = _verifyEIP1271Signature(address(validator), message, signature);
+
+        assertFalse(valid);
+    }
 }

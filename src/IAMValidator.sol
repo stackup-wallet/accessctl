@@ -122,7 +122,12 @@ contract IAMValidator is ERC7579ValidatorBase {
         override
         returns (bytes4 sigValidationResult)
     {
-        return EIP1271_FAILED;
+        (uint24 signerId, uint256 r, uint256 s) = abi.decode(signature, (uint24, uint256, uint256));
+        (uint8 installCount,,) = _parseCounter(Counters[msg.sender]);
+        Signer memory signer =
+            SignerRegister[_packInstallCountAndSignerId(installCount, signerId)][msg.sender];
+
+        return SCL_RIP7212.verify(hash, r, s, signer.x, signer.y) ? EIP1271_SUCCESS : EIP1271_FAILED;
     }
 
     /**
