@@ -7,7 +7,7 @@ import { Signer } from "src/Signer.sol";
 
 contract AuthenticationTest is TestHelper {
     function testAddSignerWritesToState() public {
-        uint24 expectedSignerId = rootSignerId + 1;
+        uint120 expectedSignerId = rootSignerId + 1;
         Signer memory s = validator.getSigner(address(instance.account), expectedSignerId);
         assertEqUint(s.x, 0);
         assertEqUint(s.y, 0);
@@ -26,19 +26,19 @@ contract AuthenticationTest is TestHelper {
     }
 
     function testAddSignerEmitsEvent() public {
-        uint24 expectedSignerId = 0;
+        uint120 expectedSignerId = 0;
         vm.expectEmit(true, true, true, true, address(validator));
         emit SignerAdded(address(this), expectedSignerId, testP256PubKeyX1, testP256PubKeyY1);
         validator.addSigner(testP256PubKeyX1, testP256PubKeyY1);
 
-        uint24 expectedSignerId1 = 1;
+        uint120 expectedSignerId1 = 1;
         vm.expectEmit(true, true, true, true, address(validator));
         emit SignerAdded(address(this), expectedSignerId1, testP256PubKeyX2, testP256PubKeyY2);
         validator.addSigner(testP256PubKeyX2, testP256PubKeyY2);
     }
 
     function testRemoveSignerWritesToState() public {
-        uint24 expectedSignerId = rootSignerId + 1;
+        uint120 expectedSignerId = rootSignerId + 1;
         _execUserOp(
             address(validator),
             0,
@@ -58,7 +58,7 @@ contract AuthenticationTest is TestHelper {
     }
 
     function testRemoveSignerEmitsEvent() public {
-        uint24 expectedSignerId = 0;
+        uint120 expectedSignerId = 0;
         vm.expectEmit(true, true, true, true, address(validator));
         emit SignerRemoved(address(this), expectedSignerId);
         validator.removeSigner(expectedSignerId);

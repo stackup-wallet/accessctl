@@ -10,26 +10,25 @@ contract IAMValidator is ERC7579ValidatorBase {
     /*//////////////////////////////////////////////////////////////////////////
                             CONSTANTS & STORAGE
     //////////////////////////////////////////////////////////////////////////*/
-    event SignerAdded(address indexed account, uint24 indexed signerId, uint256 x, uint256 y);
-    event SignerRemoved(address indexed account, uint24 indexed signerId);
+    event SignerAdded(address indexed account, uint120 indexed signerId, uint256 x, uint256 y);
+    event SignerRemoved(address indexed account, uint120 indexed signerId);
 
     /**
-     * @dev A monotonically increasing 3 dimensional value. It is 8 bytes and
-     * composed of:
-     *    1 bytes: times installed (max 255)
-     *    3 bytes: total signers added (i.e. signerId, max 16,777,215)
-     *    4 bytes: total policies added (i.e. policyId, max 4,294,967,295)
+     * A packed 32 byte value for counting various account variables:
+     *    2 bytes (uint16): install count
+     *    15 bytes (uint120): total signers added (i.e. signerId)
+     *    15 bytes (uint120): total policies added (i.e. policyId)
      * These values allow for efficient read/writes to the below mappings. For
      * instance, 1 byte install count ensures that an account state is
      * effectively reset during a reinstall without requiring any iterations.
      */
-    mapping(address account => uint64 cnt) public Counters;
+    mapping(address account => uint256 count) public Counters;
 
     /**
-     * @dev A register to determine if a given signer has been linked to an
+     * A register to determine if a given signer has been linked to an
      * account. The key is equal to concat(install count, signerId).
      */
-    mapping(uint32 installCountAndSignerId => mapping(address account => Signer s)) public
+    mapping(uint136 installCountAndSignerId => mapping(address account => Signer s)) public
         SignerRegister;
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -52,7 +51,7 @@ contract IAMValidator is ERC7579ValidatorBase {
      * @param data The data to de-initialize the module with
      */
     function onUninstall(bytes calldata data) external override {
-        (uint8 installCount,,) = _parseCounter(Counters[msg.sender]);
+        (uint16 installCount,,) = _parseCounter(Counters[msg.sender]);
         Counters[msg.sender] = _packCounter(installCount + 1, 0, 0);
     }
 
@@ -63,7 +62,7 @@ contract IAMValidator is ERC7579ValidatorBase {
      * @return true if the module is initialized, false otherwise
      */
     function isInitialized(address smartAccount) external view returns (bool) {
-        (, uint24 signerId,) = _parseCounter(Counters[smartAccount]);
+        (, uint120 signerId,) = _parseCounter(Counters[smartAccount]);
         return signerId > 0;
     }
 
@@ -92,8 +91,8 @@ contract IAMValidator is ERC7579ValidatorBase {
         override
         returns (ValidationData)
     {
-        (uint24 signerId, uint256 r, uint256 s) =
-            abi.decode(userOp.signature, (uint24, uint256, uint256));
+        (uint120 signerId, uint256 r, uint256 s) =
+            abi.decode(userOp.signature, (uint120, uint256, uint256));
         Signer memory signer = getSigner(msg.sender, signerId);
 
         return SCL_RIP7212.verify(userOpHash, r, s, signer.x, signer.y)
@@ -130,11 +129,11 @@ contract IAMValidator is ERC7579ValidatorBase {
      * Gets the public key for a given account and signerId.
      *
      * @param account The address of the modular smart account.
-     * @param signerId A unique uint24 value assgined to the public key during
+     * @param signerId A unique uint120 value assgined to the public key during
      * registration.
      */
-    function getSigner(address account, uint24 signerId) public view returns (Signer memory) {
-        (uint8 installCount,,) = _parseCounter(Counters[account]);
+    function getSigner(address account, uint120 signerId) public view returns (Signer memory) {
+        (uint16 installCount,,) = _parseCounter(Counters[account]);
         return SignerRegister[_packInstallCountAndSignerId(installCount, signerId)][account];
     }
 
@@ -153,12 +152,12 @@ contract IAMValidator is ERC7579ValidatorBase {
      * Deletes a public key registered to the account under a unique signerId.
      * Emits a SignerRemoved event on success.
      *
-     * @param signerId A unique uint24 value assgined to the public key during
+     * @param signerId A unique uint120 value assgined to the public key during
      * registration.
      */
-    function removeSigner(uint24 signerId) external {
-        (uint8 installCount,,) = _parseCounter(Counters[msg.sender]);
-        uint32 key = _packInstallCountAndSignerId(installCount, signerId);
+    function removeSigner(uint120 signerId) external {
+        (uint16 installCount,,) = _parseCounter(Counters[msg.sender]);
+        uint136 key = _packInstallCountAndSignerId(installCount, signerId);
 
         delete SignerRegister[key][msg.sender];
         emit SignerRemoved(msg.sender, signerId);
@@ -169,8 +168,9 @@ contract IAMValidator is ERC7579ValidatorBase {
     //////////////////////////////////////////////////////////////////////////*/
 
     function _addSigner(uint256 x, uint256 y) internal {
-        (uint8 installCount, uint24 signerId, uint32 policyId) = _parseCounter(Counters[msg.sender]);
-        uint32 key = _packInstallCountAndSignerId(installCount, signerId);
+        (uint16 installCount, uint120 signerId, uint120 policyId) =
+            _parseCounter(Counters[msg.sender]);
+        uint136 key = _packInstallCountAndSignerId(installCount, signerId);
         Signer memory signer = Signer(x, y);
 
         SignerRegister[key][msg.sender] = signer;
@@ -179,36 +179,36 @@ contract IAMValidator is ERC7579ValidatorBase {
     }
 
     function _packCounter(
-        uint8 installCount,
-        uint24 signerId,
-        uint32 policyId
+        uint16 installCount,
+        uint120 signerId,
+        uint120 policyId
     )
         internal
         pure
-        returns (uint64)
+        returns (uint256)
     {
-        return uint64(installCount) | (uint64(signerId) << 8) | (uint64(policyId) << (8 + 24));
+        return uint256(installCount) | (uint256(signerId) << 16) | (uint64(policyId) << (16 + 120));
     }
 
-    function _parseCounter(uint64 counter)
+    function _parseCounter(uint256 counter)
         internal
         pure
-        returns (uint8 installCount, uint24 signerId, uint32 policyId)
+        returns (uint16 installCount, uint120 signerId, uint120 policyId)
     {
-        installCount = uint8(counter);
-        signerId = uint24(counter >> 8);
-        policyId = uint32(counter >> (8 + 24));
+        installCount = uint16(counter);
+        signerId = uint120(counter >> 16);
+        policyId = uint120(counter >> (16 + 120));
     }
 
     function _packInstallCountAndSignerId(
-        uint8 installCount,
-        uint24 signerId
+        uint16 installCount,
+        uint120 signerId
     )
         internal
         pure
-        returns (uint32)
+        returns (uint136)
     {
-        return uint32(installCount) | (uint32(signerId) << 8);
+        return uint136(installCount) | (uint136(signerId) << 16);
     }
 
     /*//////////////////////////////////////////////////////////////////////////

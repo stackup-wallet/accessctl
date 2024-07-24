@@ -13,8 +13,8 @@ import { MODULE_TYPE_VALIDATOR } from "modulekit/external/ERC7579.sol";
 import { IAMValidator } from "src/IAMValidator.sol";
 
 abstract contract TestHelper is RhinestoneModuleKit, Test {
-    event SignerAdded(address indexed account, uint24 indexed signerId, uint256 x, uint256 y);
-    event SignerRemoved(address indexed account, uint24 indexed signerId);
+    event SignerAdded(address indexed account, uint120 indexed signerId, uint256 x, uint256 y);
+    event SignerRemoved(address indexed account, uint120 indexed signerId);
 
     using ModuleKitHelpers for *;
     using ModuleKitUserOp for *;
@@ -29,7 +29,7 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
         0xf24b7cd0e0d84317f2fbba39add412ddd3df7cb84be213b67fb340373e9275ec;
     uint256 constant testP256PublicKeyYRoot =
         0x255417d4c6780a9db69e2023685c95a344f3e59e930e758f3829b0b10bf87ebc;
-    uint24 constant rootSignerId = 0;
+    uint120 constant rootSignerId = 0;
 
     uint256 constant testP256PrivateKey1 =
         0x605e0a63a358c3060f9ea4b3ee7737f21e4dc49755f90ae4ad12ffcbe71a26ef;
