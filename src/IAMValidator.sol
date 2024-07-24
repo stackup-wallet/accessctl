@@ -188,7 +188,7 @@ contract IAMValidator is ERC7579ValidatorBase {
         uint32 policyId
     )
         internal
-        view
+        pure
         returns (uint64)
     {
         return uint64(installCount) | (uint64(signerId) << 8) | (uint64(policyId) << (8 + 24));
@@ -196,7 +196,7 @@ contract IAMValidator is ERC7579ValidatorBase {
 
     function _parseCounter(uint64 counter)
         internal
-        view
+        pure
         returns (uint8 installCount, uint24 signerId, uint32 policyId)
     {
         installCount = uint8(counter);
@@ -209,7 +209,7 @@ contract IAMValidator is ERC7579ValidatorBase {
         uint24 signerId
     )
         internal
-        view
+        pure
         returns (uint32)
     {
         return uint32(installCount) | (uint32(signerId) << 8);
