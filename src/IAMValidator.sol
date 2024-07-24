@@ -122,8 +122,9 @@ contract IAMValidator is ERC7579ValidatorBase {
         override
         returns (bytes4 sigValidationResult)
     {
-        (uint24 signerId, uint256 r, uint256 s) = abi.decode(signature, (uint24, uint256, uint256));
-        (uint8 installCount,,) = _parseCounter(Counters[msg.sender]);
+        (uint120 signerId, uint256 r, uint256 s) =
+            abi.decode(signature, (uint120, uint256, uint256));
+        (uint16 installCount,,) = _parseCounter(Counters[msg.sender]);
         Signer memory signer =
             SignerRegister[_packInstallCountAndSignerId(installCount, signerId)][msg.sender];
 

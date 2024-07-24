@@ -65,21 +65,25 @@ contract AuthenticationTest is TestHelper {
     }
 
     function testERC1271ValidSignature() public virtual {
-        bytes32 hash = keccak256("0xdead");
-        (bytes32 r, bytes32 s) = vm.signP256(testP256PrivateKeyRoot, hash);
+        bytes32 rawHash = keccak256("0xdead");
+        bytes32 formattedHash = _formatERC1271Hash(address(validator), rawHash);
+
+        (bytes32 r, bytes32 s) = vm.signP256(testP256PrivateKeyRoot, formattedHash);
         bytes memory signature = abi.encode(rootSignerId, uint256(r), uint256(s));
 
-        bool valid = _verifyEIP1271Signature(address(validator), hash, signature);
+        bool valid = _verifyERC1271Signature(address(validator), rawHash, signature);
 
         assertTrue(valid);
     }
 
     function testERC1271InValidSignature() public virtual {
-        bytes32 hash = keccak256("0xdead");
-        (bytes32 r, bytes32 s) = vm.signP256(testP256PrivateKey2, hash);
+        bytes32 rawHash = keccak256("0xdead");
+        bytes32 formattedHash = _formatERC1271Hash(address(validator), rawHash);
+
+        (bytes32 r, bytes32 s) = vm.signP256(testP256PrivateKey1, formattedHash);
         bytes memory signature = abi.encode(rootSignerId, uint256(r), uint256(s));
 
-        bool valid = _verifyEIP1271Signature(address(validator), hash, signature);
+        bool valid = _verifyERC1271Signature(address(validator), rawHash, signature);
 
         assertFalse(valid);
     }
