@@ -57,6 +57,21 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
         userOpData.execUserOps();
     }
 
+    function _formatERC1271Hash(address validator, bytes32 hash) internal returns (bytes32) {
+        return instance.formatERC1271Hash(validator, hash);
+    }
+
+    function _verifyERC1271Signature(
+        address validator,
+        bytes32 hash,
+        bytes memory signature
+    )
+        internal
+        returns (bool)
+    {
+        return instance.isValidSignature({ validator: validator, hash: hash, signature: signature });
+    }
+
     function _installModule() internal {
         instance.installModule({
             moduleTypeId: MODULE_TYPE_VALIDATOR,
