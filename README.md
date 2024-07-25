@@ -18,7 +18,7 @@ The remaining documentation will assume knowledge on ERC-4337 (Account Abstracti
 
 ## End to end transaction flow
 
-The following is a sequence diagram to illustrate the end to end flow of a UserOperation.
+The following is a sequence diagram to illustrate the end to end flow of a `UserOperation`.
 
 ```mermaid
 sequenceDiagram
