@@ -13,6 +13,7 @@ contract IAMValidator is ERC7579ValidatorBase {
     //////////////////////////////////////////////////////////////////////////*/
     event SignerAdded(address indexed account, uint120 indexed signerId, uint256 x, uint256 y);
     event SignerRemoved(address indexed account, uint120 indexed signerId);
+    event PolicyAdded(address indexed account, uint120 indexed policyId, Policy p);
 
     /**
      * A packed 32 byte value for counting various account variables:
@@ -134,7 +135,7 @@ contract IAMValidator is ERC7579ValidatorBase {
             abi.decode(signature, (uint120, uint256, uint256));
         (uint16 installCount,,) = _parseCounter(Counters[msg.sender]);
         Signer memory signer =
-            SignerRegister[_packInstallCountAndSignerId(installCount, signerId)][msg.sender];
+            SignerRegister[_packInstallCountAndId(installCount, signerId)][msg.sender];
 
         return SCL_RIP7212.verify(hash, r, s, signer.x, signer.y) ? EIP1271_SUCCESS : EIP1271_FAILED;
     }
@@ -148,7 +149,7 @@ contract IAMValidator is ERC7579ValidatorBase {
      */
     function getSigner(address account, uint120 signerId) public view returns (Signer memory) {
         (uint16 installCount,,) = _parseCounter(Counters[account]);
-        return SignerRegister[_packInstallCountAndSignerId(installCount, signerId)][account];
+        return SignerRegister[_packInstallCountAndId(installCount, signerId)][account];
     }
 
     /**
@@ -160,7 +161,12 @@ contract IAMValidator is ERC7579ValidatorBase {
      */
     function getPolicy(address account, uint120 policyId) public view returns (Policy memory) {
         (uint16 installCount,,) = _parseCounter(Counters[account]);
-        return PolicyRegister[_packInstallCountAndPolicyId(installCount, policyId)][account];
+        return PolicyRegister[_packInstallCountAndId(installCount, policyId)][account];
+    }
+
+    function hasPolicy(address account) public view returns (bool) {
+        (uint16 installCount, uint120 signerId, uint120 policyId) = _parseCounter(Counters[account]);
+        return policyId > 0;
     }
 
     /**
@@ -183,10 +189,14 @@ contract IAMValidator is ERC7579ValidatorBase {
      */
     function removeSigner(uint120 signerId) external {
         (uint16 installCount,,) = _parseCounter(Counters[msg.sender]);
-        uint136 key = _packInstallCountAndSignerId(installCount, signerId);
+        uint136 key = _packInstallCountAndId(installCount, signerId);
 
         delete SignerRegister[key][msg.sender];
         emit SignerRemoved(msg.sender, signerId);
+    }
+
+    function addPolicy(Policy calldata p) external {
+        _addPolicy(p);
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -196,12 +206,22 @@ contract IAMValidator is ERC7579ValidatorBase {
     function _addSigner(uint256 x, uint256 y) internal {
         (uint16 installCount, uint120 signerId, uint120 policyId) =
             _parseCounter(Counters[msg.sender]);
-        uint136 key = _packInstallCountAndSignerId(installCount, signerId);
+        uint136 key = _packInstallCountAndId(installCount, signerId);
         Signer memory signer = Signer(x, y);
 
         SignerRegister[key][msg.sender] = signer;
         emit SignerAdded(msg.sender, signerId, x, y);
         Counters[msg.sender] = _packCounter(installCount, signerId + 1, policyId);
+    }
+
+    function _addPolicy(Policy calldata p) internal {
+        (uint16 installCount, uint120 signerId, uint120 policyId) =
+            _parseCounter(Counters[msg.sender]);
+        uint136 key = _packInstallCountAndId(installCount, policyId);
+
+        PolicyRegister[key][msg.sender] = p;
+        emit PolicyAdded(msg.sender, policyId, p);
+        Counters[msg.sender] = _packCounter(installCount, signerId, policyId + 1);
     }
 
     function _packCounter(
@@ -213,7 +233,7 @@ contract IAMValidator is ERC7579ValidatorBase {
         pure
         returns (uint256)
     {
-        return uint256(installCount) | (uint256(signerId) << 16) | (uint64(policyId) << (16 + 120));
+        return uint16(installCount) | (uint256(signerId) << 16) | (uint256(policyId) << (16 + 120));
     }
 
     function _parseCounter(uint256 counter)
@@ -226,26 +246,15 @@ contract IAMValidator is ERC7579ValidatorBase {
         policyId = uint120(counter >> (16 + 120));
     }
 
-    function _packInstallCountAndSignerId(
+    function _packInstallCountAndId(
         uint16 installCount,
-        uint120 signerId
+        uint120 id
     )
         internal
         pure
         returns (uint136)
     {
-        return uint136(installCount) | (uint136(signerId) << 16);
-    }
-
-    function _packInstallCountAndPolicyId(
-        uint16 installCount,
-        uint120 policyId
-    )
-        internal
-        pure
-        returns (uint136)
-    {
-        return uint136(installCount) | (uint136(policyId) << 16);
+        return uint16(installCount) | (uint136(id) << 16);
     }
 
     /*//////////////////////////////////////////////////////////////////////////

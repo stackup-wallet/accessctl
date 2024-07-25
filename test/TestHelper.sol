@@ -11,10 +11,12 @@ import {
 } from "modulekit/ModuleKit.sol";
 import { MODULE_TYPE_VALIDATOR } from "modulekit/external/ERC7579.sol";
 import { IAMValidator } from "src/IAMValidator.sol";
+import { Policy, CallInput } from "src/Policy.sol";
 
 abstract contract TestHelper is RhinestoneModuleKit, Test {
     event SignerAdded(address indexed account, uint120 indexed signerId, uint256 x, uint256 y);
     event SignerRemoved(address indexed account, uint120 indexed signerId);
+    event PolicyAdded(address indexed account, uint120 indexed policyId, Policy p);
 
     using ModuleKitHelpers for *;
     using ModuleKitUserOp for *;
@@ -44,6 +46,8 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
         0xbe5627cf6a968b258bbf73c0c180dbd1f657c9852b9494fee2a56d8c2021db17;
     uint256 constant testP256PubKeyY2 =
         0x6f8ced2c10424a460bbec2099ed6688ee8d4ad9df325be516917bafcb21fe55a;
+
+    Policy testNullPolicy;
 
     function _execUserOp(address target, uint256 value, bytes memory data) internal {
         UserOpData memory userOpData = instance.getExecOps({
