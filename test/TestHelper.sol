@@ -17,6 +17,7 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
     event SignerAdded(address indexed account, uint120 indexed signerId, uint256 x, uint256 y);
     event SignerRemoved(address indexed account, uint120 indexed signerId);
     event PolicyAdded(address indexed account, uint120 indexed policyId, Policy p);
+    event PolicyRemoved(address indexed account, uint120 indexed policyId);
 
     using ModuleKitHelpers for *;
     using ModuleKitUserOp for *;
@@ -47,7 +48,8 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
     uint256 constant testP256PubKeyY2 =
         0x6f8ced2c10424a460bbec2099ed6688ee8d4ad9df325be516917bafcb21fe55a;
 
-    Policy testNullPolicy;
+    Policy testNullPolicy1;
+    Policy testNullPolicy2;
 
     function _execUserOp(address target, uint256 value, bytes memory data) internal {
         UserOpData memory userOpData = instance.getExecOps({

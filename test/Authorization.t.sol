@@ -10,16 +10,23 @@ contract AuthorizationTest is TestHelper {
         _execUserOp(
             address(validator),
             0,
-            abi.encodeWithSelector(IAMValidator.addPolicy.selector, testNullPolicy)
+            abi.encodeWithSelector(IAMValidator.addPolicy.selector, testNullPolicy1)
         );
 
-        assertTrue(validator.hasPolicy(address(instance.account)));
+        assertTrue(validator.hasPolicy(address(instance.account), 1));
     }
 
     function testAddPolicyEmitsEvent() public {
         uint120 expectedPolicyId = 0;
         vm.expectEmit(true, true, true, true, address(validator));
-        emit PolicyAdded(address(this), expectedPolicyId, testNullPolicy);
-        validator.addPolicy(testNullPolicy);
+        emit PolicyAdded(address(this), expectedPolicyId, testNullPolicy1);
+        validator.addPolicy(testNullPolicy1);
+    }
+
+    function testRemovePolicyEmitsEvent() public {
+        uint120 expectedPolicyId = 0;
+        vm.expectEmit(true, true, true, true, address(validator));
+        emit PolicyRemoved(address(this), expectedPolicyId);
+        validator.removePolicy(expectedPolicyId);
     }
 }

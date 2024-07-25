@@ -14,6 +14,7 @@ contract IAMValidator is ERC7579ValidatorBase {
     event SignerAdded(address indexed account, uint120 indexed signerId, uint256 x, uint256 y);
     event SignerRemoved(address indexed account, uint120 indexed signerId);
     event PolicyAdded(address indexed account, uint120 indexed policyId, Policy p);
+    event PolicyRemoved(address indexed account, uint120 indexed policyId);
 
     /**
      * A packed 32 byte value for counting various account variables:
@@ -164,9 +165,9 @@ contract IAMValidator is ERC7579ValidatorBase {
         return PolicyRegister[_packInstallCountAndId(installCount, policyId)][account];
     }
 
-    function hasPolicy(address account) public view returns (bool) {
+    function hasPolicy(address account, uint120 policyArg) public view returns (bool) {
         (uint16 installCount, uint120 signerId, uint120 policyId) = _parseCounter(Counters[account]);
-        return policyId > 0;
+        return policyId == policyArg;
     }
 
     /**
@@ -197,6 +198,14 @@ contract IAMValidator is ERC7579ValidatorBase {
 
     function addPolicy(Policy calldata p) external {
         _addPolicy(p);
+    }
+
+    function removePolicy(uint120 policyId) external {
+        (uint16 installCount,,) = _parseCounter(Counters[msg.sender]);
+        uint136 key = _packInstallCountAndId(installCount, policyId);
+
+        delete PolicyRegister[key][msg.sender];
+        emit PolicyRemoved(msg.sender, policyId);
     }
 
     /*//////////////////////////////////////////////////////////////////////////
