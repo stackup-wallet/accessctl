@@ -9,7 +9,7 @@ This project refers to an ERC-7579 validator module that can be installed on any
 - **Authentication**: support for adding many `secp256r1` signers to an account.
 - **Authorization**: support for attaching transaction policies to each signer.
 - **Gas optimized**: can scale for a large number of active signers and policies.
-- **Easily auditable**: allows verifiable changelogs for many validation updates.
+- **Easily auditable**: allows verifiable changelogs for tracking every validation update.
 
 The remaining documentation will assume knowledge on ERC-4337 (Account Abstraction) and ERC-7579 (Minimal Modular Smart Accounts). If you are unfamiliar, we recommend the following resources to get started:
 
