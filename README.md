@@ -56,17 +56,19 @@ The `roleId` is a `uint240` value that is encoded into the `UserOperation` signa
 userOp.signature = abi.encode(roleId, r, s);
 ```
 
-During role check the IAM validator uses this `roleId` to verify within the state if its active or not. In other words, it allows the module to check if a signer is allowed to assume a particular policy. If it is not active, validation will fail. Otherwise it continues with the authentication check.
+During role check the IAM validator uses this `roleId` to verify with the state if the role is active. In other words, the module checks if a signer is allowed to assume a particular policy. If it is not active, validation will fail. Otherwise it continues with the authentication check.
 
 ### Authentication check
 
 Next the IAM validator verifies that the signature from `userOp.signature` was actually signed by the relevant private key. To do this the the `roleId` is decoded into two `uint120` values for `signerId` and `policyId`.
 
-The `signerId` is then used to fetch the corresponding `x` and `y` coordinate of the public key with the state. We then have everything needed for authentication.
+The `signerId` is then used to fetch the corresponding `x` and `y` coordinate of the public key from the state. We then have everything needed for authentication.
 
 ```solidity
 bool valid = P256.verifySignature(userOpHash, r, s, x, y);
 ```
+
+If the signature is valid, we move on the the final authorization check.
 
 ### Authorization check
 
