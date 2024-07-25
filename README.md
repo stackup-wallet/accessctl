@@ -4,8 +4,28 @@ A scalable identity and access management layer for ERC-4337 modular smart accou
 
 # Architecture
 
+This project refers to an ERC-7579 validator module that can be installed on any compliant smart account to enable advanced IAM features. The module is built with the following design goals in mind to support onchain organizations at every scale:
+
+- **Authentication**: support for adding many `secp256r1` signers to an account.
+- **Authorization**: support for attaching transaction policies to each signer.
+- **Gas optimized**: can scale for a large number of active signers and policies.
+- **Easily auditable**: allows verifiable changelogs for many validation updates.
+
+The remaining documentation will assume knowledge on ERC-4337 (Account Abstraction) and ERC-7579 (Minimal Modular Smart Accounts). If you are unfamiliar, we recommend the following resources to get started:
+
+- [erc4337.io](https://www.erc4337.io/docs)
+- [erc7579.com](https://erc7579.com/)
+
+## End to end transaction flow
+
 ```
-Docs TBD
+TBD
+```
+
+## `IAMValidator` interface
+
+```
+TBD
 ```
 
 # Contributing
