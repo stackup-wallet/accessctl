@@ -5,6 +5,7 @@ import { ERC7579ValidatorBase } from "modulekit/Modules.sol";
 import { PackedUserOperation } from "modulekit/external/ERC4337.sol";
 import { SCL_RIP7212 } from "crypto-lib/lib/libSCL_RIP7212.sol";
 import { Signer } from "src/Signer.sol";
+import { Policy } from "src/Policy.sol";
 
 contract IAMValidator is ERC7579ValidatorBase {
     /*//////////////////////////////////////////////////////////////////////////
@@ -30,6 +31,13 @@ contract IAMValidator is ERC7579ValidatorBase {
      */
     mapping(uint136 installCountAndSignerId => mapping(address account => Signer s)) public
         SignerRegister;
+
+    /**
+     * @dev A register to determine if a given policy has been linked to an
+     * account. The key is equal to concat(install count, policyId).
+     */
+    mapping(uint136 installCountAndPolicyId => mapping(address account => Policy p)) public
+        PolicyRegister;
 
     /*//////////////////////////////////////////////////////////////////////////
                                      CONFIG
@@ -144,6 +152,18 @@ contract IAMValidator is ERC7579ValidatorBase {
     }
 
     /**
+     * Gets the public key for a given account and signerId.
+     *
+     * @param account The address of the modular smart account.
+     * @param policyId A unique uint120 value assgined to the public key during
+     * registration.
+     */
+    function getPolicy(address account, uint120 policyId) public view returns (Policy memory) {
+        (uint16 installCount,,) = _parseCounter(Counters[account]);
+        return PolicyRegister[_packInstallCountAndPolicyId(installCount, policyId)][account];
+    }
+
+    /**
      * Registers a public key to the account under a unique signerId. Emits a
      * SignerAdded event on success.
      *
@@ -215,6 +235,17 @@ contract IAMValidator is ERC7579ValidatorBase {
         returns (uint136)
     {
         return uint136(installCount) | (uint136(signerId) << 16);
+    }
+
+    function _packInstallCountAndPolicyId(
+        uint16 installCount,
+        uint120 policyId
+    )
+        internal
+        pure
+        returns (uint136)
+    {
+        return uint136(installCount) | (uint136(policyId) << 16);
     }
 
     /*//////////////////////////////////////////////////////////////////////////
