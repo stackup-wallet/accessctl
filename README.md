@@ -18,6 +18,58 @@ The remaining documentation will assume knowledge on ERC-4337 (Account Abstracti
 
 ## End to end transaction flow
 
+The following is a sequence diagram to illustrate the end to end flow of a UserOperation.
+
+```mermaid
+sequenceDiagram
+    Wallet->>EntryPoint:Send UserOp
+    EntryPoint->>Smart Account: Calls validateUserOp
+    Smart Account->>IAM Validator: Proxy request
+    Note over IAM Validator: Role check
+    IAM Validator->>IAM Validator: Decode roleId and signature from op.signature
+    IAM Validator->>IAM Validator: Verify roleId
+    IAM Validator->>IAM Validator: Decode signerId and policyId from roleId
+    Note over IAM Validator,P256 Verifier: Authentication check
+    IAM Validator->>IAM Validator: Get signer from state
+    IAM Validator->>P256 Verifier: Calls verifySignature
+    P256 Verifier->>P256 Verifier: Verify signature with signer
+    P256 Verifier->>IAM Validator: Returns success response
+    Note over IAM Validator: Authorization check
+    IAM Validator->>IAM Validator: Get policy from state
+    IAM Validator->>IAM Validator: Verify op.callData with policy
+    IAM Validator->>Smart Account: Returns success response
+    Smart Account->>EntryPoint: Pay prefund
+    Note over EntryPoint,Smart Account: Validation done, execution next...
+```
+
+From the diagram, there are three variables that must be known to the wallet.
+
+1. `roleId`: Concatenation of `signerId` + `policyId`.
+2. `signerId`: An ID assigned by the module for every signer added.
+3. `policyId`: An ID assigned by the module for every policy added.
+
+### Role check
+
+The `roleId` is a `uint240` value that is encoded into the `UserOperation` signature field along with the `r` and `s` values of the signed `userOpHash`.
+
+```solidity
+userOp.signature = abi.encode(roleId, r, s);
+```
+
+During role check the IAM validator uses this `roleId` to verify within the state if its active or not. In other words, it allows the module to check if a signer is allowed to assume a particular policy. If it is not active, validation will fail. Otherwise it continues with the authentication check.
+
+### Authentication check
+
+Next the IAM validator verifies that the signature from `userOp.signature` was actually signed by the relevant private key. To do this the the `roleId` is decoded into two `uint120` values for `signerId` and `policyId`.
+
+The `signerId` is then used to fetch the corresponding `x` and `y` coordinate of the public key with the state. We then have everything needed for authentication.
+
+```solidity
+bool valid = P256.verifySignature(userOpHash, r, s, x, y);
+```
+
+### Authorization check
+
 ```
 TBD
 ```
