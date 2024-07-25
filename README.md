@@ -32,7 +32,7 @@ sequenceDiagram
     Note over IAM Validator,P256 Verifier: Authentication check
     IAM Validator->>IAM Validator: Get signer from state
     IAM Validator->>P256 Verifier: Calls verifySignature
-    P256 Verifier->>P256 Verifier: Verify signature with signer
+    P256 Verifier->>P256 Verifier: Verify sig with pub key & hash
     P256 Verifier->>IAM Validator: Returns success response
     Note over IAM Validator: Authorization check
     IAM Validator->>IAM Validator: Get policy from state
