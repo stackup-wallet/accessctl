@@ -64,7 +64,7 @@ contract AuthenticationTest is TestHelper {
         validator.removeSigner(expectedSignerId);
     }
 
-    function testERC1271ValidSignature() public virtual {
+    function testERC1271ValidSignature() public {
         bytes32 rawHash = keccak256("0xdead");
         bytes32 formattedHash = _formatERC1271Hash(address(validator), rawHash);
 
@@ -74,7 +74,7 @@ contract AuthenticationTest is TestHelper {
         assertTrue(_verifyERC1271Signature(address(validator), rawHash, signature));
     }
 
-    function testERC1271InvalidSignature() public virtual {
+    function testERC1271InvalidSignature() public {
         bytes32 rawHash = keccak256("0xdead");
         bytes32 formattedHash = _formatERC1271Hash(address(validator), rawHash);
 
