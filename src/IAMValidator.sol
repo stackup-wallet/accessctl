@@ -226,8 +226,8 @@ contract IAMValidator is ERC7579ValidatorBase {
         emit RoleRemoved(msg.sender, roleId);
     }
 
-    function addRole(uint240 roleId) external {
-        _addRole(roleId);
+    function addRole(uint120 signerId, uint120 policyId) external {
+        _addRole(signerId, policyId);
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -255,12 +255,17 @@ contract IAMValidator is ERC7579ValidatorBase {
         Counters[msg.sender] = _packCounter(installCount, signerId, policyId + 1);
     }
 
-    function _addRole(uint240 roleId) internal {
+    function _addRole(uint120 signerId, uint120 policyId) internal {
         (uint16 installCount,,) = _parseCounter(Counters[msg.sender]);
+        uint240 roleId = _packRoleId(signerId, policyId);
         uint256 key = _packInstallCountAndRoleId(installCount, roleId);
 
         RoleRegister[key][msg.sender] = true;
         emit RoleAdded(msg.sender, roleId);
+    }
+
+    function _packRoleId(uint120 signerId, uint120 policyId) internal pure returns (uint240) {
+        return uint240(signerId) | (uint240(policyId) << 120);
     }
 
     function _packCounter(

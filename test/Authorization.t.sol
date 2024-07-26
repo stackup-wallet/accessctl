@@ -32,7 +32,7 @@ contract AuthorizationTest is TestHelper {
         uint120 expectedPolicyId = 0;
         vm.expectEmit(true, true, true, true, address(validator));
         emit PolicyAdded(address(this), expectedPolicyId, testAdminPolicy);
-        validator.addPolicy(testAdminPolicy);
+        validator.addPolicy(0);
     }
 
     function testRemovePolicyWritesToState() public {
