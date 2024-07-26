@@ -304,7 +304,7 @@ contract IAMValidator is ERC7579ValidatorBase {
         pure
         returns (uint256)
     {
-        return uint16(installCount) | (uint256(roleId) << 240);
+        return uint16(installCount) | (uint256(roleId) << 16);
     }
 
     function _parseRoleId(uint240 roleId)
