@@ -169,11 +169,12 @@ contract IAMValidator is ERC7579ValidatorBase {
         return PolicyRegister[_packInstallCountAndId(installCount, policyId)][account];
     }
 
-    function hasPolicy(address account, uint120 policyArg) public view returns (bool) {
-        (,, uint120 policyId) = _parseCounter(Counters[account]);
-        return policyId <= policyArg;
-    }
-
+    /**
+     * Gets the role for a given account and roleId.
+     * @param account the address of the modular smart account.
+     * @param roleId a unique uint240 value assigned to the role during
+     * registration.
+     */
     function hasRole(address account, uint240 roleId) public view returns (bool) {
         (uint16 installCount,,) = _parseCounter(Counters[account]);
         return RoleRegister[_packInstallCountAndRoleId(installCount, roleId)][account];

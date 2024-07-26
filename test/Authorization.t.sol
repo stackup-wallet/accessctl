@@ -10,17 +10,41 @@ contract AuthorizationTest is TestHelper {
         _execUserOp(
             address(validator),
             0,
-            abi.encodeWithSelector(IAMValidator.addPolicy.selector, testNullPolicy1)
+            abi.encodeWithSelector(IAMValidator.addPolicy.selector, testAdminPolicy)
         );
 
-        assertTrue(validator.hasPolicy(address(instance.account), 1));
+        Policy memory p = validator.getPolicy(address(instance.account), 0);
+        assertEqUint(uint8(p.adminModes), uint8(0x01));
+
+        _execUserOp(
+            address(validator),
+            0,
+            abi.encodeWithSelector(IAMValidator.addPolicy.selector, testNonAdminPolicy)
+        );
+
+        p = validator.getPolicy(address(instance.account), 1);
+        assertEqUint(uint8(p.adminModes), uint8(0x02));
     }
 
     function testAddPolicyEmitsEvent() public {
         uint120 expectedPolicyId = 0;
         vm.expectEmit(true, true, true, true, address(validator));
-        emit PolicyAdded(address(this), expectedPolicyId, testNullPolicy1);
-        validator.addPolicy(testNullPolicy1);
+        emit PolicyAdded(address(this), expectedPolicyId, testAdminPolicy);
+        validator.addPolicy(testAdminPolicy);
+    }
+
+    function testRemovePolicyWritesToState() public {
+        _execUserOp(
+            address(validator),
+            0,
+            abi.encodeWithSelector(IAMValidator.addPolicy.selector, testAdminPolicy)
+        );
+
+        _execUserOp(
+            address(validator), 0, abi.encodeWithSelector(IAMValidator.removePolicy.selector, 0)
+        );
+
+        assertTrue(_isZeroPolicy(validator.getPolicy(address(instance.account), 0)));
     }
 
     function testRemovePolicyEmitsEvent() public {
