@@ -212,7 +212,7 @@ contract IAMValidator is ERC7579ValidatorBase {
 
     /**
      * Registers a policy to the account under a unique policyId. Emits a
-     * PolicyRemoved event on success.
+     * PolicyAdded event on success.
      *
      * @param p The Policy struct to add.
      */
@@ -222,7 +222,7 @@ contract IAMValidator is ERC7579ValidatorBase {
 
     /**
      * Deletes a policy registered to the account under a unique policyId.
-     * Emits a SignerRemoved event on success.
+     * Emits a PolicyRemoved event on success.
      *
      * @param policyId A unique uint120 value assgined to the policy during
      * registration.
