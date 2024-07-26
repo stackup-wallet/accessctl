@@ -5,6 +5,7 @@ import { ERC7579ValidatorBase } from "modulekit/Modules.sol";
 import { PackedUserOperation } from "modulekit/external/ERC4337.sol";
 import { SCL_RIP7212 } from "crypto-lib/lib/libSCL_RIP7212.sol";
 import { Signer } from "src/Signer.sol";
+import { Policy } from "src/Policy.sol";
 
 contract IAMValidator is ERC7579ValidatorBase {
     /*//////////////////////////////////////////////////////////////////////////
@@ -12,6 +13,10 @@ contract IAMValidator is ERC7579ValidatorBase {
     //////////////////////////////////////////////////////////////////////////*/
     event SignerAdded(address indexed account, uint120 indexed signerId, uint256 x, uint256 y);
     event SignerRemoved(address indexed account, uint120 indexed signerId);
+    event PolicyAdded(address indexed account, uint120 indexed policyId, Policy p);
+    event PolicyRemoved(address indexed account, uint120 indexed policyId);
+    event RoleAdded(address indexed account, uint240 indexed roleId);
+    event RoleRemoved(address indexed account, uint240 indexed roleId);
 
     /**
      * A packed 32 byte value for counting various account variables:
@@ -30,6 +35,20 @@ contract IAMValidator is ERC7579ValidatorBase {
      */
     mapping(uint136 installCountAndSignerId => mapping(address account => Signer s)) public
         SignerRegister;
+
+    /**
+     * A register to determine if a given policy has been linked to an account.
+     * The key is equal to concat(install count, policyId).
+     */
+    mapping(uint136 installCountAndPolicyId => mapping(address account => Policy p)) public
+        PolicyRegister;
+
+    /**
+     * A register to determine if a given signer can assume a policy. The key is
+     * equal to concat(install count, roleId).
+     */
+    mapping(uint256 installCountAndRoleId => mapping(address account => bool ok)) public
+        RoleRegister;
 
     /*//////////////////////////////////////////////////////////////////////////
                                      CONFIG
@@ -126,7 +145,7 @@ contract IAMValidator is ERC7579ValidatorBase {
             abi.decode(signature, (uint120, uint256, uint256));
         (uint16 installCount,,) = _parseCounter(Counters[msg.sender]);
         Signer memory signer =
-            SignerRegister[_packInstallCountAndSignerId(installCount, signerId)][msg.sender];
+            SignerRegister[_packInstallCountAndId(installCount, signerId)][msg.sender];
 
         return SCL_RIP7212.verify(hash, r, s, signer.x, signer.y) ? EIP1271_SUCCESS : EIP1271_FAILED;
     }
@@ -140,7 +159,29 @@ contract IAMValidator is ERC7579ValidatorBase {
      */
     function getSigner(address account, uint120 signerId) public view returns (Signer memory) {
         (uint16 installCount,,) = _parseCounter(Counters[account]);
-        return SignerRegister[_packInstallCountAndSignerId(installCount, signerId)][account];
+        return SignerRegister[_packInstallCountAndId(installCount, signerId)][account];
+    }
+
+    /**
+     * Gets the policy for a given account and policyId.
+     * @param account the address of the modular smart account.
+     * @param policyId a unique uint120 value assigned to the policy during
+     * registration.
+     */
+    function getPolicy(address account, uint120 policyId) public view returns (Policy memory) {
+        (uint16 installCount,,) = _parseCounter(Counters[account]);
+        return PolicyRegister[_packInstallCountAndId(installCount, policyId)][account];
+    }
+
+    /**
+     * Checks if the role for a given account and roleId is active.
+     * @param account the address of the modular smart account.
+     * @param roleId a unique uint240 value assigned to the role during
+     * registration.
+     */
+    function hasRole(address account, uint240 roleId) public view returns (bool) {
+        (uint16 installCount,,) = _parseCounter(Counters[account]);
+        return RoleRegister[_packInstallCountAndRoleId(installCount, roleId)][account];
     }
 
     /**
@@ -163,10 +204,63 @@ contract IAMValidator is ERC7579ValidatorBase {
      */
     function removeSigner(uint120 signerId) external {
         (uint16 installCount,,) = _parseCounter(Counters[msg.sender]);
-        uint136 key = _packInstallCountAndSignerId(installCount, signerId);
+        uint136 key = _packInstallCountAndId(installCount, signerId);
 
         delete SignerRegister[key][msg.sender];
         emit SignerRemoved(msg.sender, signerId);
+    }
+
+    /**
+     * Registers a policy to the account under a unique policyId. Emits a
+     * PolicyAdded event on success.
+     *
+     * @param p The Policy struct to add.
+     */
+    function addPolicy(Policy calldata p) external {
+        _addPolicy(p);
+    }
+
+    /**
+     * Deletes a policy registered to the account under a unique policyId.
+     * Emits a PolicyRemoved event on success.
+     *
+     * @param policyId A unique uint120 value assgined to the policy during
+     * registration.
+     */
+    function removePolicy(uint120 policyId) external {
+        (uint16 installCount,,) = _parseCounter(Counters[msg.sender]);
+        uint136 key = _packInstallCountAndId(installCount, policyId);
+
+        delete PolicyRegister[key][msg.sender];
+        emit PolicyRemoved(msg.sender, policyId);
+    }
+
+    /**
+     * Associates a registered signer with a registered policy. Emits a
+     * RoleAdded event on success.
+     *
+     * @param signerId A unique uint120 value assgined to the public key during
+     * registration.
+     * @param policyId A unique uint120 value assgined to the policy during
+     * registration.
+     */
+    function addRole(uint120 signerId, uint120 policyId) external {
+        _addRole(signerId, policyId);
+    }
+
+    /**
+     * Removes an association between a signer and policy. Emits a RoleRemoved
+     * event on success.
+     *
+     * @param roleId A unique uint240 value assgined to the role during
+     * registration.
+     */
+    function removeRole(uint240 roleId) external {
+        (uint16 installCount,,) = _parseCounter(Counters[msg.sender]);
+        uint256 key = _packInstallCountAndRoleId(installCount, roleId);
+
+        RoleRegister[key][msg.sender] = false;
+        emit RoleRemoved(msg.sender, roleId);
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -176,12 +270,31 @@ contract IAMValidator is ERC7579ValidatorBase {
     function _addSigner(uint256 x, uint256 y) internal {
         (uint16 installCount, uint120 signerId, uint120 policyId) =
             _parseCounter(Counters[msg.sender]);
-        uint136 key = _packInstallCountAndSignerId(installCount, signerId);
+        uint136 key = _packInstallCountAndId(installCount, signerId);
         Signer memory signer = Signer(x, y);
 
         SignerRegister[key][msg.sender] = signer;
         emit SignerAdded(msg.sender, signerId, x, y);
         Counters[msg.sender] = _packCounter(installCount, signerId + 1, policyId);
+    }
+
+    function _addPolicy(Policy calldata p) internal {
+        (uint16 installCount, uint120 signerId, uint120 policyId) =
+            _parseCounter(Counters[msg.sender]);
+        uint136 key = _packInstallCountAndId(installCount, policyId);
+
+        PolicyRegister[key][msg.sender] = p;
+        emit PolicyAdded(msg.sender, policyId, p);
+        Counters[msg.sender] = _packCounter(installCount, signerId, policyId + 1);
+    }
+
+    function _addRole(uint120 signerId, uint120 policyId) internal {
+        (uint16 installCount,,) = _parseCounter(Counters[msg.sender]);
+        uint240 roleId = _packRoleId(signerId, policyId);
+        uint256 key = _packInstallCountAndRoleId(installCount, roleId);
+
+        RoleRegister[key][msg.sender] = true;
+        emit RoleAdded(msg.sender, roleId);
     }
 
     function _packCounter(
@@ -193,7 +306,7 @@ contract IAMValidator is ERC7579ValidatorBase {
         pure
         returns (uint256)
     {
-        return uint256(installCount) | (uint256(signerId) << 16) | (uint64(policyId) << (16 + 120));
+        return uint256(installCount) | (uint256(signerId) << 16) | (uint256(policyId) << (16 + 120));
     }
 
     function _parseCounter(uint256 counter)
@@ -206,15 +319,39 @@ contract IAMValidator is ERC7579ValidatorBase {
         policyId = uint120(counter >> (16 + 120));
     }
 
-    function _packInstallCountAndSignerId(
+    function _packInstallCountAndId(
         uint16 installCount,
-        uint120 signerId
+        uint120 id
     )
         internal
         pure
         returns (uint136)
     {
-        return uint136(installCount) | (uint136(signerId) << 16);
+        return uint136(installCount) | (uint136(id) << 16);
+    }
+
+    function _packInstallCountAndRoleId(
+        uint16 installCount,
+        uint240 roleId
+    )
+        internal
+        pure
+        returns (uint256)
+    {
+        return uint256(installCount) | (uint256(roleId) << 16);
+    }
+
+    function _packRoleId(uint120 signerId, uint120 policyId) internal pure returns (uint240) {
+        return uint240(signerId) | (uint240(policyId) << 120);
+    }
+
+    function _parseRoleId(uint240 roleId)
+        internal
+        pure
+        returns (uint120 signerId, uint120 policyId)
+    {
+        signerId = uint120(roleId);
+        policyId = uint120(roleId >> 120);
     }
 
     /*//////////////////////////////////////////////////////////////////////////
