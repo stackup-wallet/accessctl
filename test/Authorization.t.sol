@@ -7,6 +7,8 @@ import { Policy } from "src/Policy.sol";
 
 contract AuthorizationTest is TestHelper {
     function testAddPolicyWritesToState() public {
+        uint8 expectedAdminModes = 0x01;
+        uint8 expectedNonAdminModes = 0x02;
         _execUserOp(
             address(validator),
             0,
@@ -14,7 +16,7 @@ contract AuthorizationTest is TestHelper {
         );
 
         Policy memory p = validator.getPolicy(address(instance.account), 0);
-        assertEqUint(uint8(p.adminModes), uint8(0x01));
+        assertEqUint(uint8(p.adminModes), expectedAdminModes);
 
         _execUserOp(
             address(validator),
@@ -23,7 +25,7 @@ contract AuthorizationTest is TestHelper {
         );
 
         p = validator.getPolicy(address(instance.account), 1);
-        assertEqUint(uint8(p.adminModes), uint8(0x02));
+        assertEqUint(uint8(p.adminModes), expectedNonAdminModes);
     }
 
     function testAddPolicyEmitsEvent() public {
@@ -34,6 +36,7 @@ contract AuthorizationTest is TestHelper {
     }
 
     function testRemovePolicyWritesToState() public {
+        uint120 expectedPolicyId = 0;
         _execUserOp(
             address(validator),
             0,
@@ -41,7 +44,9 @@ contract AuthorizationTest is TestHelper {
         );
 
         _execUserOp(
-            address(validator), 0, abi.encodeWithSelector(IAMValidator.removePolicy.selector, 0)
+            address(validator),
+            0,
+            abi.encodeWithSelector(IAMValidator.removePolicy.selector, expectedPolicyId)
         );
 
         assertTrue(_isZeroPolicy(validator.getPolicy(address(instance.account), 0)));
@@ -51,7 +56,7 @@ contract AuthorizationTest is TestHelper {
         uint120 expectedPolicyId = 0;
         vm.expectEmit(true, true, true, true, address(validator));
         emit PolicyRemoved(address(this), expectedPolicyId);
-        validator.removePolicy(expectedPolicyId);
+        validator.removePolicy(0);
     }
 
     function testAddRoleWritesToState() public {
