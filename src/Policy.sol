@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.23;
 
+bytes1 constant ADMIN_MODE = 0x01;
+
 /**
  * A data structure with information for splicing and comparing arguments from
  * call data.
@@ -26,7 +28,7 @@ struct Policy {
     /*
     * 2nd storage slot (32 bytes)
     */
-    bytes1 adminModes; //           1 byte
+    bytes1 mode; //                 1 byte
     bytes5 reserved; //             5 bytes
     address callTarget; //          20 bytes
     bytes4 callSelector; //         4 bytes
