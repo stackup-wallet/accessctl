@@ -45,7 +45,7 @@ contract IAMValidator is ERC7579ValidatorBase {
 
     /**
      * A register to determine if a given signer can assume a policy. The key is
-     * equal to concat(install count, signerId, policyId).
+     * equal to concat(install count, roleId).
      */
     mapping(uint256 installCountAndRoleId => mapping(address account => bool ok)) public
         RoleRegister;
@@ -252,7 +252,7 @@ contract IAMValidator is ERC7579ValidatorBase {
      * Removes an association between a signer and policy. Emits a RoleRemoved
      * event on success.
      *
-     * @param roleId A unique uint120 value assgined to the public key during
+     * @param roleId A unique uint240 value assgined to the role during
      * registration.
      */
     function removeRole(uint240 roleId) external {
