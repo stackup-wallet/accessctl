@@ -11,7 +11,7 @@ import {
 } from "modulekit/ModuleKit.sol";
 import { MODULE_TYPE_VALIDATOR } from "modulekit/external/ERC7579.sol";
 import { IAMValidator } from "src/IAMValidator.sol";
-import { Policy, CallInput } from "src/Policy.sol";
+import { Policy, CallInput, ADMIN_MODE } from "src/Policy.sol";
 
 abstract contract TestHelper is RhinestoneModuleKit, Test {
     event SignerAdded(address indexed account, uint120 indexed signerId, uint256 x, uint256 y);
@@ -50,12 +50,12 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
     uint256 constant testP256PubKeyY2 =
         0x6f8ced2c10424a460bbec2099ed6688ee8d4ad9df325be516917bafcb21fe55a;
 
+    Policy public testNullPolicy;
     Policy public testAdminPolicy;
-    Policy public testNonAdminPolicy;
+    uint120 constant adminPolicyId = 0;
 
     constructor() {
-        testAdminPolicy.adminModes = hex"01";
-        testNonAdminPolicy.adminModes = hex"02";
+        testAdminPolicy.mode = ADMIN_MODE;
     }
 
     function _execUserOp(address target, uint256 value, bytes memory data) internal {
@@ -72,12 +72,6 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
 
     function _formatERC1271Hash(address validator, bytes32 hash) internal returns (bytes32) {
         return instance.formatERC1271Hash(validator, hash);
-    }
-
-    function _isZeroPolicy(Policy memory p) internal returns (bool) {
-        return p.adminModes == 0 && p.validFrom == 0 && p.validUntil == 0
-            && p.erc1271Caller == address(0) && p.callTarget == address(0) && p.callSelector == 0
-            && p.callValue == 0 && p.callValueOperator == 0 && p.callInputs.length == 0;
     }
 
     function _verifyERC1271Signature(

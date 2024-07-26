@@ -37,12 +37,16 @@ contract IAMValidator is ERC7579ValidatorBase {
         SignerRegister;
 
     /**
-     * @dev A register to determine if a given policy has been linked to an
-     * account. The key is equal to concat(install count, policyId).
+     * A register to determine if a given policy has been linked to an account.
+     * The key is equal to concat(install count, policyId).
      */
     mapping(uint136 installCountAndPolicyId => mapping(address account => Policy p)) public
         PolicyRegister;
 
+    /**
+     * A register to determine if a given signer can assume a policy. The key is
+     * equal to concat(install count, signerId, policyId).
+     */
     mapping(uint256 installCountAndRoleId => mapping(address account => bool ok)) public
         RoleRegister;
 
@@ -206,10 +210,23 @@ contract IAMValidator is ERC7579ValidatorBase {
         emit SignerRemoved(msg.sender, signerId);
     }
 
+    /**
+     * Registers a policy to the account under a unique policyId. Emits a
+     * PolicyRemoved event on success.
+     *
+     * @param p The Policy struct to add.
+     */
     function addPolicy(Policy calldata p) external {
         _addPolicy(p);
     }
 
+    /**
+     * Deletes a policy registered to the account under a unique policyId.
+     * Emits a SignerRemoved event on success.
+     *
+     * @param policyId A unique uint120 value assgined to the policy during
+     * registration.
+     */
     function removePolicy(uint120 policyId) external {
         (uint16 installCount,,) = _parseCounter(Counters[msg.sender]);
         uint136 key = _packInstallCountAndId(installCount, policyId);
@@ -218,16 +235,32 @@ contract IAMValidator is ERC7579ValidatorBase {
         emit PolicyRemoved(msg.sender, policyId);
     }
 
+    /**
+     * Associates a registered signer with a registered policy. Emits a
+     * RoleAdded event on success.
+     *
+     * @param signerId A unique uint120 value assgined to the public key during
+     * registration.
+     * @param policyId A unique uint120 value assgined to the policy during
+     * registration.
+     */
+    function addRole(uint120 signerId, uint120 policyId) external {
+        _addRole(signerId, policyId);
+    }
+
+    /**
+     * Removes an association between a signer and policy. Emits a RoleRemoved
+     * event on success.
+     *
+     * @param roleId A unique uint120 value assgined to the public key during
+     * registration.
+     */
     function removeRole(uint240 roleId) external {
         (uint16 installCount,,) = _parseCounter(Counters[msg.sender]);
         uint256 key = _packInstallCountAndRoleId(installCount, roleId);
 
-        delete RoleRegister[key][msg.sender];
+        RoleRegister[key][msg.sender] = false;
         emit RoleRemoved(msg.sender, roleId);
-    }
-
-    function addRole(uint120 signerId, uint120 policyId) external {
-        _addRole(signerId, policyId);
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -264,10 +297,6 @@ contract IAMValidator is ERC7579ValidatorBase {
         emit RoleAdded(msg.sender, roleId);
     }
 
-    function _packRoleId(uint120 signerId, uint120 policyId) internal pure returns (uint240) {
-        return uint240(signerId) | (uint240(policyId) << 120);
-    }
-
     function _packCounter(
         uint16 installCount,
         uint120 signerId,
@@ -277,7 +306,7 @@ contract IAMValidator is ERC7579ValidatorBase {
         pure
         returns (uint256)
     {
-        return uint16(installCount) | (uint256(signerId) << 16) | (uint256(policyId) << (16 + 120));
+        return uint256(installCount) | (uint256(signerId) << 16) | (uint256(policyId) << (16 + 120));
     }
 
     function _parseCounter(uint256 counter)
@@ -298,7 +327,7 @@ contract IAMValidator is ERC7579ValidatorBase {
         pure
         returns (uint136)
     {
-        return uint16(installCount) | (uint136(id) << 16);
+        return uint136(installCount) | (uint136(id) << 16);
     }
 
     function _packInstallCountAndRoleId(
@@ -309,7 +338,11 @@ contract IAMValidator is ERC7579ValidatorBase {
         pure
         returns (uint256)
     {
-        return uint16(installCount) | (uint256(roleId) << 16);
+        return uint256(installCount) | (uint256(roleId) << 16);
+    }
+
+    function _packRoleId(uint120 signerId, uint120 policyId) internal pure returns (uint240) {
+        return uint240(signerId) | (uint240(policyId) << 120);
     }
 
     function _parseRoleId(uint240 roleId)
