@@ -174,7 +174,7 @@ contract IAMValidator is ERC7579ValidatorBase {
     }
 
     /**
-     * Gets the role for a given account and roleId.
+     * Checks if the role for a given account and roleId is active.
      * @param account the address of the modular smart account.
      * @param roleId a unique uint240 value assigned to the role during
      * registration.
