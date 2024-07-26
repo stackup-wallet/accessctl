@@ -3,10 +3,8 @@ pragma solidity ^0.8.23;
 
 import { TestHelper } from "test/TestHelper.sol";
 import { IAMValidator } from "src/IAMValidator.sol";
-import { Policy, ADMIN_MODE } from "src/Policy.sol";
-import { PolicyLib } from "src/PolicyLib.sol";
 
-contract PolicyTest is TestHelper {
+contract RoleTest is TestHelper {
     function testAddRoleWritesToState() public {
         _execUserOp(
             address(validator),
