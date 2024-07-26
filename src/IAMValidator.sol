@@ -15,6 +15,8 @@ contract IAMValidator is ERC7579ValidatorBase {
     event SignerRemoved(address indexed account, uint120 indexed signerId);
     event PolicyAdded(address indexed account, uint120 indexed policyId, Policy p);
     event PolicyRemoved(address indexed account, uint120 indexed policyId);
+    event RoleAdded(address indexed account, uint240 indexed roleId);
+    event RoleRemoved(address indexed account, uint240 indexed roleId);
 
     /**
      * A packed 32 byte value for counting various account variables:
@@ -40,6 +42,9 @@ contract IAMValidator is ERC7579ValidatorBase {
      */
     mapping(uint136 installCountAndPolicyId => mapping(address account => Policy p)) public
         PolicyRegister;
+
+    mapping(uint256 installCountAndRoleId => mapping(address account => bool ok)) public
+        RoleRegister;
 
     /*//////////////////////////////////////////////////////////////////////////
                                      CONFIG
@@ -154,10 +159,9 @@ contract IAMValidator is ERC7579ValidatorBase {
     }
 
     /**
-     * Gets the public key for a given account and signerId.
-     *
-     * @param account The address of the modular smart account.
-     * @param policyId A unique uint120 value assgined to the public key during
+     * Gets the policy for a given account and policyId.
+     * @param account the address of the modular smart account.
+     * @param policyId a unique uint120 value assigned to the policy during
      * registration.
      */
     function getPolicy(address account, uint120 policyId) public view returns (Policy memory) {
@@ -166,8 +170,13 @@ contract IAMValidator is ERC7579ValidatorBase {
     }
 
     function hasPolicy(address account, uint120 policyArg) public view returns (bool) {
-        (uint16 installCount, uint120 signerId, uint120 policyId) = _parseCounter(Counters[account]);
-        return policyId == policyArg;
+        (,, uint120 policyId) = _parseCounter(Counters[account]);
+        return policyId <= policyArg;
+    }
+
+    function hasRole(address account, uint240 roleId) public view returns (bool) {
+        (uint16 installCount,,) = _parseCounter(Counters[account]);
+        return RoleRegister[_packInstallCountAndRoleId(installCount, roleId)][account];
     }
 
     /**
@@ -208,6 +217,18 @@ contract IAMValidator is ERC7579ValidatorBase {
         emit PolicyRemoved(msg.sender, policyId);
     }
 
+    function removeRole(uint240 roleId) external {
+        (uint16 installCount,,) = _parseCounter(Counters[msg.sender]);
+        uint256 key = _packInstallCountAndRoleId(installCount, roleId);
+
+        delete RoleRegister[key][msg.sender];
+        emit RoleRemoved(msg.sender, roleId);
+    }
+
+    function addRole(uint240 roleId) external {
+        _addRole(roleId);
+    }
+
     /*//////////////////////////////////////////////////////////////////////////
                                      INTERNAL
     //////////////////////////////////////////////////////////////////////////*/
@@ -231,6 +252,14 @@ contract IAMValidator is ERC7579ValidatorBase {
         PolicyRegister[key][msg.sender] = p;
         emit PolicyAdded(msg.sender, policyId, p);
         Counters[msg.sender] = _packCounter(installCount, signerId, policyId + 1);
+    }
+
+    function _addRole(uint240 roleId) internal {
+        (uint16 installCount,,) = _parseCounter(Counters[msg.sender]);
+        uint256 key = _packInstallCountAndRoleId(installCount, roleId);
+
+        RoleRegister[key][msg.sender] = true;
+        emit RoleAdded(msg.sender, roleId);
     }
 
     function _packCounter(
@@ -264,6 +293,26 @@ contract IAMValidator is ERC7579ValidatorBase {
         returns (uint136)
     {
         return uint16(installCount) | (uint136(id) << 16);
+    }
+
+    function _packInstallCountAndRoleId(
+        uint16 installCount,
+        uint240 roleId
+    )
+        internal
+        pure
+        returns (uint256)
+    {
+        return uint16(installCount) | (uint256(roleId) << 240);
+    }
+
+    function _parseRoleId(uint240 roleId)
+        internal
+        pure
+        returns (uint120 signerId, uint120 policyId)
+    {
+        signerId = uint120(roleId);
+        policyId = uint120(roleId >> 120);
     }
 
     /*//////////////////////////////////////////////////////////////////////////

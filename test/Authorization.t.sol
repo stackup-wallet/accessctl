@@ -29,4 +29,32 @@ contract AuthorizationTest is TestHelper {
         emit PolicyRemoved(address(this), expectedPolicyId);
         validator.removePolicy(expectedPolicyId);
     }
+
+    function testAddRoleWritesToState() public {
+        _execUserOp(address(validator), 0, abi.encodeWithSelector(IAMValidator.addRole.selector, 1));
+
+        assertTrue(validator.hasRole(address(instance.account), 1));
+    }
+
+    function testAddRoleEmitsEvent() public {
+        uint240 expectedRoleId = 0;
+        vm.expectEmit(true, true, true, true, address(validator));
+        emit RoleAdded(address(this), expectedRoleId);
+        validator.addRole(0);
+    }
+
+    function testRemoveRoleWritesToState() public {
+        _execUserOp(
+            address(validator), 0, abi.encodeWithSelector(IAMValidator.removeRole.selector, 1)
+        );
+
+        assertFalse(validator.hasRole(address(instance.account), 1));
+    }
+
+    function testRemoveRoleEmitsEvent() public {
+        uint240 expectedRoleId = 0;
+        vm.expectEmit(true, true, true, true, address(validator));
+        emit RoleRemoved(address(this), expectedRoleId);
+        validator.removeRole(expectedRoleId);
+    }
 }

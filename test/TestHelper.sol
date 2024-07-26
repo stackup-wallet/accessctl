@@ -18,6 +18,8 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
     event SignerRemoved(address indexed account, uint120 indexed signerId);
     event PolicyAdded(address indexed account, uint120 indexed policyId, Policy p);
     event PolicyRemoved(address indexed account, uint120 indexed policyId);
+    event RoleAdded(address indexed account, uint240 indexed roleId);
+    event RoleRemoved(address indexed account, uint240 indexed roleId);
 
     using ModuleKitHelpers for *;
     using ModuleKitUserOp for *;
