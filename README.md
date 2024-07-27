@@ -31,7 +31,7 @@ sequenceDiagram
     IAM Validator->>IAM Validator: Decode signerId and policyId from roleId
     Note over IAM Validator: Authorization check
     IAM Validator->>IAM Validator: Get policy from storage
-    IAM Validator->>IAM Validator: Verify op.callData with policy
+    IAM Validator->>IAM Validator: Verify userOp with policy
     Note over IAM Validator,P256 Verifier: Authentication check
     IAM Validator->>IAM Validator: Get signer from storage
     IAM Validator->>P256 Verifier: Calls verifySignature
