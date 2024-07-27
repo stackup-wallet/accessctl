@@ -5,12 +5,14 @@ import { ERC7579ValidatorBase } from "modulekit/Modules.sol";
 import { PackedUserOperation } from "modulekit/external/ERC4337.sol";
 import { SCL_RIP7212 } from "crypto-lib/lib/libSCL_RIP7212.sol";
 import { Signer } from "src/Signer.sol";
-import { Policy, MODE_ADMIN } from "src/Policy.sol";
+import { Policy, PolicyLib, MODE_ADMIN } from "src/Policy.sol";
 
 contract IAMValidator is ERC7579ValidatorBase {
     /*//////////////////////////////////////////////////////////////////////////
                             CONSTANTS & STORAGE
     //////////////////////////////////////////////////////////////////////////*/
+
+    using PolicyLib for Policy;
 
     event SignerAdded(address indexed account, uint120 indexed signerId, uint256 x, uint256 y);
     event SignerRemoved(address indexed account, uint120 indexed signerId);
@@ -28,27 +30,27 @@ contract IAMValidator is ERC7579ValidatorBase {
      * instance, 1 byte install count ensures that an account state is
      * effectively reset during a reinstall without requiring any iterations.
      */
-    mapping(address account => uint256 count) public Counters;
+    mapping(address account => uint256 count) internal Counters;
 
     /**
      * A register to determine if a given signer has been linked to an
      * account. The key is equal to concat(install count, signerId).
      */
-    mapping(uint136 installCountAndSignerId => mapping(address account => Signer s)) public
+    mapping(uint136 installCountAndSignerId => mapping(address account => Signer s)) internal
         SignerRegister;
 
     /**
      * A register to determine if a given policy has been linked to an account.
      * The key is equal to concat(install count, policyId).
      */
-    mapping(uint136 installCountAndPolicyId => mapping(address account => Policy p)) public
+    mapping(uint136 installCountAndPolicyId => mapping(address account => Policy p)) internal
         PolicyRegister;
 
     /**
      * A register to determine if a given signer can assume a policy. The key is
      * equal to concat(install count, roleId).
      */
-    mapping(uint256 installCountAndRoleId => mapping(address account => bool ok)) public
+    mapping(uint256 installCountAndRoleId => mapping(address account => bool ok)) internal
         RoleRegister;
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -118,13 +120,22 @@ contract IAMValidator is ERC7579ValidatorBase {
         override
         returns (ValidationData)
     {
-        (uint120 signerId, uint256 r, uint256 s) =
-            abi.decode(userOp.signature, (uint120, uint256, uint256));
-        Signer memory signer = getSigner(msg.sender, signerId);
+        // Role check
+        (uint240 roleId, uint256 r, uint256 s) =
+            abi.decode(userOp.signature, (uint240, uint256, uint256));
+        require(hasRole(msg.sender, roleId), "IAM10: invalid role");
 
+        (uint120 signerId, uint120 policyId) = _parseRoleId(roleId);
+
+        // Authorization check
+        Policy memory p = getPolicy(msg.sender, policyId);
+        require(p.verifyUserOp(userOp), "IAM11: userOp not allowed");
+
+        // Authentication check
+        Signer memory signer = getSigner(msg.sender, signerId);
         return SCL_RIP7212.verify(userOpHash, r, s, signer.x, signer.y)
-            ? ValidationData.wrap(0)
-            : ValidationData.wrap(1);
+            ? _packValidationData(false, p.validUntil, p.validAfter)
+            : _packValidationData(true, p.validUntil, p.validAfter);
     }
 
     /**
@@ -149,12 +160,18 @@ contract IAMValidator is ERC7579ValidatorBase {
         override
         returns (bytes4 sigValidationResult)
     {
-        (uint120 signerId, uint256 r, uint256 s) =
-            abi.decode(signature, (uint120, uint256, uint256));
-        (uint16 installCount,,) = _parseCounter(Counters[msg.sender]);
-        Signer memory signer =
-            SignerRegister[_packInstallCountAndId(installCount, signerId)][msg.sender];
+        // Role check
+        (uint120 roleId, uint256 r, uint256 s) = abi.decode(signature, (uint120, uint256, uint256));
+        require(hasRole(msg.sender, roleId), "IAM20: invalid role");
 
+        (uint120 signerId, uint120 policyId) = _parseRoleId(roleId);
+
+        // Authorization check
+        Policy memory p = getPolicy(msg.sender, policyId);
+        require(p.verifyERC1271Caller(sender), "IAM21: caller not allowed");
+
+        // Authentication check
+        Signer memory signer = getSigner(msg.sender, signerId);
         return SCL_RIP7212.verify(hash, r, s, signer.x, signer.y) ? EIP1271_SUCCESS : EIP1271_FAILED;
     }
 

@@ -29,14 +29,14 @@ sequenceDiagram
     IAM Validator->>IAM Validator: Decode roleId and signature from op.signature
     IAM Validator->>IAM Validator: Verify roleId
     IAM Validator->>IAM Validator: Decode signerId and policyId from roleId
+    Note over IAM Validator: Authorization check
+    IAM Validator->>IAM Validator: Get policy from storage
+    IAM Validator->>IAM Validator: Verify op.callData with policy
     Note over IAM Validator,P256 Verifier: Authentication check
-    IAM Validator->>IAM Validator: Get signer from state
+    IAM Validator->>IAM Validator: Get signer from storage
     IAM Validator->>P256 Verifier: Calls verifySignature
     P256 Verifier->>P256 Verifier: Verify sig with pub key & hash
-    P256 Verifier->>IAM Validator: Returns success response
-    Note over IAM Validator: Authorization check
-    IAM Validator->>IAM Validator: Get policy from state
-    IAM Validator->>IAM Validator: Verify op.callData with policy
+    P256 Verifier->>IAM Validator: Returns true
     IAM Validator->>Smart Account: Returns success response
     Smart Account->>EntryPoint: Pay prefund
     Note over EntryPoint,Smart Account: Validation done, execution next...
@@ -58,25 +58,72 @@ userOp.signature = abi.encode(roleId, r, s);
 
 During role check the IAM validator uses this `roleId` to verify with the state if the role is active. In other words, the module checks if a signer is allowed to assume a particular policy. If it is not active, validation will fail. Otherwise it continues with the authentication check.
 
+The `roleId` is also unpacked into a `signerId` and `policyId` for authorization and authentication checks.
+
+### Authorization check
+
+In this phase the module checks that the `UserOperation` is valid for the assumed policy. Using the `policyId` we fetch the policy data from storage and cross check it against the userOperation.
+
+```solidity
+bool valid = policy.verifyUserOp(userOp);
+```
+
+If the userOp passes the policy check then move on to the final phase.
+
 ### Authentication check
 
-Next the IAM validator verifies that the signature from `userOp.signature` was actually signed by the relevant private key. To do this the the `roleId` is decoded into two `uint120` values for `signerId` and `policyId`.
-
-The `signerId` is then used to fetch the corresponding `x` and `y` coordinate of the public key from the state. We then have everything needed for authentication.
+This last phase is to ensure that the signature from `userOp.signature` was actually signed by the relevant private key. The `signerId` is used to fetch the corresponding `x` and `y` coordinate of the public key from storage and validate it with a `P256` verifier.
 
 ```solidity
 bool valid = P256.verifySignature(userOpHash, r, s, x, y);
 ```
 
-If the signature is valid, we move on the the final authorization check.
-
-### Authorization check
-
-```
-TBD
-```
+If the signature is valid, we return a success response and proceed to the execution phase of a `UserOperation`.
 
 ## `IAMValidator` interface
+
+The `IAMValidator` inherits from the base ERC7579 validator module. The following interface relates only to the `IAMValidator`. For details, see definitions in [IAMValidator.sol](src/IAMValidator.sol) and [Signer.sol](src/Signer.sol).
+
+### Signer functions
+
+The following relates to signers for Authentication. The `signerId` is emitted via events and should be tracked on the application layer.
+
+```solidity
+event SignerAdded(address indexed account, uint120 indexed signerId, uint256 x, uint256 y);
+event SignerRemoved(address indexed account, uint120 indexed signerId);
+
+function getSigner(address account, uint120 signerId) public view returns (Signer memory);
+function addSigner(uint256 x, uint256 y) external;
+function removeSigner(uint120 signerId) external;
+```
+
+### Policy functions
+
+The following relates to policies for Authorization. The `policyId` is emitted via events and should be tracked on the application layer. For details, see definitions in [IAMValidator.sol](src/IAMValidator.sol) and [Policy.sol](src/Policy.sol).
+
+```solidity
+event PolicyAdded(address indexed account, uint120 indexed policyId, Policy p);
+event PolicyRemoved(address indexed account, uint120 indexed policyId);
+
+function getPolicy(address account, uint120 policyId) public view returns (Policy memory);
+function addPolicy(Policy calldata p) external;
+function removePolicy(uint120 policyId) external;
+```
+
+### Role functions
+
+The following relates to the association between signer and policy. The `roleId` is emitted via events and should be tracked on the application layer. For details, see definitions in [IAMValidator.sol](src/IAMValidator.sol).
+
+```solidity
+event RoleAdded(address indexed account, uint240 indexed roleId);
+event RoleRemoved(address indexed account, uint240 indexed roleId);
+
+function hasRole(address account, uint240 roleId) public view returns (bool);
+function addRole(uint120 signerId, uint120 policyId) external;
+function removeRole(uint240 roleId) external;
+```
+
+## Encoding a `Policy`
 
 ```
 TBD
@@ -116,7 +163,7 @@ All tests live under the [test](./test/) directory.
 forge test
 ```
 
-## Deploying modules
+## Deploying the module
 
 1. Import your modules into the `script/DeployModule.s.sol` file.
 2. Create a `.env` file in the root directory based on the `.env.example` file and fill in the variables.

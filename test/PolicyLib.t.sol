@@ -19,11 +19,16 @@ contract PolicyLibTest is TestHelper {
         assertFalse(dummy1EtherPolicy.isNull());
     }
 
-    function testVerify() public view {
+    function testVerifyUserOp() public view {
         PackedUserOperation memory testAdminOp;
         testAdminOp.callData = hex"dead";
 
-        assertTrue(dummyAdminPolicy.verify(testAdminOp));
-        assertFalse(dummy1EtherPolicy.verify(testAdminOp));
+        assertTrue(dummyAdminPolicy.verifyUserOp(testAdminOp));
+        assertFalse(dummy1EtherPolicy.verifyUserOp(testAdminOp));
+    }
+
+    function testVerifyERC1271Sender() public view {
+        assertTrue(dummyAdminPolicy.verifyERC1271Caller(address(0)));
+        assertFalse(dummy1EtherPolicy.verifyERC1271Caller(address(0)));
     }
 }
