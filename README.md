@@ -62,7 +62,7 @@ The `roleId` is also unpacked into a `signerId` and `policyId` for authenticatio
 
 ### Authorization check
 
-In this phase the module checks that the `UserOperation` is valid for the assumed policy. Using the `policyId` we fetch the policy data from storage and cross check it against the userOperation.
+In this phase the module checks that the `UserOperation` is valid for the assumed policy. Using the `policyId` we fetch the policy data from storage and cross check it against the `userOperation`.
 
 ```solidity
 bool valid = policy.verifyUserOp(userOp);
