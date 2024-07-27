@@ -78,7 +78,7 @@ This last phase is to ensure that the signature from `userOp.signature` was actu
 bool valid = P256.verifySignature(userOpHash, r, s, x, y);
 ```
 
-If the signature is valid, it return a success response and proceed to the execution phase of a `UserOperation`.
+If the signature is valid, it returns a success response and proceeds to the execution phase of a `UserOperation`.
 
 ## `IAMValidator` interface
 
