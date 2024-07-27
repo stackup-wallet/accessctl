@@ -3,9 +3,11 @@ pragma solidity ^0.8.23;
 
 import { TestHelper } from "test/TestHelper.sol";
 import { IAMValidator } from "src/IAMValidator.sol";
-import { Signer } from "src/Signer.sol";
+import { Signer, SignerLib } from "src/Signer.sol";
 
 contract ConfigTest is TestHelper {
+    using SignerLib for Signer;
+
     function testExecOk() public {
         address target = makeAddr("target");
         uint256 value = 1 ether;
@@ -22,50 +24,46 @@ contract ConfigTest is TestHelper {
         //     address(validator),
         //     0,
         //     abi.encodeWithSelector(
-        //         IAMValidator.addSigner.selector, testP256PubKeyX1, testP256PubKeyY1
+        //         IAMValidator.addSigner.selector, dummyP256PubKeyX1, dummyP256PubKeyY1
         //     )
         // );
         // _execUserOp(
         //     address(validator),
         //     0,
         //     abi.encodeWithSelector(
-        //         IAMValidator.addSigner.selector, testP256PubKeyX2, testP256PubKeyY2
+        //         IAMValidator.addSigner.selector, dummyP256PubKeyX2, dummyP256PubKeyY2
         //     )
         // );
         // _uninstallModule();
-        // Signer memory sRoot = validator.getSigner(address(instance.account), rootSignerId);
-        // Signer memory s1 = validator.getSigner(address(instance.account), rootSignerId + 1);
-        // Signer memory s2 = validator.getSigner(address(instance.account), rootSignerId + 2);
-        // assertEqUint(sRoot.x, 0);
-        // assertEqUint(sRoot.y, 0);
-        // assertEqUint(s1.x, 0);
-        // assertEqUint(s1.y, 0);
-        // assertEqUint(s2.x, 0);
-        // assertEqUint(s2.y, 0);
+        // assertTrue(validator.getSigner(address(instance.account), rootSignerId).isNull());
+        // assertTrue(validator.getSigner(address(instance.account), rootSignerId + 1).isNull());
+        // assertTrue(validator.getSigner(address(instance.account), rootSignerId + 2).isNull());
 
         // _installModule();
         // _execUserOp(
         //     address(validator),
         //     0,
         //     abi.encodeWithSelector(
-        //         IAMValidator.addSigner.selector, testP256PubKeyX1, testP256PubKeyY1
+        //         IAMValidator.addSigner.selector, dummyP256PubKeyX1, dummyP256PubKeyY1
         //     )
         // );
         // _execUserOp(
         //     address(validator),
         //     0,
         //     abi.encodeWithSelector(
-        //         IAMValidator.addSigner.selector, testP256PubKeyX2, testP256PubKeyY2
+        //         IAMValidator.addSigner.selector, dummyP256PubKeyX2, dummyP256PubKeyY2
         //     )
         // );
-        // sRoot = validator.getSigner(address(instance.account), rootSignerId);
-        // s1 = validator.getSigner(address(instance.account), rootSignerId + 1);
-        // s2 = validator.getSigner(address(instance.account), rootSignerId + 2);
-        // assertEqUint(sRoot.x, testP256PublicKeyXRoot);
-        // assertEqUint(sRoot.y, testP256PublicKeyYRoot);
-        // assertEqUint(s1.x, testP256PubKeyX1);
-        // assertEqUint(s1.y, testP256PubKeyY1);
-        // assertEqUint(s2.x, testP256PubKeyX2);
-        // assertEqUint(s2.y, testP256PubKeyY2);
+        // assertTrue(
+        //     validator.getSigner(address(instance.account), rootSignerId).isEqual(dummyRootSigner)
+        // );
+        // assertTrue(
+        //     validator.getSigner(address(instance.account), rootSignerId +
+        // 1).isEqual(dummySigner1)
+        // );
+        // assertTrue(
+        //     validator.getSigner(address(instance.account), rootSignerId +
+        // 2).isEqual(dummySigner2)
+        // );
     }
 }

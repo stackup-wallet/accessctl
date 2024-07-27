@@ -1,7 +1,15 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.23;
 
-bytes1 constant ADMIN_MODE = 0x01;
+import { PackedUserOperation } from "modulekit/external/ERC4337.sol";
+
+bytes1 constant MODE_ADMIN = 0x01;
+
+bytes1 constant OPERATOR_EQ = 0x01;
+bytes1 constant OPERATOR_GT = 0x02;
+bytes1 constant OPERATOR_GTE = 0x03;
+bytes1 constant OPERATOR_LT = 0x04;
+bytes1 constant OPERATOR_LTE = 0x05;
 
 /**
  * A data structure with information for splicing and comparing arguments from
@@ -40,5 +48,33 @@ struct Policy {
     /*
     * Nth storage slots
     */
-    CallInput[] callInputs; //      32 bytes/item
+    bytes callInputValidationData;
+}
+
+library PolicyLib {
+    function isEqual(Policy calldata p, Policy memory q) public pure returns (bool) {
+        return p.validFrom == q.validFrom && p.validUntil == q.validUntil
+            && p.erc1271Caller == q.erc1271Caller && p.mode == q.mode && p.reserved == q.reserved
+            && p.callTarget == q.callTarget && p.callSelector == q.callSelector
+            && p.callValueOperator == q.callValueOperator && p.callValue == q.callValue
+            && keccak256(p.callInputValidationData) == keccak256(q.callInputValidationData);
+    }
+
+    function isNull(Policy calldata p) public pure returns (bool) {
+        return p.validFrom == 0 && p.validUntil == 0 && p.erc1271Caller == address(0) && p.mode == 0
+            && p.reserved == 0 && p.callTarget == address(0) && p.callSelector == 0
+            && p.callValueOperator == 0 && p.callValue == 0 && p.callInputValidationData.length == 0;
+    }
+
+    function verify(Policy calldata p, PackedUserOperation calldata) public pure returns (bool) {
+        if (_isAdmin(p.mode)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    function _isAdmin(bytes1 mode) internal pure returns (bool) {
+        return mode == MODE_ADMIN;
+    }
 }

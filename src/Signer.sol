@@ -8,3 +8,13 @@ struct Signer {
     uint256 x;
     uint256 y;
 }
+
+library SignerLib {
+    function isEqual(Signer calldata s, Signer memory t) public pure returns (bool) {
+        return s.x == t.x && s.y == t.y;
+    }
+
+    function isNull(Signer calldata s) public pure returns (bool) {
+        return s.x == 0 && s.y == 0;
+    }
+}
