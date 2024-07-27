@@ -2,7 +2,6 @@
 pragma solidity ^0.8.23;
 
 import { TestHelper } from "test/TestHelper.sol";
-import { PackedUserOperation } from "modulekit/external/ERC4337.sol";
 import { Signer, SignerLib } from "src/Signer.sol";
 
 contract PolicyLibTest is TestHelper {
