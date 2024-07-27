@@ -58,7 +58,7 @@ userOp.signature = abi.encode(roleId, r, s);
 
 During role check the IAM validator uses this `roleId` to verify with the state if the role is active. In other words, the module checks if a signer is allowed to assume a particular policy. If it is not active, validation will fail. Otherwise it continues with the authentication check.
 
-The `roleId` is also unpacked into a `signerId` and `policyId` for authorization and authentication checks.
+The `roleId` is also unpacked into a `signerId` and `policyId` for authentication and authorization checks.
 
 ### Authorization check
 
