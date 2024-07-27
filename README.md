@@ -129,6 +129,7 @@ The `IAMValidator` has the following error codes:
 
 - `IAM1x`: Validate `UserOperation` errors.
 - `IAM2x`: Validate ERC1271 signature errors.
+- `IAM3x`: Configuration errors.
 
 ## Encoding a `Policy`
 

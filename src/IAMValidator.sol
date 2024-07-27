@@ -64,6 +64,7 @@ contract IAMValidator is ERC7579ValidatorBase {
      * @param data The data to initialize the module with
      */
     function onInstall(bytes calldata data) external override {
+        require(!this.isInitialized(msg.sender), "IAM31 already installed");
         (uint256 x, uint256 y) = abi.decode(data, (uint256, uint256));
         _addSigner(x, y);
 
