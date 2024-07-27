@@ -86,7 +86,7 @@ The `IAMValidator` inherits from the base ERC7579 validator module. The followin
 
 ### Signer functions
 
-The following relates to signers for Authentication. The `signerId` is emitted via events and should be tracked on the application layer. For details, see definitions in [IAMValidator.sol](src/IAMValidator.sol) and [Signer.sol](src/Signer.sol).
+These functions relate to Authentication. The `signerId` is emitted via events and should be tracked on the application layer. For details, see definitions in [IAMValidator.sol](src/IAMValidator.sol) and [Signer.sol](src/Signer.sol).
 
 ```solidity
 event SignerAdded(address indexed account, uint120 indexed signerId, uint256 x, uint256 y);
@@ -99,7 +99,7 @@ function removeSigner(uint120 signerId) external;
 
 ### Policy functions
 
-The following relates to policies for Authorization. The `policyId` is emitted via events and should be tracked on the application layer. For details, see definitions in [IAMValidator.sol](src/IAMValidator.sol) and [Policy.sol](src/Policy.sol).
+These functions relate to Authorization. The `policyId` is emitted via events and should be tracked on the application layer. For details, see definitions in [IAMValidator.sol](src/IAMValidator.sol) and [Policy.sol](src/Policy.sol).
 
 ```solidity
 event PolicyAdded(address indexed account, uint120 indexed policyId, Policy p);
