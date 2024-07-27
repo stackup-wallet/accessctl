@@ -82,11 +82,11 @@ If the signature is valid, we return a success response and proceed to the execu
 
 ## `IAMValidator` interface
 
-The `IAMValidator` inherits from the base ERC7579 validator module. The following interface relates only to the `IAMValidator`. For details, see definitions in [IAMValidator.sol](src/IAMValidator.sol) and [Signer.sol](src/Signer.sol).
+The `IAMValidator` inherits from the base ERC7579 validator module. The following interface relates only to the `IAMValidator`.
 
 ### Signer functions
 
-The following relates to signers for Authentication. The `signerId` is emitted via events and should be tracked on the application layer.
+The following relates to signers for Authentication. The `signerId` is emitted via events and should be tracked on the application layer. For details, see definitions in [IAMValidator.sol](src/IAMValidator.sol) and [Signer.sol](src/Signer.sol).
 
 ```solidity
 event SignerAdded(address indexed account, uint120 indexed signerId, uint256 x, uint256 y);
