@@ -56,7 +56,7 @@ The `roleId` is a `uint240` value that is encoded into the `UserOperation` signa
 userOp.signature = abi.encode(roleId, r, s);
 ```
 
-During role check the IAM validator uses this `roleId` to verify with the state if the role is active. In other words, the module checks if a signer is allowed to assume a particular policy. If it is not active, validation will fail. Otherwise it continues with the authentication check.
+During role check the IAM validator uses this `roleId` to verify with the state if the role is active. In other words, the module checks if a signer is allowed to assume a particular policy. If it is not active, validation will fail. Otherwise it continues with the authorization check.
 
 The `roleId` is also unpacked into a `signerId` and `policyId` for authentication and authorization checks.
 
@@ -122,6 +122,13 @@ function hasRole(address account, uint240 roleId) public view returns (bool);
 function addRole(uint120 signerId, uint120 policyId) external;
 function removeRole(uint240 roleId) external;
 ```
+
+## Error codes
+
+The `IAMValidator` has the following error codes:
+
+- `IAM1x`: Validate `UserOperation` errors.
+- `IAM2x`: Validate ERC1271 signature errors.
 
 ## Encoding a `Policy`
 

@@ -123,13 +123,13 @@ contract IAMValidator is ERC7579ValidatorBase {
         // Role check
         (uint240 roleId, uint256 r, uint256 s) =
             abi.decode(userOp.signature, (uint240, uint256, uint256));
-        require(hasRole(msg.sender, roleId), "IAM10: invalid role");
+        require(hasRole(msg.sender, roleId), "IAM10 invalid role");
 
         (uint120 signerId, uint120 policyId) = _parseRoleId(roleId);
 
         // Authorization check
         Policy memory p = getPolicy(msg.sender, policyId);
-        require(p.verifyUserOp(userOp), "IAM11: userOp not allowed");
+        require(p.verifyUserOp(userOp), "IAM11 userOp not allowed");
 
         // Authentication check
         Signer memory signer = getSigner(msg.sender, signerId);
@@ -162,13 +162,13 @@ contract IAMValidator is ERC7579ValidatorBase {
     {
         // Role check
         (uint120 roleId, uint256 r, uint256 s) = abi.decode(signature, (uint120, uint256, uint256));
-        require(hasRole(msg.sender, roleId), "IAM20: invalid role");
+        require(hasRole(msg.sender, roleId), "IAM20 invalid role");
 
         (uint120 signerId, uint120 policyId) = _parseRoleId(roleId);
 
         // Authorization check
         Policy memory p = getPolicy(msg.sender, policyId);
-        require(p.verifyERC1271Caller(sender), "IAM21: caller not allowed");
+        require(p.verifyERC1271Caller(sender), "IAM21 caller not allowed");
 
         // Authentication check
         Signer memory signer = getSigner(msg.sender, signerId);
