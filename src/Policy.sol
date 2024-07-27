@@ -30,7 +30,7 @@ struct Policy {
     /*
     * 1st storage slot (32 bytes)
     */
-    uint48 validFrom; //            6 bytes
+    uint48 validAfter; //           6 bytes
     uint48 validUntil; //           6 bytes
     address erc1271Caller; //       20 bytes
     /*
@@ -53,7 +53,7 @@ struct Policy {
 
 library PolicyLib {
     function isEqual(Policy calldata p, Policy memory q) public pure returns (bool) {
-        return p.validFrom == q.validFrom && p.validUntil == q.validUntil
+        return p.validAfter == q.validAfter && p.validUntil == q.validUntil
             && p.erc1271Caller == q.erc1271Caller && p.mode == q.mode && p.reserved == q.reserved
             && p.callTarget == q.callTarget && p.callSelector == q.callSelector
             && p.callValueOperator == q.callValueOperator && p.callValue == q.callValue
@@ -61,12 +61,27 @@ library PolicyLib {
     }
 
     function isNull(Policy calldata p) public pure returns (bool) {
-        return p.validFrom == 0 && p.validUntil == 0 && p.erc1271Caller == address(0) && p.mode == 0
-            && p.reserved == 0 && p.callTarget == address(0) && p.callSelector == 0
+        return p.validAfter == 0 && p.validUntil == 0 && p.erc1271Caller == address(0)
+            && p.mode == 0 && p.reserved == 0 && p.callTarget == address(0) && p.callSelector == 0
             && p.callValueOperator == 0 && p.callValue == 0 && p.callInputValidationData.length == 0;
     }
 
-    function verify(Policy calldata p, PackedUserOperation calldata) public pure returns (bool) {
+    function verifyUserOp(
+        Policy calldata p,
+        PackedUserOperation calldata
+    )
+        public
+        pure
+        returns (bool)
+    {
+        if (_isAdmin(p.mode)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    function verifyERC1271Caller(Policy calldata p, address) public pure returns (bool) {
         if (_isAdmin(p.mode)) {
             return true;
         }

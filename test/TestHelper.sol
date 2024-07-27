@@ -80,7 +80,7 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
             txValidator: address(validator)
         });
         (bytes32 r, bytes32 s) = vm.signP256(dummyP256PrivateKeyRoot, userOpData.userOpHash);
-        userOpData.userOp.signature = abi.encode(rootSignerId, uint256(r), uint256(s));
+        userOpData.userOp.signature = abi.encode(rootRoleId, uint256(r), uint256(s));
         userOpData.execUserOps();
     }
 

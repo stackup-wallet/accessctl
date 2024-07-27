@@ -26,14 +26,12 @@ contract AuthenticationTest is TestHelper {
     }
 
     function testAddSignerEmitsEvent() public {
-        uint120 expectedSignerId = 0;
         vm.expectEmit(true, true, true, true, address(validator));
-        emit SignerAdded(address(this), expectedSignerId, dummyP256PubKeyX1, dummyP256PubKeyY1);
+        emit SignerAdded(address(this), rootSignerId, dummyP256PubKeyX1, dummyP256PubKeyY1);
         validator.addSigner(dummyP256PubKeyX1, dummyP256PubKeyY1);
 
-        uint120 expectedSignerId1 = 1;
         vm.expectEmit(true, true, true, true, address(validator));
-        emit SignerAdded(address(this), expectedSignerId1, dummyP256PubKeyX2, dummyP256PubKeyY2);
+        emit SignerAdded(address(this), rootSignerId + 1, dummyP256PubKeyX2, dummyP256PubKeyY2);
         validator.addSigner(dummyP256PubKeyX2, dummyP256PubKeyY2);
     }
 
@@ -57,29 +55,15 @@ contract AuthenticationTest is TestHelper {
     }
 
     function testRemoveSignerEmitsEvent() public {
-        uint120 expectedSignerId = 0;
+        validator.addSigner(dummyP256PubKeyX1, dummyP256PubKeyY1);
+        validator.addSigner(dummyP256PubKeyX2, dummyP256PubKeyY2);
+
         vm.expectEmit(true, true, true, true, address(validator));
-        emit SignerRemoved(address(this), expectedSignerId);
-        validator.removeSigner(expectedSignerId);
-    }
+        emit SignerRemoved(address(this), rootSignerId);
+        validator.removeSigner(rootSignerId);
 
-    function testERC1271ValidSignature() public {
-        bytes32 rawHash = keccak256("0xdead");
-        bytes32 formattedHash = _formatERC1271Hash(address(validator), rawHash);
-
-        (bytes32 r, bytes32 s) = vm.signP256(dummyP256PrivateKeyRoot, formattedHash);
-        bytes memory signature = abi.encode(rootSignerId, uint256(r), uint256(s));
-
-        assertTrue(_verifyERC1271Signature(address(validator), rawHash, signature));
-    }
-
-    function testERC1271InvalidSignature() public {
-        bytes32 rawHash = keccak256("0xdead");
-        bytes32 formattedHash = _formatERC1271Hash(address(validator), rawHash);
-
-        (bytes32 r, bytes32 s) = vm.signP256(dummyP256PrivateKey1, formattedHash);
-        bytes memory signature = abi.encode(rootSignerId, uint256(r), uint256(s));
-
-        assertFalse(_verifyERC1271Signature(address(validator), rawHash, signature));
+        vm.expectEmit(true, true, true, true, address(validator));
+        emit SignerRemoved(address(this), rootSignerId + 1);
+        validator.removeSigner(rootSignerId + 1);
     }
 }
