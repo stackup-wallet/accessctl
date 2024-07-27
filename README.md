@@ -112,7 +112,7 @@ function removePolicy(uint120 policyId) external;
 
 ### Role functions
 
-The following relates to the association between signer and policy. The `roleId` is emitted via events and should be tracked on the application layer. For details, see definitions in [IAMValidator.sol](src/IAMValidator.sol).
+These functions relate to the association between signer and policy. The `roleId` is emitted via events and should be tracked on the application layer. For details, see definitions in [IAMValidator.sol](src/IAMValidator.sol).
 
 ```solidity
 event RoleAdded(address indexed account, uint240 indexed roleId);
