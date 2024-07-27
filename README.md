@@ -141,7 +141,7 @@ TBD
 On install, the `IAMValidator` does the following steps:
 
 1. Adds the root signer passed in via call data. It assigns the `signerId` of `0`.
-2. Adds an admin policy (i.e. blank `Policy` with `mode` set to `MODE_ADMIN`). It assigns the `policyId` of `0`.
+2. Adds an admin policy (i.e. a blank `Policy` with `mode` set to `MODE_ADMIN`). It assigns the `policyId` of `0`.
 3. Attaches the admin policy to the root signer. It assigns the association a `roleId` of `0`.
 
 These steps are idempotent and will cause a revert if `onInstall` is called again on an initialized account.
