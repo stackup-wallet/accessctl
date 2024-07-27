@@ -68,7 +68,7 @@ In this phase the module checks that the `UserOperation` is valid for the assume
 bool valid = policy.verifyUserOp(userOp);
 ```
 
-If the userOp passes the policy check then move on to the final phase.
+If the userOp passes the policy check it then moves on to the final phase.
 
 ### Authentication check
 
@@ -78,7 +78,7 @@ This last phase is to ensure that the signature from `userOp.signature` was actu
 bool valid = P256.verifySignature(userOpHash, r, s, x, y);
 ```
 
-If the signature is valid, we return a success response and proceed to the execution phase of a `UserOperation`.
+If the signature is valid, it return a success response and proceed to the execution phase of a `UserOperation`.
 
 ## `IAMValidator` interface
 
