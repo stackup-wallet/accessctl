@@ -5,12 +5,13 @@ import { ERC7579ValidatorBase } from "modulekit/Modules.sol";
 import { PackedUserOperation } from "modulekit/external/ERC4337.sol";
 import { SCL_RIP7212 } from "crypto-lib/lib/libSCL_RIP7212.sol";
 import { Signer } from "src/Signer.sol";
-import { Policy } from "src/Policy.sol";
+import { Policy, MODE_ADMIN } from "src/Policy.sol";
 
 contract IAMValidator is ERC7579ValidatorBase {
     /*//////////////////////////////////////////////////////////////////////////
                             CONSTANTS & STORAGE
     //////////////////////////////////////////////////////////////////////////*/
+
     event SignerAdded(address indexed account, uint120 indexed signerId, uint256 x, uint256 y);
     event SignerRemoved(address indexed account, uint120 indexed signerId);
     event PolicyAdded(address indexed account, uint120 indexed policyId, Policy p);
@@ -55,13 +56,20 @@ contract IAMValidator is ERC7579ValidatorBase {
     //////////////////////////////////////////////////////////////////////////*/
 
     /**
-     * Initialize the module with the given data
+     * Initialize the module with the given root signer, adds an admin policy,
+     * and associates the root signer with the admin policy.
      *
      * @param data The data to initialize the module with
      */
     function onInstall(bytes calldata data) external override {
         (uint256 x, uint256 y) = abi.decode(data, (uint256, uint256));
         _addSigner(x, y);
+
+        Policy memory p;
+        p.mode = MODE_ADMIN;
+        _addPolicy(p);
+
+        _addRole(0, 0);
     }
 
     /**
@@ -278,7 +286,7 @@ contract IAMValidator is ERC7579ValidatorBase {
         Counters[msg.sender] = _packCounter(installCount, signerId + 1, policyId);
     }
 
-    function _addPolicy(Policy calldata p) internal {
+    function _addPolicy(Policy memory p) internal {
         (uint16 installCount, uint120 signerId, uint120 policyId) =
             _parseCounter(Counters[msg.sender]);
         uint136 key = _packInstallCountAndId(installCount, policyId);

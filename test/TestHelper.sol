@@ -11,7 +11,8 @@ import {
 } from "modulekit/ModuleKit.sol";
 import { MODULE_TYPE_VALIDATOR } from "modulekit/external/ERC7579.sol";
 import { IAMValidator } from "src/IAMValidator.sol";
-import { Policy, CallInput, ADMIN_MODE } from "src/Policy.sol";
+import { Signer } from "src/Signer.sol";
+import { Policy, MODE_ADMIN, OPERATOR_LTE } from "src/Policy.sol";
 
 abstract contract TestHelper is RhinestoneModuleKit, Test {
     event SignerAdded(address indexed account, uint120 indexed signerId, uint256 x, uint256 y);
@@ -28,34 +29,47 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
     AccountInstance internal instance;
     IAMValidator internal validator;
 
-    uint256 constant testP256PrivateKeyRoot =
+    uint256 constant dummyP256PrivateKeyRoot =
         0x9b6949ce4e9f7958797d91a4a51a96e9361b94451b88791d8784d8331b46c32d;
-    uint256 constant testP256PublicKeyXRoot =
+    uint256 constant dummyP256PubKeyXRoot =
         0xf24b7cd0e0d84317f2fbba39add412ddd3df7cb84be213b67fb340373e9275ec;
-    uint256 constant testP256PublicKeyYRoot =
+    uint256 constant dummyP256PubKeyYRoot =
         0x255417d4c6780a9db69e2023685c95a344f3e59e930e758f3829b0b10bf87ebc;
     uint120 constant rootSignerId = 0;
 
-    uint256 constant testP256PrivateKey1 =
+    uint256 constant dummyP256PrivateKey1 =
         0x605e0a63a358c3060f9ea4b3ee7737f21e4dc49755f90ae4ad12ffcbe71a26ef;
-    uint256 constant testP256PubKeyX1 =
+    uint256 constant dummyP256PubKeyX1 =
         0x1b0f2d89ae560071a013a47d440532c606cc7753dc38e95760895f5822de97a9;
-    uint256 constant testP256PubKeyY1 =
+    uint256 constant dummyP256PubKeyY1 =
         0xe4d714fa24d1f9d2173a18f627d73ea17307ad285bf08823bdd9bc89ff4fa3c6;
 
-    uint256 constant testP256PrivateKey2 =
+    uint256 constant dummyP256PrivateKey2 =
         0x982642594965c2f0998a0db98748ff267995965605a3902c11a96d304305d727;
-    uint256 constant testP256PubKeyX2 =
+    uint256 constant dummyP256PubKeyX2 =
         0xbe5627cf6a968b258bbf73c0c180dbd1f657c9852b9494fee2a56d8c2021db17;
-    uint256 constant testP256PubKeyY2 =
+    uint256 constant dummyP256PubKeyY2 =
         0x6f8ced2c10424a460bbec2099ed6688ee8d4ad9df325be516917bafcb21fe55a;
 
-    Policy public testNullPolicy;
-    Policy public testAdminPolicy;
-    uint120 constant adminPolicyId = 0;
+    Signer public dummyRootSigner = Signer(dummyP256PubKeyXRoot, dummyP256PubKeyYRoot);
+    Signer public dummySigner1 = Signer(dummyP256PubKeyX1, dummyP256PubKeyY1);
+    Signer public dummySigner2 = Signer(dummyP256PubKeyX2, dummyP256PubKeyY2);
+
+    Policy public dummyAdminPolicy;
+    Policy public dummy1EtherPolicy;
+    Policy public dummy5EtherPolicy;
+    uint120 constant rootPolicyId = 0;
+
+    uint240 constant rootRoleId = 0;
 
     constructor() {
-        testAdminPolicy.mode = ADMIN_MODE;
+        dummyAdminPolicy.mode = MODE_ADMIN;
+
+        dummy1EtherPolicy.callValue = 1 ether;
+        dummy1EtherPolicy.callValueOperator = OPERATOR_LTE;
+
+        dummy5EtherPolicy.callValue = 5 ether;
+        dummy5EtherPolicy.callValueOperator = OPERATOR_LTE;
     }
 
     function _execUserOp(address target, uint256 value, bytes memory data) internal {
@@ -65,7 +79,7 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
             callData: data,
             txValidator: address(validator)
         });
-        (bytes32 r, bytes32 s) = vm.signP256(testP256PrivateKeyRoot, userOpData.userOpHash);
+        (bytes32 r, bytes32 s) = vm.signP256(dummyP256PrivateKeyRoot, userOpData.userOpHash);
         userOpData.userOp.signature = abi.encode(rootSignerId, uint256(r), uint256(s));
         userOpData.execUserOps();
     }
@@ -89,7 +103,7 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
         instance.installModule({
             moduleTypeId: MODULE_TYPE_VALIDATOR,
             module: address(validator),
-            data: abi.encode(testP256PublicKeyXRoot, testP256PublicKeyYRoot)
+            data: abi.encode(dummyP256PubKeyXRoot, dummyP256PubKeyYRoot)
         });
     }
 

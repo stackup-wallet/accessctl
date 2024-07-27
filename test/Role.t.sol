@@ -5,6 +5,10 @@ import { TestHelper } from "test/TestHelper.sol";
 import { IAMValidator } from "src/IAMValidator.sol";
 
 contract RoleTest is TestHelper {
+    function testRootSignerWithAdminPolicyRoleExists() public {
+        assertTrue(validator.hasRole(address(instance.account), rootRoleId));
+    }
+
     function testAddRoleWritesToState() public {
         _execUserOp(
             address(validator),
