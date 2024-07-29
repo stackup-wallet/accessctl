@@ -8,6 +8,10 @@ import { Action, ActionLib } from "src/Action.sol";
 contract ActionTest is TestHelper {
     using ActionLib for Action;
 
+    function testRootActionIsNull() public {
+        assertTrue(validator.getAction(address(instance.account), rootActionId).isNull());
+    }
+
     function testAddActionWritesToState() public {
         _execUserOp(
             address(validator),
@@ -15,7 +19,7 @@ contract ActionTest is TestHelper {
             abi.encodeWithSelector(IAMValidator.addAction.selector, dummySendMax1EtherAction)
         );
         assertTrue(
-            validator.getAction(address(instance.account), initActionId).isEqual(
+            validator.getAction(address(instance.account), rootActionId + 1).isEqual(
                 dummySendMax1EtherAction
             )
         );
@@ -26,7 +30,7 @@ contract ActionTest is TestHelper {
             abi.encodeWithSelector(IAMValidator.addAction.selector, dummySendMax5EtherAction)
         );
         assertTrue(
-            validator.getAction(address(instance.account), initActionId + 1).isEqual(
+            validator.getAction(address(instance.account), rootActionId + 2).isEqual(
                 dummySendMax5EtherAction
             )
         );
@@ -34,11 +38,11 @@ contract ActionTest is TestHelper {
 
     function testAddActionEmitsEvent() public {
         vm.expectEmit(true, true, true, true, address(validator));
-        emit ActionAdded(address(this), initActionId, dummySendMax1EtherAction);
+        emit ActionAdded(address(this), rootActionId, dummySendMax1EtherAction);
         validator.addAction(dummySendMax1EtherAction);
 
         vm.expectEmit(true, true, true, true, address(validator));
-        emit ActionAdded(address(this), initActionId + 1, dummySendMax5EtherAction);
+        emit ActionAdded(address(this), rootActionId + 1, dummySendMax5EtherAction);
         validator.addAction(dummySendMax5EtherAction);
     }
 
@@ -57,25 +61,25 @@ contract ActionTest is TestHelper {
         _execUserOp(
             address(validator),
             0,
-            abi.encodeWithSelector(IAMValidator.removeAction.selector, initActionId)
+            abi.encodeWithSelector(IAMValidator.removeAction.selector, rootActionId)
         );
-        assertTrue(validator.getAction(address(instance.account), initActionId).isNull());
+        assertTrue(validator.getAction(address(instance.account), rootActionId).isNull());
 
         _execUserOp(
             address(validator),
             0,
-            abi.encodeWithSelector(IAMValidator.removeAction.selector, initActionId + 1)
+            abi.encodeWithSelector(IAMValidator.removeAction.selector, rootActionId + 1)
         );
-        assertTrue(validator.getAction(address(instance.account), initActionId + 1).isNull());
+        assertTrue(validator.getAction(address(instance.account), rootActionId + 1).isNull());
     }
 
     function testRemoveActionEmitsEvent() public {
         vm.expectEmit(true, true, true, true, address(validator));
-        emit ActionRemoved(address(this), initActionId);
-        validator.removeAction(initActionId);
+        emit ActionRemoved(address(this), rootActionId);
+        validator.removeAction(rootActionId);
 
         vm.expectEmit(true, true, true, true, address(validator));
-        emit ActionRemoved(address(this), initActionId + 1);
-        validator.removeAction(initActionId + 1);
+        emit ActionRemoved(address(this), rootActionId + 1);
+        validator.removeAction(rootActionId + 1);
     }
 }

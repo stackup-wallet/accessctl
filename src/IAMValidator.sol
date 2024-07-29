@@ -83,6 +83,9 @@ contract IAMValidator is ERC7579ValidatorBase {
         p.mode = MODE_ADMIN;
         _addPolicy(p);
 
+        Action memory a;
+        _addAction(a);
+
         _addRole(0, 0);
     }
 

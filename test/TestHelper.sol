@@ -65,15 +65,15 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
 
     Action public dummySendMax1EtherAction;
     Action public dummySendMax5EtherAction;
-    uint24 constant initActionId = 0;
+    uint24 constant rootActionId = 0;
 
     uint224 constant rootRoleId = 0;
 
     constructor() {
         dummyAdminPolicy.mode = MODE_ADMIN;
 
-        dummy1EtherPolicy.allowActions = initActionId;
-        dummy5EtherPolicy.allowActions = initActionId + 1;
+        dummy1EtherPolicy.allowActions = rootActionId + 1;
+        dummy5EtherPolicy.allowActions = rootActionId + 2;
 
         dummySendMax1EtherAction.value = 1 ether;
         dummySendMax1EtherAction.operator = OPERATOR_LTE;
