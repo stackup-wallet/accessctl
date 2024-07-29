@@ -295,7 +295,7 @@ contract IAMValidator is ERC7579ValidatorBase {
      * Deletes an action registered to the account under a unique actionId.
      * Emits an ActionRemoved event on success.
      *
-     * @param actionId A unique uint24 value assgined to the policy during
+     * @param actionId A unique uint24 value assgined to the action during
      * registration.
      */
     function removeAction(uint24 actionId) external {
