@@ -12,15 +12,18 @@ import {
 import { MODULE_TYPE_VALIDATOR } from "modulekit/external/ERC7579.sol";
 import { IAMValidator } from "src/IAMValidator.sol";
 import { Signer } from "src/Signer.sol";
-import { Policy, MODE_ADMIN, OPERATOR_LTE } from "src/Policy.sol";
+import { Policy, MODE_ADMIN } from "src/Policy.sol";
+import { Action, OPERATOR_LTE } from "src/Action.sol";
 
 abstract contract TestHelper is RhinestoneModuleKit, Test {
-    event SignerAdded(address indexed account, uint120 indexed signerId, uint256 x, uint256 y);
-    event SignerRemoved(address indexed account, uint120 indexed signerId);
-    event PolicyAdded(address indexed account, uint120 indexed policyId, Policy p);
-    event PolicyRemoved(address indexed account, uint120 indexed policyId);
-    event RoleAdded(address indexed account, uint240 indexed roleId);
-    event RoleRemoved(address indexed account, uint240 indexed roleId);
+    event SignerAdded(address indexed account, uint112 indexed signerId, uint256 x, uint256 y);
+    event SignerRemoved(address indexed account, uint112 indexed signerId);
+    event PolicyAdded(address indexed account, uint112 indexed policyId, Policy p);
+    event PolicyRemoved(address indexed account, uint112 indexed policyId);
+    event ActionAdded(address indexed account, uint24 indexed actionId, Action a);
+    event ActionRemoved(address indexed account, uint24 indexed actionId);
+    event RoleAdded(address indexed account, uint224 indexed roleId);
+    event RoleRemoved(address indexed account, uint224 indexed roleId);
 
     using ModuleKitHelpers for *;
     using ModuleKitUserOp for *;
@@ -35,7 +38,7 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
         0xf24b7cd0e0d84317f2fbba39add412ddd3df7cb84be213b67fb340373e9275ec;
     uint256 constant dummyP256PubKeyYRoot =
         0x255417d4c6780a9db69e2023685c95a344f3e59e930e758f3829b0b10bf87ebc;
-    uint120 constant rootSignerId = 0;
+    uint112 constant rootSignerId = 0;
 
     uint256 constant dummyP256PrivateKey1 =
         0x605e0a63a358c3060f9ea4b3ee7737f21e4dc49755f90ae4ad12ffcbe71a26ef;
@@ -58,18 +61,24 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
     Policy public dummyAdminPolicy;
     Policy public dummy1EtherPolicy;
     Policy public dummy5EtherPolicy;
-    uint120 constant rootPolicyId = 0;
+    uint112 constant rootPolicyId = 0;
 
-    uint240 constant rootRoleId = 0;
+    Action public dummySendMax1EtherAction;
+    Action public dummySendMax5EtherAction;
+    uint24 constant initActionId = 0;
+
+    uint224 constant rootRoleId = 0;
 
     constructor() {
         dummyAdminPolicy.mode = MODE_ADMIN;
 
-        dummy1EtherPolicy.callValue = 1 ether;
-        dummy1EtherPolicy.callValueOperator = OPERATOR_LTE;
+        dummy1EtherPolicy.allowActions = initActionId;
+        dummy5EtherPolicy.allowActions = initActionId + 1;
 
-        dummy5EtherPolicy.callValue = 5 ether;
-        dummy5EtherPolicy.callValueOperator = OPERATOR_LTE;
+        dummySendMax1EtherAction.value = 1 ether;
+        dummySendMax1EtherAction.operator = OPERATOR_LTE;
+        dummySendMax5EtherAction.value = 5 ether;
+        dummySendMax5EtherAction.operator = OPERATOR_LTE;
     }
 
     function _execUserOp(address target, uint256 value, bytes memory data) internal {

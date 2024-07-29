@@ -31,6 +31,7 @@ sequenceDiagram
     IAM Validator->>IAM Validator: Decode signerId and policyId from roleId
     Note over IAM Validator: Authorization check
     IAM Validator->>IAM Validator: Get policy from storage
+    IAM Validator->>IAM Validator: Hydrate policy with associated actions
     IAM Validator->>IAM Validator: Verify userOp with policy
     Note over IAM Validator,P256 Verifier: Authentication check
     IAM Validator->>IAM Validator: Get signer from storage
@@ -47,10 +48,11 @@ From the diagram, there are three variables that must be known to the wallet.
 1. `roleId`: Concatenation of `signerId` + `policyId`.
 2. `signerId`: An ID assigned by the module for every signer added.
 3. `policyId`: An ID assigned by the module for every policy added.
+4. `actionId`: An ID assigned by the module for every action added.
 
 ### Role check
 
-The `roleId` is a `uint240` value that is encoded into the `UserOperation` signature field along with the `r` and `s` values of the signed `userOpHash`.
+The `roleId` is a `uint224` value that is encoded into the `UserOperation` signature field along with the `r` and `s` values of the signed `userOpHash`.
 
 ```solidity
 userOp.signature = abi.encode(roleId, r, s);
@@ -89,12 +91,12 @@ The `IAMValidator` inherits from the base ERC7579 validator module. The followin
 These functions relate to Authentication. The `signerId` is emitted via events and should be tracked on the application layer. For details, see definitions in [IAMValidator.sol](src/IAMValidator.sol) and [Signer.sol](src/Signer.sol).
 
 ```solidity
-event SignerAdded(address indexed account, uint120 indexed signerId, uint256 x, uint256 y);
-event SignerRemoved(address indexed account, uint120 indexed signerId);
+event SignerAdded(address indexed account, uint112 indexed signerId, uint256 x, uint256 y);
+event SignerRemoved(address indexed account, uint112 indexed signerId);
 
-function getSigner(address account, uint120 signerId) public view returns (Signer memory);
+function getSigner(address account, uint112 signerId) public view returns (Signer memory);
 function addSigner(uint256 x, uint256 y) external;
-function removeSigner(uint120 signerId) external;
+function removeSigner(uint112 signerId) external;
 ```
 
 ### Policy functions
@@ -102,12 +104,25 @@ function removeSigner(uint120 signerId) external;
 These functions relate to Authorization. The `policyId` is emitted via events and should be tracked on the application layer. For details, see definitions in [IAMValidator.sol](src/IAMValidator.sol) and [Policy.sol](src/Policy.sol).
 
 ```solidity
-event PolicyAdded(address indexed account, uint120 indexed policyId, Policy p);
-event PolicyRemoved(address indexed account, uint120 indexed policyId);
+event PolicyAdded(address indexed account, uint112 indexed policyId, Policy p);
+event PolicyRemoved(address indexed account, uint112 indexed policyId);
 
-function getPolicy(address account, uint120 policyId) public view returns (Policy memory);
+function getPolicy(address account, uint112 policyId) public view returns (Policy memory);
 function addPolicy(Policy calldata p) external;
-function removePolicy(uint120 policyId) external;
+function removePolicy(uint112 policyId) external;
+```
+
+### Action functions
+
+These functions also relate to Authorization. Every `Policy` can have up to 10 actions which are rules for evaluating an outgoing `CALL` from the smart account. The `actionId` is emitted via events and should be tracked by the application layer. For details, see definitions in [IAMValidator.sol](src/IAMValidator.sol) and [Action.sol](src/Action.sol).
+
+```solidity
+event ActionAdded(address indexed account, uint24 indexed actionId, Action a);
+event ActionRemoved(address indexed account, uint24 indexed actionId);
+
+function getAction(address account, uint24 actionId) public view returns (Action memory);
+function addAction(Action calldata a) external;
+function removeAction(uint24 actionId) external;
 ```
 
 ### Role functions
@@ -115,12 +130,12 @@ function removePolicy(uint120 policyId) external;
 These functions relate to the association between signer and policy. The `roleId` is emitted via events and should be tracked on the application layer. For details, see definitions in [IAMValidator.sol](src/IAMValidator.sol).
 
 ```solidity
-event RoleAdded(address indexed account, uint240 indexed roleId);
-event RoleRemoved(address indexed account, uint240 indexed roleId);
+event RoleAdded(address indexed account, uint224 indexed roleId);
+event RoleRemoved(address indexed account, uint224 indexed roleId);
 
-function hasRole(address account, uint240 roleId) public view returns (bool);
-function addRole(uint120 signerId, uint120 policyId) external;
-function removeRole(uint240 roleId) external;
+function hasRole(address account, uint224 roleId) public view returns (bool);
+function addRole(uint112 signerId, uint112 policyId) external;
+function removeRole(uint224 roleId) external;
 ```
 
 ## Error codes
@@ -131,7 +146,7 @@ The `IAMValidator` has the following error codes:
 - `IAM2x`: Validate ERC1271 signature errors.
 - `IAM3x`: Configuration errors.
 
-## Encoding a `Policy`
+## Encoding policies and actions
 
 ```
 TBD

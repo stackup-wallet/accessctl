@@ -35,7 +35,7 @@ contract AuthorizationTest is TestHelper {
     }
 
     function testRemovePolicyWritesToState() public {
-        uint120 expectedPolicyId = rootPolicyId + 1;
+        uint112 expectedPolicyId = rootPolicyId + 1;
         _execUserOp(
             address(validator),
             0,
