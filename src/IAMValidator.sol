@@ -282,7 +282,7 @@ contract IAMValidator is ERC7579ValidatorBase {
     }
 
     /**
-     * Registers an action to the account under a unique policyId. Emits an
+     * Registers an action to the account under a unique actionId. Emits an
      * actionAdded event on success.
      *
      * @param a The Action struct to add.
