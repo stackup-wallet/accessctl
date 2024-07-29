@@ -9,7 +9,7 @@ contract AuthenticationTest is TestHelper {
     using SignerLib for Signer;
 
     function testAddSignerWritesToState() public {
-        uint120 expectedSignerId = rootSignerId + 1;
+        uint112 expectedSignerId = rootSignerId + 1;
         Signer memory s = validator.getSigner(address(instance.account), expectedSignerId);
         assertTrue(s.isNull());
 
@@ -36,7 +36,7 @@ contract AuthenticationTest is TestHelper {
     }
 
     function testRemoveSignerWritesToState() public {
-        uint120 expectedSignerId = rootSignerId + 1;
+        uint112 expectedSignerId = rootSignerId + 1;
         _execUserOp(
             address(validator),
             0,

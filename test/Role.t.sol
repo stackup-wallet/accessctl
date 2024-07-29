@@ -14,17 +14,17 @@ contract RoleTest is TestHelper {
             address(validator),
             0,
             abi.encodeWithSelector(
-                IAMValidator.addRole.selector, type(uint120).max, type(uint120).max
+                IAMValidator.addRole.selector, type(uint112).max, type(uint112).max
             )
         );
 
-        assertTrue(validator.hasRole(address(instance.account), type(uint240).max));
+        assertTrue(validator.hasRole(address(instance.account), type(uint224).max));
     }
 
     function testAddRoleEmitsEvent() public {
         vm.expectEmit(true, true, true, true, address(validator));
-        emit RoleAdded(address(this), type(uint240).max);
-        validator.addRole(type(uint120).max, type(uint120).max);
+        emit RoleAdded(address(this), type(uint224).max);
+        validator.addRole(type(uint112).max, type(uint112).max);
     }
 
     function testRemoveRoleWritesToState() public {
@@ -32,21 +32,21 @@ contract RoleTest is TestHelper {
             address(validator),
             0,
             abi.encodeWithSelector(
-                IAMValidator.addRole.selector, type(uint120).max, type(uint120).max
+                IAMValidator.addRole.selector, type(uint112).max, type(uint112).max
             )
         );
 
         _execUserOp(
             address(validator),
             0,
-            abi.encodeWithSelector(IAMValidator.removeRole.selector, type(uint240).max)
+            abi.encodeWithSelector(IAMValidator.removeRole.selector, type(uint224).max)
         );
-        assertFalse(validator.hasRole(address(instance.account), type(uint240).max));
+        assertFalse(validator.hasRole(address(instance.account), type(uint224).max));
     }
 
     function testRemoveRoleEmitsEvent() public {
         vm.expectEmit(true, true, true, true, address(validator));
-        emit RoleRemoved(address(this), type(uint240).max);
-        validator.removeRole(type(uint240).max);
+        emit RoleRemoved(address(this), type(uint224).max);
+        validator.removeRole(type(uint224).max);
     }
 }
