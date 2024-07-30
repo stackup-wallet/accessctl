@@ -220,7 +220,7 @@ The `callModeLevel` field allows authorization of call types. All flag values ar
 
 #### Allow actions
 
-The `allowActions` field links the policy with up to 10 call actions. This is done by packing a max of 10 `uint24` actionIds into a single `uint240` value. During authorization, each external call will be cross checked with each action. If the call matches none of the actions, then validation will fail.
+The `allowActions` field links the policy with up to 10 call actions. This is done by packing a max of 10 `uint24` `actionIds` into a single `uint240` value. During authorization, each external call will be cross checked with each action. If the call matches none of the actions, then validation will fail.
 
 ### `Action` data structure
 
