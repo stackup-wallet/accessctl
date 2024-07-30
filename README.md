@@ -192,7 +192,7 @@ struct Policy {
 
 #### Time range
 
-A policy can be valid for a specific time range only using a combination of the `validAfter` and `validUntil` fields.
+A policy can be valid for a specific time range using a combination of the `validAfter` and `validUntil` fields.
 
 - `validAfter`: The unix timestamp in seconds for when this policy will activate.
 - `validUntil`: The unix timestamp in seconds for when this policy will expire.
