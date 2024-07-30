@@ -75,10 +75,10 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
         dummy1EtherPolicy.allowActions = rootActionId + 1;
         dummy5EtherPolicy.allowActions = rootActionId + 2;
 
-        dummySendMax1EtherAction.value = 1 ether;
-        dummySendMax1EtherAction.operator = OPERATOR_LTE;
-        dummySendMax5EtherAction.value = 5 ether;
-        dummySendMax5EtherAction.operator = OPERATOR_LTE;
+        dummySendMax1EtherAction.payableValue = 1 ether;
+        dummySendMax1EtherAction.payableOperator = OPERATOR_LTE;
+        dummySendMax5EtherAction.payableValue = 5 ether;
+        dummySendMax5EtherAction.payableOperator = OPERATOR_LTE;
     }
 
     function _execUserOp(address target, uint256 value, bytes memory data) internal {
