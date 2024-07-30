@@ -146,11 +146,134 @@ The `IAMValidator` has the following error codes:
 - `IAM2x`: Validate ERC1271 signature errors.
 - `IAM3x`: Configuration errors.
 
-## Encoding policies and actions
+## Policies and Actions
 
+The following is a flow chart of how the `IAMValidator` decides if a `UserOperation` is allowed based on a given `Policy` and its associated `Actions`.
+
+```mermaid
+flowchart TD
+    start(["call to policy.verifyUserOp(op)"])-->isAdmin{Is admin mode?}
+    isAdmin-->|Yes|ok([Return true])
+    isAdmin-->|No|isExec{"is calling account.execute(...)?"}
+    isExec-->|Yes|getCallMode["Get call mode"]
+    isExec-->|No|iam12([Reverts with IAM12])
+    getCallMode-->isCallModeOk{"Is policy.callMode ok?"}
+    isCallModeOk-->|Yes|hydrateActions[Fetch all allowed actions]
+    isCallModeOk-->|No|iam13([Reverts with IAM13])
+    hydrateActions-->iterateCalls([Iterate calls])
+    iterateCalls-->isLastCall{All calls checked?}
+    isLastCall-->|Yes|allCallsOk{"is count(allowedCalls) == calls.length?"}
+    allCallsOk-->|Yes|ok
+    allCallsOk-->|No|iam14([Reverts with IAM14])
+    isLastCall-->|No|iterateActions([Iterate allowed actions])
+    iterateActions-->isLastAction{All actions checked?}
+    isLastAction-->|Yes|iam14
+    isLastAction-->|No|isCallActionMatch{current call matches current action?}
+    isCallActionMatch-->|No|isStrictMode{current action is set to strict?}
+    isStrictMode-->|Yes|iam14
+    isStrictMode-->|No|iterateActions
+    isCallActionMatch-->|Yes|iterateCalls
 ```
-TBD
+
+### `Policy` data structure
+
+This data structure stores information on how to authorize a `UserOperation`.
+
+```solidity
+struct Policy {
+    uint48 validAfter;
+    uint48 validUntil;
+    address erc1271Caller;
+    bytes1 mode;
+    bytes1 callModeLevel;
+    uint240 allowActions;
+}
 ```
+
+#### Time range
+
+A policy can be valid for a specific time range only using a combination of the `validAfter` and `validUntil` fields.
+
+- `validAfter`: The unix timestamp in seconds for when this policy will activate.
+- `validUntil`: The unix timestamp in seconds for when this policy will expire.
+
+> _Note that the [validation rules](https://eips.ethereum.org/EIPS/eip-7562) for account abstraction does not permit the use of the `TIMESTAMP` opcode during `validateUserOp`. If the rest of the policy is ok, these two values will be returned in the `validationData` and enforced by the `EntryPoint`._
+
+#### Mode
+
+This field allows encoding flags for common authorization modes. All flag values are defined in [Policy.sol](src/Policy.sol).
+
+- `MODE_ADMIN`: Allows any `UserOperation` to be executed. This policy is already initialized during install with a `policyId` of `0`.
+- `MODE_ERC1271_ADMIN`: Allows ERC1271 signature verification from any caller.
+
+#### ERC1271
+
+A policy can encode an address in the `erc1271Caller` field to allow a signer to validate signatures from a specific origin.
+
+#### Call modes
+
+The `callModeLevel` field allows authorization of call types. All flag values are defined in [Policy.sol](src/Policy.sol).
+
+- `CALL_MODE_LEVEL_SINGLE`: Only one external call is allowed per `UserOperation`.
+- `CALL_MODE_LEVEL_BATCH`: Allows batching of multiple external calls per `UserOperation`.
+- `CALL_MODE_LEVEL_DELEGATE`: Allows a `DELEGATECALL` to be used during a `UserOperation`.
+
+#### Allow actions
+
+The `allowActions` field links the policy with up to 10 call actions. This is done by packing a max of 10 `uint24` actionIds into a single `uint240` value. During authorization, each external call will be cross checked with each action. If the call matches none of the actions, then validation will fail.
+
+### `Action` data structure
+
+This data structure stores information on what type of external calls are allowed in a `UserOperation`.
+
+```solidity
+struct Action {
+    address target;
+    bytes4 selector;
+    bytes1 level;
+    uint8 argOffset;
+    uint8 argLength;
+    bytes1 argOperator;
+    bytes1 payableOperator;
+    bytes3 unused;
+    uint256 argValue;
+    uint256 payableValue;
+}
+```
+
+#### Allowed targets
+
+An external call can be authorized for a single address only using the `target` field. Encoding an `address(0)` here will allow all targets.
+
+#### Allowed selectors
+
+We can narrow down to specific functions on an external call using the `selector` field. For example to allow only calls to `	transfer(address,uint256)`, the 4 byte selector would be set to `0xa9059cbb`. A zero value here will allow all functions.
+
+#### Level of strictness
+
+The `level` field allows us to specify how strict this action is. All flag values are defined in [Action.sol](src/Action.sol).
+
+- `LEVEL_ALLOW_FAIL`: By default an action can fail. If the call matches another action in the policy then the `UserOperation` is still authorized to proceed.
+- `LEVEL_MUST_PASS_FOR_TARGET`: If the call matches the target then this action must pass or the entire `UserOperation` is unauthorized to proceed.
+- `LEVEL_MUST_PASS`: This action must pass for every call in the `UserOperation`. If one call fails regardless of the target, then the entire `UserOperation` is unauthorized to proceed.
+
+This allows us to build more secure policies by ensure a call matches multiple actions. For example, we can create two actions for an ERC20 transfer where one validates the address argument and the other validates the value argument. Both must pass for the top level policy to be validated.
+
+#### Argument validation
+
+The following fields allow us to validate specific arguments in a call.
+
+- `argOffset`: Where in the call data to being the slice.
+- `argLength`: How many bytes after the `argOffset` to end the slice.
+- `argOperator`: The conditional operator to use for the check (e.g. `<`, `>`, `==`, etc).
+- `argValue`: The reference value to compare the sliced call data value with.
+
+#### Payable validation
+
+The following fields allow us to validate the amount of ETH (or native tokens) sent during a call.
+
+- `payableOperator`: The conditional operator to use for the check (e.g. `<`, `>`, `==`, etc).
+- `payableValue`: The reference value to compare the call value with.
 
 ## Configuration logic
 
