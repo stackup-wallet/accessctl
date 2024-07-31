@@ -2,6 +2,7 @@
 pragma solidity ^0.8.23;
 
 import { PackedUserOperation } from "modulekit/external/ERC4337.sol";
+import { IERC7579Account } from "modulekit/external/ERC7579.sol";
 
 bytes1 constant MODE_ADMIN = 0x01;
 bytes1 constant MODE_ERC1271_ADMIN = 0x02;
@@ -43,7 +44,7 @@ library PolicyLib {
 
     function verifyUserOp(
         Policy calldata p,
-        PackedUserOperation calldata
+        PackedUserOperation calldata op
     )
         public
         pure
@@ -51,6 +52,10 @@ library PolicyLib {
     {
         if (_isAdmin(p.mode)) {
             return true;
+        }
+
+        if (!_isCallingExecute(op.callData)) {
+            revert("IAM12 not calling execute");
         }
 
         return false;
@@ -66,5 +71,9 @@ library PolicyLib {
 
     function _isAdmin(bytes1 mode) internal pure returns (bool) {
         return mode == MODE_ADMIN;
+    }
+
+    function _isCallingExecute(bytes calldata call) internal pure returns (bool) {
+        return bytes4(call[:4]) == IERC7579Account.execute.selector;
     }
 }
