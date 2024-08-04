@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 import { TestHelper } from "test/TestHelper.sol";
-import { IAMValidator } from "src/IAMValidator.sol";
+import { IAMModule } from "src/IAMModule.sol";
 import { Policy, PolicyLib, MODE_ADMIN } from "src/Policy.sol";
 
 contract AuthorizationTest is TestHelper {
@@ -18,7 +18,7 @@ contract AuthorizationTest is TestHelper {
         _execUserOp(
             address(validator),
             0,
-            abi.encodeWithSelector(IAMValidator.addPolicy.selector, dummy1EtherPolicy)
+            abi.encodeWithSelector(IAMModule.addPolicy.selector, dummy1EtherPolicy)
         );
 
         assertTrue(
@@ -39,13 +39,13 @@ contract AuthorizationTest is TestHelper {
         _execUserOp(
             address(validator),
             0,
-            abi.encodeWithSelector(IAMValidator.addPolicy.selector, dummy1EtherPolicy)
+            abi.encodeWithSelector(IAMModule.addPolicy.selector, dummy1EtherPolicy)
         );
 
         _execUserOp(
             address(validator),
             0,
-            abi.encodeWithSelector(IAMValidator.removePolicy.selector, expectedPolicyId)
+            abi.encodeWithSelector(IAMModule.removePolicy.selector, expectedPolicyId)
         );
         assertTrue(validator.getPolicy(address(instance.account), expectedPolicyId).isNull());
     }

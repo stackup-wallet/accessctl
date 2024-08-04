@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 import { TestHelper } from "test/TestHelper.sol";
-import { IAMValidator } from "src/IAMValidator.sol";
+import { IAMModule } from "src/IAMModule.sol";
 import { Signer, SignerLib } from "src/Signer.sol";
 
 contract AuthenticationTest is TestHelper {
@@ -17,7 +17,7 @@ contract AuthenticationTest is TestHelper {
             address(validator),
             0,
             abi.encodeWithSelector(
-                IAMValidator.addSigner.selector, dummyP256PubKeyX1, dummyP256PubKeyY1
+                IAMModule.addSigner.selector, dummyP256PubKeyX1, dummyP256PubKeyY1
             )
         );
 
@@ -41,14 +41,14 @@ contract AuthenticationTest is TestHelper {
             address(validator),
             0,
             abi.encodeWithSelector(
-                IAMValidator.addSigner.selector, dummyP256PubKeyX1, dummyP256PubKeyY1
+                IAMModule.addSigner.selector, dummyP256PubKeyX1, dummyP256PubKeyY1
             )
         );
 
         _execUserOp(
             address(validator),
             0,
-            abi.encodeWithSelector(IAMValidator.removeSigner.selector, expectedSignerId)
+            abi.encodeWithSelector(IAMModule.removeSigner.selector, expectedSignerId)
         );
         Signer memory s = validator.getSigner(address(instance.account), expectedSignerId);
         assertTrue(s.isNull());

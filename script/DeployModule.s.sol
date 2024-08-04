@@ -5,13 +5,13 @@ import "forge-std/Script.sol";
 import { RegistryDeployer } from "modulekit/deployment/RegistryDeployer.sol";
 
 // Import modules here
-import { IAMValidator } from "src/IAMValidator.sol";
+import { IAMModule } from "src/IAMModule.sol";
 
 /// @title DeployModuleScript
 contract DeployModuleScript is Script, RegistryDeployer {
     function run() public {
         // Setup module bytecode, deploy params, and data
-        bytes memory bytecode = type(IAMValidator).creationCode;
+        bytes memory bytecode = type(IAMModule).creationCode;
         bytes memory deployParams = "";
         bytes memory data = "";
 

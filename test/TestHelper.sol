@@ -10,7 +10,7 @@ import {
     UserOpData
 } from "modulekit/ModuleKit.sol";
 import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_HOOK } from "modulekit/external/ERC7579.sol";
-import { IAMValidator } from "src/IAMValidator.sol";
+import { IAMModule } from "src/IAMModule.sol";
 import { Signer } from "src/Signer.sol";
 import { Policy, MODE_ADMIN } from "src/Policy.sol";
 import { Action, OPERATOR_LTE } from "src/Action.sol";
@@ -30,7 +30,7 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
 
     // account and modules
     AccountInstance internal instance;
-    IAMValidator internal validator;
+    IAMModule internal validator;
 
     uint256 constant dummyP256PrivateKeyRoot =
         0x9b6949ce4e9f7958797d91a4a51a96e9361b94451b88791d8784d8331b46c32d;
@@ -142,8 +142,8 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
         init();
 
         // Create the validator
-        validator = new IAMValidator();
-        vm.label(address(validator), "IAMValidator");
+        validator = new IAMModule();
+        vm.label(address(validator), "IAMModule");
 
         // Create the account and install the validator
         instance = makeAccountInstance("MainAccount");

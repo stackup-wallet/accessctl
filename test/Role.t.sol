@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 import { TestHelper } from "test/TestHelper.sol";
-import { IAMValidator } from "src/IAMValidator.sol";
+import { IAMModule } from "src/IAMModule.sol";
 
 contract RoleTest is TestHelper {
     function testRootSignerWithAdminPolicyRoleExists() public view {
@@ -13,9 +13,7 @@ contract RoleTest is TestHelper {
         _execUserOp(
             address(validator),
             0,
-            abi.encodeWithSelector(
-                IAMValidator.addRole.selector, type(uint112).max, type(uint112).max
-            )
+            abi.encodeWithSelector(IAMModule.addRole.selector, type(uint112).max, type(uint112).max)
         );
 
         assertTrue(validator.hasRole(address(instance.account), type(uint224).max));
@@ -31,15 +29,13 @@ contract RoleTest is TestHelper {
         _execUserOp(
             address(validator),
             0,
-            abi.encodeWithSelector(
-                IAMValidator.addRole.selector, type(uint112).max, type(uint112).max
-            )
+            abi.encodeWithSelector(IAMModule.addRole.selector, type(uint112).max, type(uint112).max)
         );
 
         _execUserOp(
             address(validator),
             0,
-            abi.encodeWithSelector(IAMValidator.removeRole.selector, type(uint224).max)
+            abi.encodeWithSelector(IAMModule.removeRole.selector, type(uint224).max)
         );
         assertFalse(validator.hasRole(address(instance.account), type(uint224).max));
     }

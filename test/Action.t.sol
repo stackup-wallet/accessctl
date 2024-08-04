@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 import { TestHelper } from "test/TestHelper.sol";
-import { IAMValidator } from "src/IAMValidator.sol";
+import { IAMModule } from "src/IAMModule.sol";
 import { Action, ActionLib } from "src/Action.sol";
 
 contract ActionTest is TestHelper {
@@ -16,7 +16,7 @@ contract ActionTest is TestHelper {
         _execUserOp(
             address(validator),
             0,
-            abi.encodeWithSelector(IAMValidator.addAction.selector, dummySendMax1EtherAction)
+            abi.encodeWithSelector(IAMModule.addAction.selector, dummySendMax1EtherAction)
         );
         assertTrue(
             validator.getAction(address(instance.account), rootActionId + 1).isEqual(
@@ -27,7 +27,7 @@ contract ActionTest is TestHelper {
         _execUserOp(
             address(validator),
             0,
-            abi.encodeWithSelector(IAMValidator.addAction.selector, dummySendMax5EtherAction)
+            abi.encodeWithSelector(IAMModule.addAction.selector, dummySendMax5EtherAction)
         );
         assertTrue(
             validator.getAction(address(instance.account), rootActionId + 2).isEqual(
@@ -50,25 +50,25 @@ contract ActionTest is TestHelper {
         _execUserOp(
             address(validator),
             0,
-            abi.encodeWithSelector(IAMValidator.addAction.selector, dummySendMax1EtherAction)
+            abi.encodeWithSelector(IAMModule.addAction.selector, dummySendMax1EtherAction)
         );
         _execUserOp(
             address(validator),
             0,
-            abi.encodeWithSelector(IAMValidator.addAction.selector, dummySendMax5EtherAction)
+            abi.encodeWithSelector(IAMModule.addAction.selector, dummySendMax5EtherAction)
         );
 
         _execUserOp(
             address(validator),
             0,
-            abi.encodeWithSelector(IAMValidator.removeAction.selector, rootActionId)
+            abi.encodeWithSelector(IAMModule.removeAction.selector, rootActionId)
         );
         assertTrue(validator.getAction(address(instance.account), rootActionId).isNull());
 
         _execUserOp(
             address(validator),
             0,
-            abi.encodeWithSelector(IAMValidator.removeAction.selector, rootActionId + 1)
+            abi.encodeWithSelector(IAMModule.removeAction.selector, rootActionId + 1)
         );
         assertTrue(validator.getAction(address(instance.account), rootActionId + 1).isNull());
     }
