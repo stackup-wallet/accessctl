@@ -64,8 +64,8 @@ library ContextQueue {
         return uint256(start) | (uint256(end) << 128);
     }
 
-    function _parseRef(uint256 key) internal pure returns (uint128 start, uint128 end) {
-        start = uint128(key);
-        end = uint128(key >> 128);
+    function _parseRef(uint256 data) internal pure returns (uint128 start, uint128 end) {
+        start = uint128(data);
+        end = uint128(data >> 128);
     }
 }
