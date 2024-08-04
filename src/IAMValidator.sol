@@ -1,14 +1,16 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.23;
 
-import { ERC7579ValidatorBase } from "modulekit/Modules.sol";
+import { ERC7579ValidatorBase, ERC7579HookBase } from "modulekit/Modules.sol";
 import { PackedUserOperation } from "modulekit/external/ERC4337.sol";
 import { SCL_RIP7212 } from "crypto-lib/lib/libSCL_RIP7212.sol";
 import { Signer } from "src/Signer.sol";
 import { Policy, PolicyLib, MODE_ADMIN } from "src/Policy.sol";
 import { Action } from "src/Action.sol";
+import { InitPhase } from "src/InitPhase.sol";
+import { ContextQueue } from "src/ContextQueue.sol";
 
-contract IAMValidator is ERC7579ValidatorBase {
+contract IAMValidator is ERC7579ValidatorBase, ERC7579HookBase {
     /*//////////////////////////////////////////////////////////////////////////
                             CONSTANTS & STORAGE
     //////////////////////////////////////////////////////////////////////////*/
@@ -23,6 +25,15 @@ contract IAMValidator is ERC7579ValidatorBase {
     event ActionRemoved(address indexed account, uint24 indexed actionId);
     event RoleAdded(address indexed account, uint224 indexed roleId);
     event RoleRemoved(address indexed account, uint224 indexed roleId);
+
+    /**
+     * The IAMValidator is a combination of an ERC-7579 Validator and Hook. To
+     * operation correctly, both validator and hook must be explicitly installed
+     * on the smart account for the IAMValidator to be considered initialized.
+     *
+     * We use the InitPhase enum to track the state machine of initialization.
+     */
+    mapping(address account => InitPhase phase) internal CurrentInitPhase;
 
     /**
      * A packed 32 byte value for counting various account variables:
@@ -76,17 +87,25 @@ contract IAMValidator is ERC7579ValidatorBase {
      */
     function onInstall(bytes calldata data) external override {
         require(!this.isInitialized(msg.sender), "IAM31 already installed");
-        (uint256 x, uint256 y) = abi.decode(data, (uint256, uint256));
-        _addSigner(x, y);
 
-        Policy memory p;
-        p.mode = MODE_ADMIN;
-        _addPolicy(p);
-
-        Action memory a;
-        _addAction(a);
-
-        _addRole(0, 0);
+        InitPhase phase = CurrentInitPhase[msg.sender];
+        if (phase == InitPhase.v0h0 && data.length == 0) {
+            // installing hook first
+            CurrentInitPhase[msg.sender] = InitPhase.v0h1;
+        } else if (phase == InitPhase.v0h0) {
+            // installing validator first
+            _initializeValidator(data);
+            CurrentInitPhase[msg.sender] = InitPhase.v1h0;
+        } else if (phase == InitPhase.v1h0) {
+            // install hook second
+            CurrentInitPhase[msg.sender] = InitPhase.v1h1;
+        } else if (phase == InitPhase.v0h1) {
+            // installing validator second
+            _initializeValidator(data);
+            CurrentInitPhase[msg.sender] = InitPhase.v1h1;
+        } else {
+            revert("IAM36 unexpected phase");
+        }
     }
 
     /**
@@ -95,8 +114,36 @@ contract IAMValidator is ERC7579ValidatorBase {
      * @param data The data to de-initialize the module with
      */
     function onUninstall(bytes calldata data) external override {
-        (uint8 installCount,,,) = _parseCounter(Counters[msg.sender]);
-        Counters[msg.sender] = _packCounter(installCount + 1, 0, 0, 0);
+        InitPhase phase = CurrentInitPhase[msg.sender];
+        require(phase != InitPhase.v0h0, "IAM32 already uninstalled");
+        require(data.length == 32, "IAM33 bad uninstall data");
+
+        uint256 typeId = abi.decode(data, (uint256));
+        if (typeId == TYPE_VALIDATOR) {
+            if (phase == InitPhase.v1h1) {
+                // Uninstall validator first
+                _uninitializeValiator();
+                CurrentInitPhase[msg.sender] = InitPhase.v0h1;
+            } else if (phase == InitPhase.v1h0) {
+                // Uninstall validator second
+                _uninitializeValiator();
+                CurrentInitPhase[msg.sender] = InitPhase.v0h0;
+            } else if (phase == InitPhase.v0h1) {
+                revert("IAM35 validator already uninstalled");
+            }
+        } else if (typeId == TYPE_HOOK) {
+            if (phase == InitPhase.v1h1) {
+                // Uninstall hook first
+                CurrentInitPhase[msg.sender] = InitPhase.v1h0;
+            } else if (phase == InitPhase.v1h0) {
+                revert("IAM36 hook already uninstalled");
+            } else if (phase == InitPhase.v0h1) {
+                // Uninstall hook second
+                CurrentInitPhase[msg.sender] = InitPhase.v0h0;
+            }
+        } else {
+            revert("IAM34 unexpected typeId");
+        }
     }
 
     /**
@@ -106,13 +153,33 @@ contract IAMValidator is ERC7579ValidatorBase {
      * @return true if the module is initialized, false otherwise
      */
     function isInitialized(address smartAccount) external view returns (bool) {
-        (, uint112 signerId,,) = _parseCounter(Counters[smartAccount]);
-        return signerId > 0;
+        return CurrentInitPhase[smartAccount] == InitPhase.v1h1;
     }
 
     /*//////////////////////////////////////////////////////////////////////////
                                      MODULE LOGIC
     //////////////////////////////////////////////////////////////////////////*/
+
+    /**
+     * Called on precheck before every execution
+     */
+    function _preCheck(
+        address,
+        address,
+        uint256,
+        bytes calldata
+    )
+        internal
+        override
+        returns (bytes memory hookData)
+    {
+        hookData = abi.encode(uint224(ContextQueue.dequeue()));
+    }
+
+    /**
+     * Called on postcheck after every execution
+     */
+    function _postCheck(address, bytes calldata data) internal pure override { }
 
     /**
      * Validates PackedUserOperation
@@ -131,7 +198,6 @@ contract IAMValidator is ERC7579ValidatorBase {
         bytes32 userOpHash
     )
         external
-        view
         override
         returns (ValidationData)
     {
@@ -148,9 +214,13 @@ contract IAMValidator is ERC7579ValidatorBase {
 
         // Authentication check
         Signer memory signer = getSigner(msg.sender, signerId);
-        return SCL_RIP7212.verify(userOpHash, r, s, signer.x, signer.y)
-            ? _packValidationData(false, p.validUntil, p.validAfter)
-            : _packValidationData(true, p.validUntil, p.validAfter);
+        if (SCL_RIP7212.verify(userOpHash, r, s, signer.x, signer.y)) {
+            // Load required context for execution hooks
+            ContextQueue.enqueue(uint256(roleId));
+
+            return _packValidationData(false, p.validUntil, p.validAfter);
+        }
+        return _packValidationData(true, p.validUntil, p.validAfter);
     }
 
     /**
@@ -339,6 +409,25 @@ contract IAMValidator is ERC7579ValidatorBase {
                                      INTERNAL
     //////////////////////////////////////////////////////////////////////////*/
 
+    function _initializeValidator(bytes calldata data) internal {
+        (uint256 x, uint256 y) = abi.decode(data, (uint256, uint256));
+        _addSigner(x, y);
+
+        Policy memory p;
+        p.mode = MODE_ADMIN;
+        _addPolicy(p);
+
+        Action memory a;
+        _addAction(a);
+
+        _addRole(0, 0);
+    }
+
+    function _uninitializeValiator() internal {
+        (uint8 installCount,,,) = _parseCounter(Counters[msg.sender]);
+        Counters[msg.sender] = _packCounter(installCount + 1, 0, 0, 0);
+    }
+
     function _addSigner(uint256 x, uint256 y) internal {
         (uint8 installCount, uint112 signerId, uint112 policyId, uint24 actionId) =
             _parseCounter(Counters[msg.sender]);
@@ -476,6 +565,6 @@ contract IAMValidator is ERC7579ValidatorBase {
      * @return true if the module is of the given type, false otherwise
      */
     function isModuleType(uint256 typeID) external pure override returns (bool) {
-        return typeID == TYPE_VALIDATOR;
+        return typeID == TYPE_VALIDATOR || typeID == TYPE_HOOK;
     }
 }

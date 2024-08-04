@@ -8,7 +8,7 @@ import { Action, ActionLib } from "src/Action.sol";
 contract ActionTest is TestHelper {
     using ActionLib for Action;
 
-    function testRootActionIsNull() public {
+    function testRootActionIsNull() public view {
         assertTrue(validator.getAction(address(instance.account), rootActionId).isNull());
     }
 

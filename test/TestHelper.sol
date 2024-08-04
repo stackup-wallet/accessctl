@@ -9,7 +9,7 @@ import {
     AccountInstance,
     UserOpData
 } from "modulekit/ModuleKit.sol";
-import { MODULE_TYPE_VALIDATOR } from "modulekit/external/ERC7579.sol";
+import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_HOOK } from "modulekit/external/ERC7579.sol";
 import { IAMValidator } from "src/IAMValidator.sol";
 import { Signer } from "src/Signer.sol";
 import { Policy, MODE_ADMIN } from "src/Policy.sol";
@@ -93,19 +93,23 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
         userOpData.execUserOps();
     }
 
-    function _formatERC1271Hash(address validator, bytes32 hash) internal returns (bytes32) {
-        return instance.formatERC1271Hash(validator, hash);
+    function _formatERC1271Hash(address validatorModule, bytes32 hash) internal returns (bytes32) {
+        return instance.formatERC1271Hash(validatorModule, hash);
     }
 
     function _verifyERC1271Signature(
-        address validator,
+        address validatorModule,
         bytes32 hash,
         bytes memory signature
     )
         internal
         returns (bool)
     {
-        return instance.isValidSignature({ validator: validator, hash: hash, signature: signature });
+        return instance.isValidSignature({
+            validator: validatorModule,
+            hash: hash,
+            signature: signature
+        });
     }
 
     function _installModule() internal {
@@ -114,13 +118,23 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
             module: address(validator),
             data: abi.encode(dummyP256PubKeyXRoot, dummyP256PubKeyYRoot)
         });
+        instance.installModule({
+            moduleTypeId: MODULE_TYPE_HOOK,
+            module: address(validator),
+            data: ""
+        });
     }
 
     function _uninstallModule() internal {
         instance.uninstallModule({
             moduleTypeId: MODULE_TYPE_VALIDATOR,
             module: address(validator),
-            data: ""
+            data: abi.encode(MODULE_TYPE_VALIDATOR)
+        });
+        instance.uninstallModule({
+            moduleTypeId: MODULE_TYPE_HOOK,
+            module: address(validator),
+            data: abi.encode(MODULE_TYPE_HOOK)
         });
     }
 
