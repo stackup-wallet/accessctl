@@ -8,7 +8,7 @@ import { Policy, PolicyLib, MODE_ADMIN } from "src/Policy.sol";
 contract AuthorizationTest is TestHelper {
     using PolicyLib for Policy;
 
-    function testAdminPolicyExists() public {
+    function testAdminPolicyExists() public view {
         assertTrue(
             validator.getPolicy(address(instance.account), rootPolicyId).isEqual(dummyAdminPolicy)
         );
