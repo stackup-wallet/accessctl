@@ -10,7 +10,7 @@ import { Action } from "src/Action.sol";
 import { InitPhase } from "src/InitPhase.sol";
 import { ContextQueue } from "src/ContextQueue.sol";
 
-contract IAMValidator is ERC7579ValidatorBase, ERC7579HookBase {
+contract IAMModule is ERC7579ValidatorBase, ERC7579HookBase {
     /*//////////////////////////////////////////////////////////////////////////
                             CONSTANTS & STORAGE
     //////////////////////////////////////////////////////////////////////////*/
@@ -27,9 +27,9 @@ contract IAMValidator is ERC7579ValidatorBase, ERC7579HookBase {
     event RoleRemoved(address indexed account, uint224 indexed roleId);
 
     /**
-     * The IAMValidator is a combination of an ERC-7579 Validator and Hook. To
+     * The IAMModule is a combination of an ERC-7579 Validator and Hook. To
      * operation correctly, both validator and hook must be explicitly installed
-     * on the smart account for the IAMValidator to be considered initialized.
+     * on the smart account for the IAMModule to be considered initialized.
      *
      * We use the InitPhase enum to track the state machine of initialization.
      */

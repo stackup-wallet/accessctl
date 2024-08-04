@@ -4,7 +4,7 @@ A scalable identity and access management layer for ERC-4337 modular smart accou
 
 # Architecture
 
-This project refers to an ERC-7579 validator module that can be installed on any compliant smart account to enable advanced IAM features. The module is built with the following design goals in mind to support onchain organizations at every scale:
+This project refers to an ERC-7579 validator and hook module that can be installed on any compliant smart account to enable advanced IAM features. The module is built with the following design goals in mind to support onchain organizations at every scale:
 
 - **Authentication**: support for adding many `secp256r1` signers to an account.
 - **Authorization**: support for attaching transaction policies to each signer.
@@ -82,13 +82,13 @@ bool valid = P256.verifySignature(userOpHash, r, s, x, y);
 
 If the signature is valid, it returns a success response and proceeds to the execution phase of a `UserOperation`.
 
-## `IAMValidator` interface
+## `IAMModule` interface
 
-The `IAMValidator` inherits from the base ERC7579 validator module. The following interface relates only to the `IAMValidator`.
+The `IAMModule` inherits from the base ERC7579 validator and hook module. The following interface relates only to the `IAMModule`.
 
 ### Signer functions
 
-These functions relate to Authentication. The `signerId` is emitted via events and should be tracked on the application layer. For details, see definitions in [IAMValidator.sol](src/IAMValidator.sol) and [Signer.sol](src/Signer.sol).
+These functions relate to Authentication. The `signerId` is emitted via events and should be tracked on the application layer. For details, see definitions in [IAMModule.sol](src/IAMModule.sol) and [Signer.sol](src/Signer.sol).
 
 ```solidity
 event SignerAdded(address indexed account, uint112 indexed signerId, uint256 x, uint256 y);
@@ -101,7 +101,7 @@ function removeSigner(uint112 signerId) external;
 
 ### Policy functions
 
-These functions relate to Authorization. The `policyId` is emitted via events and should be tracked on the application layer. For details, see definitions in [IAMValidator.sol](src/IAMValidator.sol) and [Policy.sol](src/Policy.sol).
+These functions relate to Authorization. The `policyId` is emitted via events and should be tracked on the application layer. For details, see definitions in [IAMModule.sol](src/IAMModule.sol) and [Policy.sol](src/Policy.sol).
 
 ```solidity
 event PolicyAdded(address indexed account, uint112 indexed policyId, Policy p);
@@ -114,7 +114,7 @@ function removePolicy(uint112 policyId) external;
 
 ### Action functions
 
-These functions also relate to Authorization. Every `Policy` can have up to 10 actions which are rules for evaluating an outgoing `CALL` from the smart account. The `actionId` is emitted via events and should be tracked by the application layer. For details, see definitions in [IAMValidator.sol](src/IAMValidator.sol) and [Action.sol](src/Action.sol).
+These functions also relate to Authorization. Every `Policy` can have up to 10 actions which are rules for evaluating an outgoing `CALL` from the smart account. The `actionId` is emitted via events and should be tracked by the application layer. For details, see definitions in [IAMModule.sol](src/IAMModule.sol) and [Action.sol](src/Action.sol).
 
 ```solidity
 event ActionAdded(address indexed account, uint24 indexed actionId, Action a);
@@ -127,7 +127,7 @@ function removeAction(uint24 actionId) external;
 
 ### Role functions
 
-These functions relate to the association between signer and policy. The `roleId` is emitted via events and should be tracked on the application layer. For details, see definitions in [IAMValidator.sol](src/IAMValidator.sol).
+These functions relate to the association between signer and policy. The `roleId` is emitted via events and should be tracked on the application layer. For details, see definitions in [IAMModule.sol](src/IAMModule.sol).
 
 ```solidity
 event RoleAdded(address indexed account, uint224 indexed roleId);
@@ -140,7 +140,7 @@ function removeRole(uint224 roleId) external;
 
 ## Error codes
 
-The `IAMValidator` has the following error codes:
+The `IAMModule` has the following error codes:
 
 - `IAM1x`: Validate `UserOperation` errors.
 - `IAM2x`: Validate ERC1271 signature errors.
@@ -148,7 +148,7 @@ The `IAMValidator` has the following error codes:
 
 ## Policies and Actions
 
-The following is a flow chart of how the `IAMValidator` decides if a `UserOperation` is allowed based on a given `Policy` and its associated `Actions`.
+The following is a flow chart of how the `IAMModule` decides if a `UserOperation` is allowed based on a given `Policy` and its associated `Actions`.
 
 ```mermaid
 flowchart TD
@@ -277,7 +277,9 @@ The following fields allow us to validate the amount of ETH (or native tokens) s
 
 ## Configuration logic
 
-On install, the `IAMValidator` does the following steps:
+> _Note that this module MUST be explicitly installed as a `TYPE_VALIDATOR` and `TYPE_HOOK` to be considered as initialized. The following refers to installation of the validator. Installation of the hook is effectively a noop from the perspective of the module._
+
+On install, the `IAMModule` does the following steps:
 
 1. Adds the root signer passed in via call data. It assigns the `signerId` of `0`.
 2. Adds an admin policy (i.e. a blank `Policy` with `mode` set to `MODE_ADMIN`). It assigns the `policyId` of `0`.
@@ -286,7 +288,7 @@ On install, the `IAMValidator` does the following steps:
 
 These steps are idempotent and will cause a revert if `onInstall` is called again on an initialized account.
 
-On uninstall, the `IAMValidator` will effectively wipe all existing signers and policies from the account's state. It will also reset `signerId` and `policyId` back to `0`.
+On uninstall, the `IAMModule` will effectively wipe all existing signers and policies from the account's state. It will also reset `signerId` and `policyId` back to `0`.
 
 # Contributing
 
