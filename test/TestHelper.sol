@@ -30,7 +30,7 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
 
     // account and modules
     AccountInstance internal instance;
-    IAMModule internal validator;
+    IAMModule internal module;
 
     uint256 constant dummyP256PrivateKeyRoot =
         0x9b6949ce4e9f7958797d91a4a51a96e9361b94451b88791d8784d8331b46c32d;
@@ -86,7 +86,7 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
             target: target,
             value: value,
             callData: data,
-            txValidator: address(validator)
+            txValidator: address(module)
         });
         (bytes32 r, bytes32 s) = vm.signP256(dummyP256PrivateKeyRoot, userOpData.userOpHash);
         userOpData.userOp.signature = abi.encode(rootRoleId, uint256(r), uint256(s));
@@ -115,25 +115,21 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
     function _installModule() internal {
         instance.installModule({
             moduleTypeId: MODULE_TYPE_VALIDATOR,
-            module: address(validator),
+            module: address(module),
             data: abi.encode(dummyP256PubKeyXRoot, dummyP256PubKeyYRoot)
         });
-        instance.installModule({
-            moduleTypeId: MODULE_TYPE_HOOK,
-            module: address(validator),
-            data: ""
-        });
+        instance.installModule({ moduleTypeId: MODULE_TYPE_HOOK, module: address(module), data: "" });
     }
 
     function _uninstallModule() internal {
         instance.uninstallModule({
             moduleTypeId: MODULE_TYPE_VALIDATOR,
-            module: address(validator),
+            module: address(module),
             data: abi.encode(MODULE_TYPE_VALIDATOR)
         });
         instance.uninstallModule({
             moduleTypeId: MODULE_TYPE_HOOK,
-            module: address(validator),
+            module: address(module),
             data: abi.encode(MODULE_TYPE_HOOK)
         });
     }
@@ -141,9 +137,9 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
     function setUp() public {
         init();
 
-        // Create the validator
-        validator = new IAMModule();
-        vm.label(address(validator), "IAMModule");
+        // Create the module
+        module = new IAMModule();
+        vm.label(address(module), "IAMModule");
 
         // Create the account and install the validator
         instance = makeAccountInstance("MainAccount");

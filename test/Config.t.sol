@@ -25,47 +25,47 @@ contract ConfigTest is TestHelper {
         if (instance.accountType == AccountType.KERNEL) return;
 
         _execUserOp(
-            address(validator),
+            address(module),
             0,
             abi.encodeWithSelector(
                 IAMModule.addSigner.selector, dummyP256PubKeyX1, dummyP256PubKeyY1
             )
         );
         _execUserOp(
-            address(validator),
+            address(module),
             0,
             abi.encodeWithSelector(
                 IAMModule.addSigner.selector, dummyP256PubKeyX2, dummyP256PubKeyY2
             )
         );
         _uninstallModule();
-        assertTrue(validator.getSigner(address(instance.account), rootSignerId).isNull());
-        assertTrue(validator.getSigner(address(instance.account), rootSignerId + 1).isNull());
-        assertTrue(validator.getSigner(address(instance.account), rootSignerId + 2).isNull());
+        assertTrue(module.getSigner(address(instance.account), rootSignerId).isNull());
+        assertTrue(module.getSigner(address(instance.account), rootSignerId + 1).isNull());
+        assertTrue(module.getSigner(address(instance.account), rootSignerId + 2).isNull());
 
         _installModule();
         _execUserOp(
-            address(validator),
+            address(module),
             0,
             abi.encodeWithSelector(
                 IAMModule.addSigner.selector, dummyP256PubKeyX1, dummyP256PubKeyY1
             )
         );
         _execUserOp(
-            address(validator),
+            address(module),
             0,
             abi.encodeWithSelector(
                 IAMModule.addSigner.selector, dummyP256PubKeyX2, dummyP256PubKeyY2
             )
         );
         assertTrue(
-            validator.getSigner(address(instance.account), rootSignerId).isEqual(dummyRootSigner)
+            module.getSigner(address(instance.account), rootSignerId).isEqual(dummyRootSigner)
         );
         assertTrue(
-            validator.getSigner(address(instance.account), rootSignerId + 1).isEqual(dummySigner1)
+            module.getSigner(address(instance.account), rootSignerId + 1).isEqual(dummySigner1)
         );
         assertTrue(
-            validator.getSigner(address(instance.account), rootSignerId + 2).isEqual(dummySigner2)
+            module.getSigner(address(instance.account), rootSignerId + 2).isEqual(dummySigner2)
         );
     }
 }
