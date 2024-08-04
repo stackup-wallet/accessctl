@@ -162,7 +162,6 @@ contract IAMValidator is ERC7579ValidatorBase, ERC7579HookBase {
 
     /**
      * Called on precheck before every execution
-     * @dev this function updates the last access time for the account
      */
     function _preCheck(
         address,
@@ -179,7 +178,6 @@ contract IAMValidator is ERC7579ValidatorBase, ERC7579HookBase {
 
     /**
      * Called on postcheck after every execution
-     * @dev this function is unused
      */
     function _postCheck(address, bytes calldata data) internal pure override { }
 
