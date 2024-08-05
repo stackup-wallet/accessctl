@@ -9,7 +9,6 @@ bytes1 constant MODE_ERC1271_ADMIN = 0x02;
 
 bytes1 constant CALL_MODE_LEVEL_SINGLE = 0x01;
 bytes1 constant CALL_MODE_LEVEL_BATCH = 0x02;
-bytes1 constant CALL_MODE_LEVEL_DELEGATE = 0x03;
 
 /**
  * A data structure for storing transaction permissions that can be attached to
@@ -60,6 +59,11 @@ library PolicyLib {
             revert("IAM12 not calling execute");
         }
 
+        (bytes1 callType, bytes memory executionCallData) = _parseExecuteArgs(op.callData);
+        if (callType >= p.callModeLevel) {
+            revert("IAM13 callType not allowed");
+        }
+
         return false;
     }
 
@@ -77,5 +81,15 @@ library PolicyLib {
 
     function _isCallingExecute(bytes calldata call) internal pure returns (bool) {
         return bytes4(call[:4]) == IERC7579Account.execute.selector;
+    }
+
+    function _parseExecuteArgs(bytes calldata call)
+        internal
+        pure
+        returns (bytes1 callType, bytes memory executionCallData)
+    {
+        (bytes32 mode, bytes memory data) = abi.decode(call[4:], (bytes32, bytes));
+        callType = mode[0];
+        executionCallData = data;
     }
 }
