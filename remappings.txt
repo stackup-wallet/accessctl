@@ -19,3 +19,7 @@ solarray/=node_modules/solarray/src/
 kernel/=node_modules/@zerodev/kernel/src/
 ExcessivelySafeCall/=node_modules/excessively-safe-call/src/
 webauthn-sol/=lib/webauthn-sol/src/
+
+FreshCryptoLib/=lib/webauthn-sol/lib/FreshCryptoLib/solidity/src/
+openzeppelin-contracts/contracts/=lib/webauthn-sol/lib/openzeppelin-contracts/contracts/
+@openzeppelin/contracts/=lib/webauthn-sol/lib/openzeppelin-contracts/contracts/

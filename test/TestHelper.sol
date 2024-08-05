@@ -101,6 +101,7 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
         uint256 privateKey
     )
         internal
+        pure
         returns (bytes memory signature)
     {
         string memory clientDataJSON = clientDataJSONPre.concat(
