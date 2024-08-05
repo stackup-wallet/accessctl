@@ -114,7 +114,7 @@ function removePolicy(uint112 policyId) external;
 
 ### Action functions
 
-These functions also relate to Authorization. Every `Policy` can have up to 10 actions which are rules for evaluating an outgoing `CALL` from the smart account. The `actionId` is emitted via events and should be tracked by the application layer. For details, see definitions in [IAMModule.sol](src/IAMModule.sol) and [Action.sol](src/Action.sol).
+These functions also relate to Authorization. Every `Policy` can have up to 8 actions which are rules for evaluating an outgoing `CALL` from the smart account. The `actionId` is emitted via events and should be tracked by the application layer. For details, see definitions in [IAMModule.sol](src/IAMModule.sol) and [Action.sol](src/Action.sol).
 
 ```solidity
 event ActionAdded(address indexed account, uint24 indexed actionId, Action a);
@@ -186,7 +186,8 @@ struct Policy {
     address erc1271Caller;
     bytes1 mode;
     bytes1 callModeLevel;
-    uint240 allowActions;
+    uint48 validInterval;
+    uint192 allowActions;
 }
 ```
 
@@ -217,6 +218,10 @@ The `callModeLevel` field allows authorization of call types. All flag values ar
 - `CALL_MODE_LEVEL_SINGLE`: Only one external call is allowed per `UserOperation`.
 - `CALL_MODE_LEVEL_BATCH`: Allows batching of multiple external calls per `UserOperation`.
 - `CALL_MODE_LEVEL_DELEGATE`: Allows a `DELEGATECALL` to be used during a `UserOperation`.
+
+#### Rate limits
+
+A policy can enable rate limits on a `UserOperation` via the `validInterval` field. This is a unix timestamp to specify how long a signer must wait between consecutive `UserOperations`.
 
 #### Allow actions
 
