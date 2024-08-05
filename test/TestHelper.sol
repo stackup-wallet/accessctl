@@ -174,12 +174,12 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
         instance.uninstallModule({
             moduleTypeId: MODULE_TYPE_VALIDATOR,
             module: address(module),
-            data: abi.encode(MODULE_TYPE_VALIDATOR)
+            data: ""
         });
         instance.uninstallModule({
             moduleTypeId: MODULE_TYPE_HOOK,
             module: address(module),
-            data: abi.encode(MODULE_TYPE_HOOK)
+            data: ""
         });
     }
 
