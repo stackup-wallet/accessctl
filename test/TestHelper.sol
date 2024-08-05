@@ -10,6 +10,9 @@ import {
     UserOpData
 } from "modulekit/ModuleKit.sol";
 import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_HOOK } from "modulekit/external/ERC7579.sol";
+import { LibString } from "solady/utils/LibString.sol";
+import { Base64 } from "openzeppelin-contracts/contracts/utils/Base64.sol";
+import { FCL_Elliptic_ZZ } from "FreshCryptoLib/FCL_elliptic.sol";
 import { IAMModule } from "src/IAMModule.sol";
 import { Signer } from "src/Signer.sol";
 import { Policy, MODE_ADMIN } from "src/Policy.sol";
@@ -25,12 +28,22 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
     event RoleAdded(address indexed account, uint224 indexed roleId);
     event RoleRemoved(address indexed account, uint224 indexed roleId);
 
+    using LibString for string;
     using ModuleKitHelpers for *;
     using ModuleKitUserOp for *;
 
     // account and modules
     AccountInstance internal instance;
     IAMModule internal module;
+
+    // Dummy WebAuthn variables
+    // From https://github.com/base-org/webauthn-sol/blob/main/test/WebAuthn.t.sol
+    bytes constant authenticatorData =
+        hex"49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d9763050000010a";
+    string constant clientDataJSONPre = '{"type":"webauthn.get","challenge":"';
+    string constant clientDataJSONPost = '","origin":"http://localhost:3005","crossOrigin":false}';
+    uint256 constant challangeIndex = 23;
+    uint256 constant typeIndex = 1;
 
     uint256 constant dummyP256PrivateKeyRoot =
         0x9b6949ce4e9f7958797d91a4a51a96e9361b94451b88791d8784d8331b46c32d;
@@ -81,6 +94,40 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
         dummySendMax5EtherAction.payableOperator = OPERATOR_LTE;
     }
 
+    function _webAuthnSign(
+        uint224 roleId,
+        bytes32 message,
+        uint256 privateKey
+    )
+        internal
+        returns (bytes memory signature)
+    {
+        string memory clientDataJSON = clientDataJSONPre.concat(
+            Base64.encodeURL(abi.encode(message))
+        ).concat(clientDataJSONPost);
+        bytes32 clientDataJSONHash = sha256(bytes(clientDataJSON));
+        bytes32 messageHash = sha256(abi.encodePacked(authenticatorData, clientDataJSONHash));
+        (bytes32 rBytes, bytes32 sBytes) = vm.signP256(privateKey, messageHash);
+        uint256 r = uint256(rBytes);
+        uint256 s = uint256(sBytes);
+        if (s > FCL_Elliptic_ZZ.n / 2) {
+            s = FCL_Elliptic_ZZ.n - s;
+        }
+
+        signature = abi.encodePacked(
+            roleId,
+            abi.encode(
+                authenticatorData,
+                clientDataJSONPre,
+                clientDataJSONPost,
+                challangeIndex,
+                typeIndex,
+                r,
+                s
+            )
+        );
+    }
+
     function _execUserOp(address target, uint256 value, bytes memory data) internal {
         UserOpData memory userOpData = instance.getExecOps({
             target: target,
@@ -88,8 +135,8 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
             callData: data,
             txValidator: address(module)
         });
-        (bytes32 r, bytes32 s) = vm.signP256(dummyP256PrivateKeyRoot, userOpData.userOpHash);
-        userOpData.userOp.signature = abi.encode(rootRoleId, uint256(r), uint256(s));
+        userOpData.userOp.signature =
+            _webAuthnSign(rootRoleId, userOpData.userOpHash, dummyP256PrivateKeyRoot);
         userOpData.execUserOps();
     }
 
