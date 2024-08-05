@@ -3,7 +3,9 @@ pragma solidity ^0.8.23;
 
 import { ERC7579ValidatorBase, ERC7579HookBase } from "modulekit/Modules.sol";
 import { PackedUserOperation } from "modulekit/external/ERC4337.sol";
-import { SCL_RIP7212 } from "crypto-lib/lib/libSCL_RIP7212.sol";
+import { WebAuthn } from "webauthn-sol/WebAuthn.sol";
+import { LibString } from "solady/utils/LibString.sol";
+import { Base64 } from "openzeppelin-contracts/contracts/utils/Base64.sol";
 import { Signer } from "src/Signer.sol";
 import { Policy, PolicyLib, MODE_ADMIN } from "src/Policy.sol";
 import { Action } from "src/Action.sol";
@@ -15,6 +17,7 @@ contract IAMModule is ERC7579ValidatorBase, ERC7579HookBase {
                             CONSTANTS & STORAGE
     //////////////////////////////////////////////////////////////////////////*/
 
+    using LibString for string;
     using PolicyLib for Policy;
 
     event SignerAdded(address indexed account, uint112 indexed signerId, uint256 x, uint256 y);
@@ -202,8 +205,7 @@ contract IAMModule is ERC7579ValidatorBase, ERC7579HookBase {
         returns (ValidationData)
     {
         // Role check
-        (uint224 roleId, uint256 r, uint256 s) =
-            abi.decode(userOp.signature, (uint224, uint256, uint256));
+        uint224 roleId = _getRoleIdFromSig(userOp.signature);
         require(hasRole(msg.sender, roleId), "IAM10 invalid role");
 
         (uint112 signerId, uint112 policyId) = _parseRoleId(roleId);
@@ -214,7 +216,9 @@ contract IAMModule is ERC7579ValidatorBase, ERC7579HookBase {
 
         // Authentication check
         Signer memory signer = getSigner(msg.sender, signerId);
-        if (SCL_RIP7212.verify(userOpHash, r, s, signer.x, signer.y)) {
+        bytes memory challange = abi.encode(userOpHash);
+        WebAuthn.WebAuthnAuth memory auth = _getAuthFromSigAndChallange(userOp.signature, challange);
+        if (WebAuthn.verify(challange, true, auth, signer.x, signer.y)) {
             // Load required context for execution hooks
             ContextQueue.enqueue(uint256(roleId));
 
@@ -246,7 +250,7 @@ contract IAMModule is ERC7579ValidatorBase, ERC7579HookBase {
         returns (bytes4 sigValidationResult)
     {
         // Role check
-        (uint224 roleId, uint256 r, uint256 s) = abi.decode(signature, (uint224, uint256, uint256));
+        uint224 roleId = _getRoleIdFromSig(signature);
         require(hasRole(msg.sender, roleId), "IAM20 invalid role");
 
         (uint112 signerId, uint112 policyId) = _parseRoleId(roleId);
@@ -257,7 +261,11 @@ contract IAMModule is ERC7579ValidatorBase, ERC7579HookBase {
 
         // Authentication check
         Signer memory signer = getSigner(msg.sender, signerId);
-        return SCL_RIP7212.verify(hash, r, s, signer.x, signer.y) ? EIP1271_SUCCESS : EIP1271_FAILED;
+        bytes memory challange = abi.encode(hash);
+        WebAuthn.WebAuthnAuth memory auth = _getAuthFromSigAndChallange(signature, challange);
+        return WebAuthn.verify(challange, true, auth, signer.x, signer.y)
+            ? EIP1271_SUCCESS
+            : EIP1271_FAILED;
     }
 
     /**
@@ -426,6 +434,39 @@ contract IAMModule is ERC7579ValidatorBase, ERC7579HookBase {
     function _uninitializeValiator() internal {
         (uint8 installCount,,,) = _parseCounter(Counters[msg.sender]);
         Counters[msg.sender] = _packCounter(installCount + 1, 0, 0, 0);
+    }
+
+    function _getRoleIdFromSig(bytes calldata data) internal pure returns (uint224) {
+        return uint224(bytes28(data[:28]));
+    }
+
+    function _getAuthFromSigAndChallange(
+        bytes calldata data,
+        bytes memory challange
+    )
+        internal
+        pure
+        returns (WebAuthn.WebAuthnAuth memory auth)
+    {
+        (
+            bytes memory authenticatorData,
+            string memory clientDataJSONPre,
+            string memory clientDataJSONPost,
+            uint256 challengeIndex,
+            uint256 typeIndex,
+            uint256 r,
+            uint256 s
+        ) = abi.decode(data[28:], (bytes, string, string, uint256, uint256, uint256, uint256));
+        auth = WebAuthn.WebAuthnAuth({
+            authenticatorData: authenticatorData,
+            clientDataJSON: clientDataJSONPre.concat(Base64.encodeURL(challange)).concat(
+                clientDataJSONPost
+            ),
+            challengeIndex: challengeIndex,
+            typeIndex: typeIndex,
+            r: r,
+            s: s
+        });
     }
 
     function _addSigner(uint256 x, uint256 y) internal {

@@ -9,7 +9,6 @@ module-bases/=node_modules/@rhinestone/module-bases/src/
 account-abstraction/=node_modules/@ERC4337/account-abstraction/contracts/
 account-abstraction-v0.6/=node_modules/@ERC4337/account-abstraction-v0.6/contracts/
 
-@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/
 @safe-global/=node_modules/@safe-global/
 ds-test/=node_modules/ds-test/src/
 erc7579/=node_modules/erc7579/src/
@@ -19,4 +18,4 @@ solarray/=node_modules/solarray/src/
 @prb/math/=node_modules/@prb/math/src/
 kernel/=node_modules/@zerodev/kernel/src/
 ExcessivelySafeCall/=node_modules/excessively-safe-call/src/
-crypto-lib/=lib/crypto-lib/src/
+webauthn-sol/=lib/webauthn-sol/src/
