@@ -155,11 +155,11 @@ flowchart TD
     start(["call to policy.verifyUserOp(op)"])-->isAdmin{Is admin mode?}
     isAdmin-->|Yes|ok([Return true])
     isAdmin-->|No|isExec{"is calling account.execute(...)?"}
-    isExec-->|Yes|getCallMode["Get call mode"]
+    isExec-->|Yes|getCallType["Get call type"]
     isExec-->|No|iam12([Reverts with IAM12])
-    getCallMode-->isCallModeOk{"Is policy.callMode ok?"}
-    isCallModeOk-->|Yes|hydrateActions[Fetch all allowed actions]
-    isCallModeOk-->|No|iam13([Reverts with IAM13])
+    getCallType-->isCallTypeOk{"Is policy's callType ok?"}
+    isCallTypeOk-->|Yes|hydrateActions[Fetch all allowed actions]
+    isCallTypeOk-->|No|iam13([Reverts with IAM13])
     hydrateActions-->iterateCalls([Iterate calls])
     iterateCalls-->isLastCall{All calls checked?}
     isLastCall-->|Yes|allCallsOk{"is count(allowedCalls) == calls.length?"}
@@ -185,7 +185,7 @@ struct Policy {
     uint48 validUntil;
     address erc1271Caller;
     bytes1 mode;
-    bytes1 callModeLevel;
+    bytes1 callTypeLevel;
     uint48 validInterval;
     uint192 allowActions;
 }
@@ -211,13 +211,14 @@ This field allows encoding flags for common authorization modes. All flag values
 
 A policy can encode an address in the `erc1271Caller` field to allow a signer to validate signatures from a specific origin.
 
-#### Call modes
+#### Call types
 
-The `callModeLevel` field allows authorization of call types. All flag values are defined in [Policy.sol](src/Policy.sol).
+The `callTypeLevel` field allows authorization of call types. All flag values are defined in [Policy.sol](src/Policy.sol).
 
-- `CALL_MODE_LEVEL_SINGLE`: Only one external call is allowed per `UserOperation`.
-- `CALL_MODE_LEVEL_BATCH`: Allows batching of multiple external calls per `UserOperation`.
-- `CALL_MODE_LEVEL_DELEGATE`: Allows a `DELEGATECALL` to be used during a `UserOperation`.
+- `CALL_TYPE_LEVEL_SINGLE`: Only one external call is allowed per `UserOperation`.
+- `CALL_TYPE_LEVEL_BATCH`: Allows batching of multiple external calls per `UserOperation`.
+
+Note that other call types defined in the ERC-7579 spec such as `staticcall` and `delegatecall` are automatically denied outside `MODE_ADMIN`.
 
 #### Rate limits
 

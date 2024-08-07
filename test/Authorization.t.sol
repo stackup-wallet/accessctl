@@ -18,18 +18,20 @@ contract AuthorizationTest is TestHelper {
         _execUserOp(
             address(module),
             0,
-            abi.encodeWithSelector(IAMModule.addPolicy.selector, dummy1EtherPolicy)
+            abi.encodeWithSelector(IAMModule.addPolicy.selector, dummy1EtherSinglePolicy)
         );
 
         assertTrue(
-            module.getPolicy(address(instance.account), rootPolicyId + 1).isEqual(dummy1EtherPolicy)
+            module.getPolicy(address(instance.account), rootPolicyId + 1).isEqual(
+                dummy1EtherSinglePolicy
+            )
         );
     }
 
     function testAddPolicyEmitsEvent() public {
         vm.expectEmit(true, true, true, true, address(module));
-        emit PolicyAdded(address(this), rootPolicyId, dummy1EtherPolicy);
-        module.addPolicy(dummy1EtherPolicy);
+        emit PolicyAdded(address(this), rootPolicyId, dummy1EtherSinglePolicy);
+        module.addPolicy(dummy1EtherSinglePolicy);
     }
 
     function testRemovePolicyWritesToState() public {
@@ -37,7 +39,7 @@ contract AuthorizationTest is TestHelper {
         _execUserOp(
             address(module),
             0,
-            abi.encodeWithSelector(IAMModule.addPolicy.selector, dummy1EtherPolicy)
+            abi.encodeWithSelector(IAMModule.addPolicy.selector, dummy1EtherSinglePolicy)
         );
 
         _execUserOp(

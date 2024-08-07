@@ -15,7 +15,7 @@ import { Base64 } from "openzeppelin-contracts/contracts/utils/Base64.sol";
 import { FCL_Elliptic_ZZ } from "FreshCryptoLib/FCL_elliptic.sol";
 import { IAMModule } from "src/IAMModule.sol";
 import { Signer } from "src/Signer.sol";
-import { Policy, MODE_ADMIN } from "src/Policy.sol";
+import { Policy, MODE_ADMIN, CALL_TYPE_LEVEL_SINGLE, CALL_TYPE_LEVEL_BATCH } from "src/Policy.sol";
 import { Action, OPERATOR_LTE } from "src/Action.sol";
 import { EIP7212Mock } from "test/mock/EIP7212Mock.sol";
 
@@ -73,8 +73,8 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
     Signer public dummySigner2 = Signer(dummyP256PubKeyX2, dummyP256PubKeyY2);
 
     Policy public dummyAdminPolicy;
-    Policy public dummy1EtherPolicy;
-    Policy public dummy5EtherPolicy;
+    Policy public dummy1EtherSinglePolicy;
+    Policy public dummy5EtherBatchPolicy;
     uint112 constant rootPolicyId = 0;
 
     Action public dummySendMax1EtherAction;
@@ -86,8 +86,11 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
     constructor() {
         dummyAdminPolicy.mode = MODE_ADMIN;
 
-        dummy1EtherPolicy.allowActions = rootActionId + 1;
-        dummy5EtherPolicy.allowActions = rootActionId + 2;
+        dummy1EtherSinglePolicy.callTypeLevel = CALL_TYPE_LEVEL_SINGLE;
+        dummy5EtherBatchPolicy.callTypeLevel = CALL_TYPE_LEVEL_BATCH;
+
+        dummy1EtherSinglePolicy.allowActions = rootActionId + 1;
+        dummy5EtherBatchPolicy.allowActions = rootActionId + 2;
 
         dummySendMax1EtherAction.payableValue = 1 ether;
         dummySendMax1EtherAction.payableOperator = OPERATOR_LTE;
