@@ -157,7 +157,7 @@ flowchart TD
     isAdmin-->|No|isExec{"is calling account.execute(...)?"}
     isExec-->|Yes|getCallType["Get call type"]
     isExec-->|No|iam12([Reverts with IAM12])
-    getCallType-->isCallTypeOk{"Is policy.callType ok?"}
+    getCallType-->isCallTypeOk{"Is policy's callType ok?"}
     isCallTypeOk-->|Yes|hydrateActions[Fetch all allowed actions]
     isCallTypeOk-->|No|iam13([Reverts with IAM13])
     hydrateActions-->iterateCalls([Iterate calls])
