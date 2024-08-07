@@ -7,8 +7,8 @@ import { IERC7579Account } from "modulekit/external/ERC7579.sol";
 bytes1 constant MODE_ADMIN = 0x01;
 bytes1 constant MODE_ERC1271_ADMIN = 0x02;
 
-bytes1 constant CALL_MODE_LEVEL_SINGLE = 0x01;
-bytes1 constant CALL_MODE_LEVEL_BATCH = 0x02;
+bytes1 constant CALL_TYPE_LEVEL_SINGLE = 0x00;
+bytes1 constant CALL_TYPE_LEVEL_BATCH = 0x01;
 
 /**
  * A data structure for storing transaction permissions that can be attached to
@@ -25,7 +25,7 @@ struct Policy {
     * 2nd storage slot
     */
     bytes1 mode; //             1 byte
-    bytes1 callModeLevel; //    1 byte
+    bytes1 callTypeLevel; //    1 byte
     uint48 validInterval; //    6 bytes
     uint192 allowActions; //    24 bytes (up to 8 actions per policy)
 }
@@ -34,13 +34,13 @@ library PolicyLib {
     function isEqual(Policy calldata p, Policy memory q) public pure returns (bool) {
         return p.validAfter == q.validAfter && p.validUntil == q.validUntil
             && p.erc1271Caller == q.erc1271Caller && p.mode == q.mode
-            && p.callModeLevel == q.callModeLevel && p.validInterval == q.validInterval
+            && p.callTypeLevel == q.callTypeLevel && p.validInterval == q.validInterval
             && p.allowActions == q.allowActions;
     }
 
     function isNull(Policy calldata p) public pure returns (bool) {
         return p.validAfter == 0 && p.validUntil == 0 && p.erc1271Caller == address(0)
-            && p.mode == 0 && p.callModeLevel == 0 && p.validInterval == 0 && p.allowActions == 0;
+            && p.mode == 0 && p.callTypeLevel == 0 && p.validInterval == 0 && p.allowActions == 0;
     }
 
     function verifyUserOp(
@@ -60,11 +60,11 @@ library PolicyLib {
         }
 
         (bytes1 callType, bytes memory executionCallData) = _parseExecuteArgs(op.callData);
-        if (callType >= p.callModeLevel) {
+        if (callType > CALL_TYPE_LEVEL_BATCH || callType > p.callTypeLevel) {
             revert("IAM13 callType not allowed");
         }
 
-        return false;
+        return true;
     }
 
     function verifyERC1271Caller(Policy calldata p, address) public pure returns (bool) {
