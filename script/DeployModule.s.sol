@@ -10,24 +10,14 @@ import { IAMModule } from "src/IAMModule.sol";
 /// @title DeployModuleScript
 contract DeployModuleScript is Script, RegistryDeployer {
     function run() public {
-        // Setup module bytecode, deploy params, and data
         bytes memory bytecode = type(IAMModule).creationCode;
-        bytes memory deployParams = "";
-        bytes memory data = "";
+        bytes32 salt = 0;
 
-        // Get private key for deployment
         vm.startBroadcast(vm.envUint("PK"));
 
-        // Deploy module
-        address module = deployModule({
-            code: bytecode,
-            deployParams: deployParams,
-            salt: bytes32(0),
-            data: data
-        });
+        IAMModule module = new IAMModule{ salt: salt }();
 
-        // Stop broadcast and log module address
         vm.stopBroadcast();
-        console.log("Deploying module at: %s", module);
+        console.log("Deploying module at: %s", address(module));
     }
 }
