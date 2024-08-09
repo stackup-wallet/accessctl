@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.23;
 
+bytes1 constant OPERATOR_ALLOW_ALL = 0x00;
 bytes1 constant OPERATOR_EQ = 0x01;
 bytes1 constant OPERATOR_GT = 0x02;
 bytes1 constant OPERATOR_GTE = 0x03;
@@ -10,6 +11,8 @@ bytes1 constant OPERATOR_LTE = 0x05;
 bytes1 constant LEVEL_ALLOW_FAIL = 0x00;
 bytes1 constant LEVEL_MUST_PASS_FOR_TARGET = 0x01;
 bytes1 constant LEVEL_MUST_PASS = 0x02;
+
+address constant TARGET_ALLOW_ALL = address(0);
 
 /**
  * A data structure for validating outgoing CALLs from the account's execute
@@ -53,7 +56,7 @@ library ActionLib {
 
     function verifyCall(
         Action calldata a,
-        address,
+        address target,
         uint256 value,
         bytes calldata
     )
@@ -61,7 +64,19 @@ library ActionLib {
         pure
         returns (bool ok)
     {
+        if (!_assertTarget(target, a.target)) {
+            return false;
+        }
+
         return _assertEquality(value, a.payableValue, a.payableOperator);
+    }
+
+    function _assertTarget(address val, address ref) internal pure returns (bool) {
+        if (ref == TARGET_ALLOW_ALL) {
+            return true;
+        }
+
+        return val == ref;
     }
 
     function _assertEquality(
@@ -83,6 +98,8 @@ library ActionLib {
             return val < ref;
         } else if (operator == OPERATOR_LTE) {
             return val <= ref;
+        } else if (operator == OPERATOR_ALLOW_ALL) {
+            return true;
         }
 
         // solhint-disable-next-line gas-custom-errors
