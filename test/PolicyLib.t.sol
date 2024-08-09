@@ -45,7 +45,7 @@ contract PolicyLibTest is TestHelper {
         assertFalse(dummy1EtherSinglePolicy.isNull());
     }
 
-    function testUserOpNotCallingExecut() public view {
+    function testUserOpNotCallingExecute() public view {
         PackedUserOperation memory testOp;
         testOp.callData = hex"deadbeef";
 
