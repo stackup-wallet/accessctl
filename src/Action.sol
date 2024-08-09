@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.23;
 
-import { PackedUserOperation } from "modulekit/external/ERC4337.sol";
-
 bytes1 constant OPERATOR_EQ = 0x01;
 bytes1 constant OPERATOR_GT = 0x02;
 bytes1 constant OPERATOR_GTE = 0x03;
@@ -51,5 +49,18 @@ library ActionLib {
         return a.target == address(0) && a.selector == 0 && a.level == 0 && a.argOffset == 0
             && a.argLength == 0 && a.argOperator == 0 && a.payableOperator == 0 && a.unused == 0
             && a.argValue == 0 && a.payableValue == 0;
+    }
+
+    function verifyCall(
+        Action calldata a,
+        address,
+        uint256 value,
+        bytes calldata
+    )
+        public
+        pure
+        returns (bool ok)
+    {
+        return value <= a.payableValue;
     }
 }

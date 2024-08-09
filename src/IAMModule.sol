@@ -97,9 +97,8 @@ contract IAMModule is ERC7579ValidatorBase, ERC7579HookBase {
     /**
      * De-initialize the module with the given data
      *
-     * @param data The data to de-initialize the module with
      */
-    function onUninstall(bytes calldata data) external override {
+    function onUninstall(bytes calldata) external override {
         if (!this.isInitialized(msg.sender)) return;
 
         (uint8 installCount,,,) = _parseCounter(Counters[msg.sender]);
@@ -164,13 +163,17 @@ contract IAMModule is ERC7579ValidatorBase, ERC7579HookBase {
     {
         // Role check
         uint224 roleId = _getRoleIdFromSig(userOp.signature);
+        // solhint-disable-next-line gas-custom-errors
         require(hasRole(msg.sender, roleId), "IAM10 invalid role");
 
         (uint112 signerId, uint112 policyId) = _parseRoleId(roleId);
 
         // Authorization check
         Policy memory p = getPolicy(msg.sender, policyId);
-        require(p.verifyUserOp(userOp), "IAM11 userOp not allowed");
+        Action[] memory a = getActions(msg.sender, p.allowActions);
+        (bool policyOk, string memory reason) = p.verifyUserOp(userOp, a);
+        // solhint-disable-next-line gas-custom-errors
+        require(policyOk, reason);
 
         // Authentication check
         Signer memory signer = getSigner(msg.sender, signerId);
@@ -209,12 +212,14 @@ contract IAMModule is ERC7579ValidatorBase, ERC7579HookBase {
     {
         // Role check
         uint224 roleId = _getRoleIdFromSig(signature);
+        // solhint-disable-next-line gas-custom-errors
         require(hasRole(msg.sender, roleId), "IAM20 invalid role");
 
         (uint112 signerId, uint112 policyId) = _parseRoleId(roleId);
 
         // Authorization check
         Policy memory p = getPolicy(msg.sender, policyId);
+        // solhint-disable-next-line gas-custom-errors
         require(p.verifyERC1271Caller(sender), "IAM21 caller not allowed");
 
         // Authentication check
@@ -258,6 +263,36 @@ contract IAMModule is ERC7579ValidatorBase, ERC7579HookBase {
     function getAction(address account, uint24 actionId) public view returns (Action memory) {
         (uint8 installCount,,,) = _parseCounter(Counters[account]);
         return ActionRegister[_packInstallCountAndActionId(installCount, actionId)][account];
+    }
+
+    /**
+     * Gets all the actions for a given account and array of packed actionIds.
+     * @param account the address of the modular smart account.
+     * @param packedActionIds the packed uint192 value attached to a policy which
+     * contains up to 8 actionIds.
+     */
+    function getActions(
+        address account,
+        uint192 packedActionIds
+    )
+        public
+        view
+        returns (Action[] memory)
+    {
+        (uint8 installCount,,,) = _parseCounter(Counters[account]);
+        uint24[8] memory actionIds = PolicyLib.parsePackedActionIds(packedActionIds);
+
+        Action[] memory actions = new Action[](actionIds.length);
+        for (uint256 i = 0; i < actionIds.length; i++) {
+            uint24 actionId = actionIds[i];
+            if (actionId == 0) {
+                continue;
+            }
+
+            actions[i] =
+                ActionRegister[_packInstallCountAndActionId(installCount, actionId)][account];
+        }
+        return actions;
     }
 
     /**

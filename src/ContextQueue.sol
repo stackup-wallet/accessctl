@@ -23,12 +23,14 @@ library ContextQueue {
     }
 
     function _tloadRef() internal view returns (uint256 ref) {
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             ref := tload(caller())
         }
     }
 
     function _tloadMap(uint256 n) internal view returns (uint256 ref) {
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             let ptr := mload(0x40)
             mstore(ptr, caller())
@@ -42,12 +44,14 @@ library ContextQueue {
     }
 
     function _tstoreRef(uint256 value) internal {
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             tstore(caller(), value)
         }
     }
 
     function _tstoreMap(uint256 n, uint256 value) internal {
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             let ptr := mload(0x40)
             mstore(ptr, caller())

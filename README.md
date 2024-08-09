@@ -158,14 +158,13 @@ flowchart TD
     isExec-->|Yes|getCallType["Get call type"]
     isExec-->|No|iam12([Reverts with IAM12])
     getCallType-->isCallTypeOk{"Is policy's callType ok?"}
-    isCallTypeOk-->|Yes|hydrateActions[Fetch all allowed actions]
+    isCallTypeOk-->|Yes|iterateCalls[Iterate calls]
     isCallTypeOk-->|No|iam13([Reverts with IAM13])
-    hydrateActions-->iterateCalls([Iterate calls])
     iterateCalls-->isLastCall{All calls checked?}
     isLastCall-->|Yes|allCallsOk{"is count(allowedCalls) == calls.length?"}
     allCallsOk-->|Yes|ok
     allCallsOk-->|No|iam14([Reverts with IAM14])
-    isLastCall-->|No|iterateActions([Iterate allowed actions])
+    isLastCall-->|No|iterateActions[Iterate allowed actions]
     iterateActions-->isLastAction{All actions checked?}
     isLastAction-->|Yes|iam14
     isLastAction-->|No|isCallActionMatch{current call matches current action?}
@@ -226,7 +225,7 @@ A policy can enable rate limits on a `UserOperation` via the `validInterval` fie
 
 #### Allow actions
 
-The `allowActions` field links the policy with up to 10 call actions. This is done by packing a max of 10 `uint24` `actionIds` into a single `uint240` value. During authorization, each external call will be cross checked with each action. If the call matches none of the actions, then validation will fail.
+The `allowActions` field links the policy with up to 8 call actions. This is done by packing a max of 8 `uint24` `actionIds` into a single `uint192` value. During authorization, each external call will be cross checked with each action. If the call matches none of the actions, then validation will fail.
 
 ### `Action` data structure
 

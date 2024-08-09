@@ -9,12 +9,27 @@ import {
     CALLTYPE_SINGLE,
     CALLTYPE_BATCH,
     CALLTYPE_STATIC,
-    CALLTYPE_DELEGATECALL
+    CALLTYPE_DELEGATECALL,
+    Execution
 } from "modulekit/external/ERC7579.sol";
 import { Policy, PolicyLib, MODE_ADMIN } from "src/Policy.sol";
+import { Action } from "src/Action.sol";
 
 contract PolicyLibTest is TestHelper {
     using PolicyLib for Policy;
+
+    Action[] public nullActions;
+    Action[] public sendMax5EtherActions;
+    Action[] public sendMax1EtherActions;
+
+    Execution[] public executions;
+
+    constructor() {
+        sendMax5EtherActions.push(dummySendMax5EtherAction);
+        sendMax1EtherActions.push(dummySendMax1EtherAction);
+        executions.push(Execution(address(0), uint256(0.5 ether), ""));
+        executions.push(Execution(address(0), uint256(0.57 ether), ""));
+    }
 
     function testIsEqual() public view {
         assertTrue(dummy1EtherSinglePolicy.isEqual(dummy1EtherSinglePolicy));
@@ -27,63 +42,114 @@ contract PolicyLibTest is TestHelper {
         assertFalse(dummy1EtherSinglePolicy.isNull());
     }
 
-    function testUserOpNotCallingExecute() public {
+    function testUserOpNotCallingExecut() public view {
         PackedUserOperation memory testOp;
         testOp.callData = hex"deadbeef";
 
-        assertTrue(dummyAdminPolicy.verifyUserOp(testOp));
+        (bool ok, string memory reason) = dummyAdminPolicy.verifyUserOp(testOp, nullActions);
+        assertTrue(ok);
+        assertEq(reason, "");
 
-        vm.expectRevert("IAM12 not calling execute");
-        dummy1EtherSinglePolicy.verifyUserOp(testOp);
+        (ok, reason) = dummy1EtherSinglePolicy.verifyUserOp(testOp, sendMax1EtherActions);
+        assertFalse(ok);
+        assertEq(reason, "IAM12 not calling execute");
     }
 
-    function testUserOpCallTypeSingle() public {
+    function testUserOpCallTypeSingle() public view {
         PackedUserOperation memory callTypeSingeOp;
         callTypeSingeOp.callData = abi.encodeWithSelector(
-            IERC7579Account.execute.selector, bytes32(CallType.unwrap(CALLTYPE_SINGLE)), ""
+            IERC7579Account.execute.selector,
+            bytes32(CallType.unwrap(CALLTYPE_SINGLE)),
+            abi.encodePacked(address(0), uint256(0.5 ether), hex"deadbeef")
         );
 
-        assertTrue(dummyAdminPolicy.verifyUserOp(callTypeSingeOp));
-        assertTrue(dummy5EtherBatchPolicy.verifyUserOp(callTypeSingeOp));
-        assertTrue(dummy1EtherSinglePolicy.verifyUserOp(callTypeSingeOp));
+        (bool ok, string memory reason) =
+            dummyAdminPolicy.verifyUserOp(callTypeSingeOp, nullActions);
+        assertTrue(ok);
+        assertEq(reason, "");
+        (ok, reason) = dummy5EtherBatchPolicy.verifyUserOp(callTypeSingeOp, sendMax5EtherActions);
+        assertTrue(ok);
+        assertEq(reason, "");
+        (ok, reason) = dummy1EtherSinglePolicy.verifyUserOp(callTypeSingeOp, sendMax1EtherActions);
+        assertTrue(ok);
+        assertEq(reason, "");
     }
 
-    function testUserOperationCallTypeBatch() public {
+    function testUserOperationCallTypeBatch() public view {
         PackedUserOperation memory callTypeBatchOp;
         callTypeBatchOp.callData = abi.encodeWithSelector(
-            IERC7579Account.execute.selector, bytes32(CallType.unwrap(CALLTYPE_BATCH)), ""
+            IERC7579Account.execute.selector,
+            bytes32(CallType.unwrap(CALLTYPE_BATCH)),
+            abi.encode(executions)
         );
 
-        assertTrue(dummyAdminPolicy.verifyUserOp(callTypeBatchOp));
-        assertTrue(dummy5EtherBatchPolicy.verifyUserOp(callTypeBatchOp));
-        vm.expectRevert("IAM13 callType not allowed");
-        dummy1EtherSinglePolicy.verifyUserOp(callTypeBatchOp);
+        (bool ok, string memory reason) =
+            dummyAdminPolicy.verifyUserOp(callTypeBatchOp, nullActions);
+        assertTrue(ok);
+        assertEq(reason, "");
+        (ok, reason) = dummy5EtherBatchPolicy.verifyUserOp(callTypeBatchOp, sendMax5EtherActions);
+        assertTrue(ok);
+        assertEq(reason, "");
+        (ok, reason) = dummy1EtherSinglePolicy.verifyUserOp(callTypeBatchOp, sendMax1EtherActions);
+        assertFalse(ok);
+        assertEq(reason, "IAM13 callType not allowed");
     }
 
-    function testUserOperationCallTypeStatic() public {
+    function testUserOperationCallTypeStatic() public view {
         PackedUserOperation memory callTypeStaticOp;
         callTypeStaticOp.callData = abi.encodeWithSelector(
             IERC7579Account.execute.selector, bytes32(CallType.unwrap(CALLTYPE_STATIC)), ""
         );
 
-        assertTrue(dummyAdminPolicy.verifyUserOp(callTypeStaticOp));
-        vm.expectRevert("IAM13 callType not allowed");
-        dummy5EtherBatchPolicy.verifyUserOp(callTypeStaticOp);
-        vm.expectRevert("IAM13 callType not allowed");
-        dummy1EtherSinglePolicy.verifyUserOp(callTypeStaticOp);
+        (bool ok, string memory reason) =
+            dummyAdminPolicy.verifyUserOp(callTypeStaticOp, nullActions);
+        assertTrue(ok);
+        assertEq(reason, "");
+        (ok, reason) = dummy5EtherBatchPolicy.verifyUserOp(callTypeStaticOp, sendMax5EtherActions);
+        assertFalse(ok);
+        assertEq(reason, "IAM13 callType not allowed");
+        (ok, reason) = dummy1EtherSinglePolicy.verifyUserOp(callTypeStaticOp, sendMax1EtherActions);
+        assertFalse(ok);
+        assertEq(reason, "IAM13 callType not allowed");
     }
 
-    function testUserOperationCallTypeDelegate() public {
+    function testUserOperationCallTypeDelegate() public view {
         PackedUserOperation memory callTypeDelegateOp;
         callTypeDelegateOp.callData = abi.encodeWithSelector(
             IERC7579Account.execute.selector, bytes32(CallType.unwrap(CALLTYPE_DELEGATECALL)), ""
         );
 
-        assertTrue(dummyAdminPolicy.verifyUserOp(callTypeDelegateOp));
-        vm.expectRevert("IAM13 callType not allowed");
-        dummy5EtherBatchPolicy.verifyUserOp(callTypeDelegateOp);
-        vm.expectRevert("IAM13 callType not allowed");
-        dummy1EtherSinglePolicy.verifyUserOp(callTypeDelegateOp);
+        (bool ok, string memory reason) =
+            dummyAdminPolicy.verifyUserOp(callTypeDelegateOp, nullActions);
+        assertTrue(ok);
+        assertEq(reason, "");
+        (ok, reason) = dummy5EtherBatchPolicy.verifyUserOp(callTypeDelegateOp, sendMax5EtherActions);
+        assertFalse(ok);
+        assertEq(reason, "IAM13 callType not allowed");
+        (ok, reason) =
+            dummy1EtherSinglePolicy.verifyUserOp(callTypeDelegateOp, sendMax1EtherActions);
+        assertFalse(ok);
+        assertEq(reason, "IAM13 callType not allowed");
+    }
+
+    function testUserOperationExecutionCallDataSingle() public view {
+        PackedUserOperation memory callTypeSingeOp;
+        callTypeSingeOp.callData = abi.encodeWithSelector(
+            IERC7579Account.execute.selector,
+            bytes32(CallType.unwrap(CALLTYPE_SINGLE)),
+            abi.encodePacked(address(0), uint256(2 ether), "")
+        );
+
+        (bool ok, string memory reason) =
+            dummyAdminPolicy.verifyUserOp(callTypeSingeOp, nullActions);
+        assertTrue(ok);
+        assertEq(reason, "");
+        (ok, reason) = dummy5EtherBatchPolicy.verifyUserOp(callTypeSingeOp, sendMax5EtherActions);
+        assertTrue(ok);
+        assertEq(reason, "");
+        (ok, reason) = dummy1EtherSinglePolicy.verifyUserOp(callTypeSingeOp, sendMax1EtherActions);
+        assertFalse(ok);
+        assertEq(reason, "IAM14 execution not allowed");
     }
 
     function testVerifyERC1271Sender() public view {
