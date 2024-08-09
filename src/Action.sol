@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.23;
 
+bytes1 constant OPERATOR_ALLOW_ALL = 0x00;
 bytes1 constant OPERATOR_EQ = 0x01;
 bytes1 constant OPERATOR_GT = 0x02;
 bytes1 constant OPERATOR_GTE = 0x03;
@@ -97,8 +98,11 @@ library ActionLib {
             return val < ref;
         } else if (operator == OPERATOR_LTE) {
             return val <= ref;
+        } else if (operator == OPERATOR_ALLOW_ALL) {
+            return true;
         }
 
-        return true;
+        // solhint-disable-next-line gas-custom-errors
+        revert("IAM14 unexpected flow");
     }
 }
