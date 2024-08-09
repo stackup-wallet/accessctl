@@ -22,13 +22,16 @@ contract PolicyLibTest is TestHelper {
     Action[] public sendMax5EtherActions;
     Action[] public sendMax1EtherActions;
 
-    Execution[] public executions;
+    Execution[] public executionsLessThan1Eth;
+    Execution[] public executionsLessThan10Eth;
 
     constructor() {
         sendMax5EtherActions.push(dummySendMax5EtherAction);
         sendMax1EtherActions.push(dummySendMax1EtherAction);
-        executions.push(Execution(address(0), uint256(0.5 ether), ""));
-        executions.push(Execution(address(0), uint256(0.57 ether), ""));
+        executionsLessThan1Eth.push(Execution(address(0), uint256(0.5 ether), ""));
+        executionsLessThan1Eth.push(Execution(address(0), uint256(0.75 ether), ""));
+        executionsLessThan10Eth.push(Execution(address(0), uint256(5 ether), ""));
+        executionsLessThan10Eth.push(Execution(address(0), uint256(7.5 ether), ""));
     }
 
     function testIsEqual() public view {
@@ -80,7 +83,7 @@ contract PolicyLibTest is TestHelper {
         callTypeBatchOp.callData = abi.encodeWithSelector(
             IERC7579Account.execute.selector,
             bytes32(CallType.unwrap(CALLTYPE_BATCH)),
-            abi.encode(executions)
+            abi.encode(executionsLessThan1Eth)
         );
 
         (bool ok, string memory reason) =
@@ -132,7 +135,7 @@ contract PolicyLibTest is TestHelper {
         assertEq(reason, "IAM13 callType not allowed");
     }
 
-    function testUserOperationExecutionCallDataSingle() public view {
+    function testUserOperationExecutionCallDataSingleFail() public view {
         PackedUserOperation memory callTypeSingeOp;
         callTypeSingeOp.callData = abi.encodeWithSelector(
             IERC7579Account.execute.selector,
@@ -150,6 +153,26 @@ contract PolicyLibTest is TestHelper {
         (ok, reason) = dummy1EtherSinglePolicy.verifyUserOp(callTypeSingeOp, sendMax1EtherActions);
         assertFalse(ok);
         assertEq(reason, "IAM14 execution not allowed");
+    }
+
+    function testUserOperationExecutionCallDataBatchFail() public view {
+        PackedUserOperation memory callTypeBatchOp;
+        callTypeBatchOp.callData = abi.encodeWithSelector(
+            IERC7579Account.execute.selector,
+            bytes32(CallType.unwrap(CALLTYPE_BATCH)),
+            abi.encode(executionsLessThan10Eth)
+        );
+
+        (bool ok, string memory reason) =
+            dummyAdminPolicy.verifyUserOp(callTypeBatchOp, nullActions);
+        assertTrue(ok);
+        assertEq(reason, "");
+        (ok, reason) = dummy5EtherBatchPolicy.verifyUserOp(callTypeBatchOp, sendMax5EtherActions);
+        assertFalse(ok);
+        assertEq(reason, "IAM14 execution not allowed");
+        (ok, reason) = dummy1EtherSinglePolicy.verifyUserOp(callTypeBatchOp, sendMax1EtherActions);
+        assertFalse(ok);
+        assertEq(reason, "IAM13 callType not allowed");
     }
 
     function testVerifyERC1271Sender() public view {
