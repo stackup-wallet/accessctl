@@ -45,7 +45,7 @@ contract PolicyLibTest is TestHelper {
         assertFalse(dummy1EtherSinglePolicy.isNull());
     }
 
-    function testUserOpNotCallingExecute() public view {
+    function testUserOperationNotCallingExecute() public view {
         PackedUserOperation memory testOp;
         testOp.callData = hex"deadbeef";
 
@@ -58,7 +58,7 @@ contract PolicyLibTest is TestHelper {
         assertEq(reason, "IAM12 not calling execute");
     }
 
-    function testUserOpCallTypeSingle() public view {
+    function testUserOperationCallTypeSingle() public view {
         PackedUserOperation memory callTypeSingeOp;
         callTypeSingeOp.callData = abi.encodeWithSelector(
             IERC7579Account.execute.selector,
