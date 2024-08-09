@@ -11,7 +11,8 @@ import {
     OPERATOR_GT,
     OPERATOR_GTE,
     OPERATOR_LT,
-    OPERATOR_LTE
+    OPERATOR_LTE,
+    TARGET_ALLOW_ALL
 } from "src/Action.sol";
 
 contract ActionLibTest is TestHelper {
@@ -30,6 +31,7 @@ contract ActionLibTest is TestHelper {
 
     function testVerifyCallTargetAllowAll() public pure {
         Action memory action;
+        action.target = TARGET_ALLOW_ALL;
 
         assertTrue(action.verifyCall(address(0xdead), 0, ""));
     }
