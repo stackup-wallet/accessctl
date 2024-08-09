@@ -27,6 +27,28 @@ contract ActionLibTest is TestHelper {
         assertFalse(dummySendMax1EtherAction.isNull());
     }
 
+    function testVerifyCallTargetAllowAll() public pure {
+        Action memory action;
+
+        assertTrue(action.verifyCall(address(0xdead), 0, ""));
+    }
+
+    function testVerifyCallTargetAllowOne() public pure {
+        Action memory action;
+        action.target = address(0xbeef);
+
+        assertFalse(action.verifyCall(address(0xdead), 0, ""));
+    }
+
+    function testVerifyCallPayableValueAllowAll() public pure {
+        Action memory action;
+        action.payableValue = 1 ether;
+
+        assertTrue(action.verifyCall(address(0), 1 ether, ""));
+        assertTrue(action.verifyCall(address(0), 0.5 ether, ""));
+        assertTrue(action.verifyCall(address(0), 2 ether, ""));
+    }
+
     function testVerifyCallPayableValueEQ() public pure {
         Action memory action;
         action.payableValue = 1 ether;
