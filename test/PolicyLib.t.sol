@@ -55,7 +55,7 @@ contract PolicyLibTest is TestHelper {
 
         (ok, reason) = dummy1EtherSinglePolicy.verifyUserOp(testOp, sendMax1EtherActions);
         assertFalse(ok);
-        assertEq(reason, "IAM12 not calling execute");
+        assertEq(reason, "IAM11 not calling execute");
     }
 
     function testUserOperationCallTypeSingle() public view {
@@ -95,7 +95,7 @@ contract PolicyLibTest is TestHelper {
         assertEq(reason, "");
         (ok, reason) = dummy1EtherSinglePolicy.verifyUserOp(callTypeBatchOp, sendMax1EtherActions);
         assertFalse(ok);
-        assertEq(reason, "IAM13 callType not allowed");
+        assertEq(reason, "IAM12 callType not allowed");
     }
 
     function testUserOperationCallTypeStatic() public view {
@@ -110,10 +110,10 @@ contract PolicyLibTest is TestHelper {
         assertEq(reason, "");
         (ok, reason) = dummy5EtherBatchPolicy.verifyUserOp(callTypeStaticOp, sendMax5EtherActions);
         assertFalse(ok);
-        assertEq(reason, "IAM13 callType not allowed");
+        assertEq(reason, "IAM12 callType not allowed");
         (ok, reason) = dummy1EtherSinglePolicy.verifyUserOp(callTypeStaticOp, sendMax1EtherActions);
         assertFalse(ok);
-        assertEq(reason, "IAM13 callType not allowed");
+        assertEq(reason, "IAM12 callType not allowed");
     }
 
     function testUserOperationCallTypeDelegate() public view {
@@ -128,11 +128,11 @@ contract PolicyLibTest is TestHelper {
         assertEq(reason, "");
         (ok, reason) = dummy5EtherBatchPolicy.verifyUserOp(callTypeDelegateOp, sendMax5EtherActions);
         assertFalse(ok);
-        assertEq(reason, "IAM13 callType not allowed");
+        assertEq(reason, "IAM12 callType not allowed");
         (ok, reason) =
             dummy1EtherSinglePolicy.verifyUserOp(callTypeDelegateOp, sendMax1EtherActions);
         assertFalse(ok);
-        assertEq(reason, "IAM13 callType not allowed");
+        assertEq(reason, "IAM12 callType not allowed");
     }
 
     function testUserOperationExecutionCallDataSingleFail() public view {
@@ -152,7 +152,7 @@ contract PolicyLibTest is TestHelper {
         assertEq(reason, "");
         (ok, reason) = dummy1EtherSinglePolicy.verifyUserOp(callTypeSingeOp, sendMax1EtherActions);
         assertFalse(ok);
-        assertEq(reason, "IAM14 execution not allowed");
+        assertEq(reason, "IAM13 execution not allowed");
     }
 
     function testUserOperationExecutionCallDataBatchFail() public view {
@@ -169,10 +169,10 @@ contract PolicyLibTest is TestHelper {
         assertEq(reason, "");
         (ok, reason) = dummy5EtherBatchPolicy.verifyUserOp(callTypeBatchOp, sendMax5EtherActions);
         assertFalse(ok);
-        assertEq(reason, "IAM14 execution not allowed");
+        assertEq(reason, "IAM13 execution not allowed");
         (ok, reason) = dummy1EtherSinglePolicy.verifyUserOp(callTypeBatchOp, sendMax1EtherActions);
         assertFalse(ok);
-        assertEq(reason, "IAM13 callType not allowed");
+        assertEq(reason, "IAM12 callType not allowed");
     }
 
     function testVerifyERC1271Sender() public view {

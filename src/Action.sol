@@ -61,6 +61,31 @@ library ActionLib {
         pure
         returns (bool ok)
     {
-        return value <= a.payableValue;
+        return _assertEquality(value, a.payableValue, a.payableOperator);
+    }
+
+    function _assertEquality(
+        uint256 val,
+        uint256 ref,
+        bytes1 operator
+    )
+        internal
+        pure
+        returns (bool)
+    {
+        if (operator == OPERATOR_EQ) {
+            return val == ref;
+        } else if (operator == OPERATOR_GT) {
+            return val > ref;
+        } else if (operator == OPERATOR_GTE) {
+            return val >= ref;
+        } else if (operator == OPERATOR_LT) {
+            return val < ref;
+        } else if (operator == OPERATOR_LTE) {
+            return val <= ref;
+        }
+
+        // solhint-disable-next-line gas-custom-errors
+        revert("IAM14 unexpected flow");
     }
 }
