@@ -6,6 +6,7 @@ import { PackedUserOperation } from "modulekit/external/ERC4337.sol";
 import {
     Action,
     ActionLib,
+    OPERATOR_ALLOW_ALL,
     OPERATOR_EQ,
     OPERATOR_GT,
     OPERATOR_GTE,
@@ -42,7 +43,7 @@ contract ActionLibTest is TestHelper {
 
     function testVerifyCallPayableValueAllowAll() public pure {
         Action memory action;
-        action.payableValue = 1 ether;
+        action.payableOperator = OPERATOR_ALLOW_ALL;
 
         assertTrue(action.verifyCall(address(0), 1 ether, ""));
         assertTrue(action.verifyCall(address(0), 0.5 ether, ""));
