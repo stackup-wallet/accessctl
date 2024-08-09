@@ -60,12 +60,12 @@ library PolicyLib {
         }
 
         if (!_isCallingExecute(op.callData)) {
-            return (false, "IAM12 not calling execute");
+            return (false, "IAM11 not calling execute");
         }
 
         bytes1 callType = _parseCallType(op.callData);
         if (callType > CALL_TYPE_LEVEL_BATCH || callType > p.callTypeLevel) {
-            return (false, "IAM13 callType not allowed");
+            return (false, "IAM12 callType not allowed");
         }
 
         return _verifyExecutionCallData(callType, op.callData, actions);
@@ -121,7 +121,7 @@ library PolicyLib {
             return _verifyExecutionCallDataBatch(opCallData, actions);
         }
 
-        return (false, "IAM15 unexpected flow");
+        return (false, "IAM14 unexpected flow");
     }
 
     function _verifyExecutionCallDataSingle(
@@ -145,7 +145,7 @@ library PolicyLib {
                 return (true, "");
             }
         }
-        return (false, "IAM14 execution not allowed");
+        return (false, "IAM13 execution not allowed");
     }
 
     function _parseExecutionCallDataSingle(bytes calldata call)
@@ -193,7 +193,7 @@ library PolicyLib {
                 }
             }
             if (noActionsPassed) {
-                return (false, "IAM14 execution not allowed");
+                return (false, "IAM13 execution not allowed");
             }
         }
         return (true, "");
