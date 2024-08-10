@@ -17,7 +17,6 @@ import { IAMModule } from "src/IAMModule.sol";
 import { Signer } from "src/Signer.sol";
 import { Policy, MODE_ADMIN, CALL_TYPE_LEVEL_SINGLE, CALL_TYPE_LEVEL_BATCH } from "src/Policy.sol";
 import { Action, OPERATOR_LTE } from "src/Action.sol";
-import { EIP7212Mock } from "test/mock/EIP7212Mock.sol";
 
 abstract contract TestHelper is RhinestoneModuleKit, Test {
     event SignerAdded(address indexed account, uint112 indexed signerId, uint256 x, uint256 y);
@@ -188,10 +187,6 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
 
     function setUp() public {
         init();
-
-        // TODO: Remove once modulekit supports EIP-7212
-        EIP7212Mock eip7212Mock = new EIP7212Mock();
-        vm.etch(address(0x100), address(eip7212Mock).code);
 
         // Create the module
         module = new IAMModule();
