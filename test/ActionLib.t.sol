@@ -12,7 +12,8 @@ import {
     OPERATOR_GTE,
     OPERATOR_LT,
     OPERATOR_LTE,
-    TARGET_ALLOW_ALL
+    TARGET_ALLOW_ALL,
+    SELECTOR_ALLOW_ALL
 } from "src/Action.sol";
 
 contract ActionLibTest is TestHelper {
@@ -41,6 +42,27 @@ contract ActionLibTest is TestHelper {
         action.target = address(0xbeef);
 
         assertFalse(action.verifyCall(address(0xdead), 0, ""));
+    }
+
+    function testVerifyCallSelectorAllowAll() public pure {
+        Action memory action;
+        action.selector = SELECTOR_ALLOW_ALL;
+
+        assertTrue(action.verifyCall(address(0), 0, hex"BAAAAAAD"));
+    }
+
+    function testVerifyCallSelectorAllowOne() public pure {
+        Action memory action;
+        action.selector = bytes4(0xdeadbeef);
+
+        assertFalse(action.verifyCall(address(0), 0, hex"BAAAAAAD"));
+    }
+
+    function testVerifyCallSelectorBadData() public pure {
+        Action memory action;
+        action.selector = bytes4(0xdeadbeef);
+
+        assertFalse(action.verifyCall(address(0), 0, hex"BAAD"));
     }
 
     function testVerifyCallPayableValueAllowAll() public pure {

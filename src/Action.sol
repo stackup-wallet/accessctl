@@ -14,6 +14,8 @@ bytes1 constant LEVEL_MUST_PASS = 0x02;
 
 address constant TARGET_ALLOW_ALL = address(0);
 
+bytes4 constant SELECTOR_ALLOW_ALL = bytes4(0);
+
 /**
  * A data structure for validating outgoing CALLs from the account's execute
  * function.
@@ -58,46 +60,58 @@ library ActionLib {
         Action calldata a,
         address target,
         uint256 value,
-        bytes calldata
+        bytes calldata data
     )
         public
         pure
         returns (bool ok)
     {
-        if (!_assertTarget(target, a.target)) {
+        if (!_assertTarget(a.target, target)) {
             return false;
         }
 
-        return _assertEquality(value, a.payableValue, a.payableOperator);
+        if (!_assertSelector(a.selector, data)) {
+            return false;
+        }
+
+        return _assertEquality(a.payableValue, a.payableOperator, value);
     }
 
-    function _assertTarget(address val, address ref) internal pure returns (bool) {
+    function _assertTarget(address ref, address target) internal pure returns (bool) {
         if (ref == TARGET_ALLOW_ALL) {
             return true;
         }
 
-        return val == ref;
+        return target == ref;
+    }
+
+    function _assertSelector(bytes4 ref, bytes calldata data) internal pure returns (bool) {
+        if (data.length == 0 || ref == SELECTOR_ALLOW_ALL) {
+            return true;
+        }
+
+        return data.length >= 4 && bytes4(data[:4]) == ref;
     }
 
     function _assertEquality(
-        uint256 val,
         uint256 ref,
-        bytes1 operator
+        bytes1 operator,
+        uint256 value
     )
         internal
         pure
         returns (bool)
     {
         if (operator == OPERATOR_EQ) {
-            return val == ref;
+            return value == ref;
         } else if (operator == OPERATOR_GT) {
-            return val > ref;
+            return value > ref;
         } else if (operator == OPERATOR_GTE) {
-            return val >= ref;
+            return value >= ref;
         } else if (operator == OPERATOR_LT) {
-            return val < ref;
+            return value < ref;
         } else if (operator == OPERATOR_LTE) {
-            return val <= ref;
+            return value <= ref;
         } else if (operator == OPERATOR_ALLOW_ALL) {
             return true;
         }
