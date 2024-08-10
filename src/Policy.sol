@@ -148,7 +148,9 @@ library PolicyLib {
         return (false, "IAM13 execution not allowed");
     }
 
-    function _parseExecutionCallDataSingle(bytes calldata call)
+    function _parseExecutionCallDataSingle(
+        bytes calldata call
+    )
         internal
         pure
         returns (address target, uint256 value, bytes calldata data)
@@ -199,7 +201,9 @@ library PolicyLib {
         return (true, "");
     }
 
-    function _parseExecutionCallDataBatch(bytes calldata call)
+    function _parseExecutionCallDataBatch(
+        bytes calldata call
+    )
         internal
         pure
         returns (Execution[] memory executions)

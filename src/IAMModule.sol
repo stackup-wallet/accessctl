@@ -327,7 +327,9 @@ contract IAMModule is ERC7579ValidatorBase, ERC7579HookBase {
     function removeSigner(uint112 signerId) external {
         (uint8 installCount,,,) = _parseCounter(Counters[msg.sender]);
 
-        delete SignerRegister[_packInstallCountAndId(installCount, signerId)][msg.sender];
+        delete SignerRegister[_packInstallCountAndId(installCount, signerId)][
+            msg.sender
+        ];
         emit SignerRemoved(msg.sender, signerId);
     }
 
@@ -351,7 +353,9 @@ contract IAMModule is ERC7579ValidatorBase, ERC7579HookBase {
     function removePolicy(uint112 policyId) external {
         (uint8 installCount,,,) = _parseCounter(Counters[msg.sender]);
 
-        delete PolicyRegister[_packInstallCountAndId(installCount, policyId)][msg.sender];
+        delete PolicyRegister[_packInstallCountAndId(installCount, policyId)][
+            msg.sender
+        ];
         emit PolicyRemoved(msg.sender, policyId);
     }
 
@@ -375,7 +379,9 @@ contract IAMModule is ERC7579ValidatorBase, ERC7579HookBase {
     function removeAction(uint24 actionId) external {
         (uint8 installCount,,,) = _parseCounter(Counters[msg.sender]);
 
-        delete ActionRegister[_packInstallCountAndActionId(installCount, actionId)][msg.sender];
+        delete ActionRegister[
+            _packInstallCountAndActionId(installCount, actionId)
+        ][msg.sender];
         emit ActionRemoved(msg.sender, actionId);
     }
 
@@ -490,10 +496,12 @@ contract IAMModule is ERC7579ValidatorBase, ERC7579HookBase {
         returns (uint256)
     {
         return uint256(installCount) | (uint256(signerId) << 8) | (uint256(policyId) << (8 + 112))
-            | (uint256(actionId) << 8 + 112 + 112);
+            | (uint256(actionId) << (8 + 112 + 112));
     }
 
-    function _parseCounter(uint256 counter)
+    function _parseCounter(
+        uint256 counter
+    )
         internal
         pure
         returns (uint8 installCount, uint112 signerId, uint112 policyId, uint24 actionId)
@@ -541,7 +549,9 @@ contract IAMModule is ERC7579ValidatorBase, ERC7579HookBase {
         return uint224(signerId) | (uint224(policyId) << 112);
     }
 
-    function _parseRoleId(uint224 roleId)
+    function _parseRoleId(
+        uint224 roleId
+    )
         internal
         pure
         returns (uint112 signerId, uint112 policyId)
