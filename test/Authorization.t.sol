@@ -6,8 +6,6 @@ import { IAMModule } from "src/IAMModule.sol";
 import { Policy, PolicyLib, MODE_ADMIN } from "src/Policy.sol";
 import { Action, ActionLib } from "src/Action.sol";
 
-import "forge-std/console.sol";
-
 contract AuthorizationTest is TestHelper {
     using PolicyLib for Policy;
     using ActionLib for Action;
