@@ -16,7 +16,7 @@ import { FCL_Elliptic_ZZ } from "FreshCryptoLib/FCL_elliptic.sol";
 import { IAMModule } from "src/IAMModule.sol";
 import { Signer } from "src/Signer.sol";
 import { Policy, MODE_ADMIN, CALL_TYPE_LEVEL_SINGLE, CALL_TYPE_LEVEL_BATCH } from "src/Policy.sol";
-import { Action, OPERATOR_LTE } from "src/Action.sol";
+import { Action, LEVEL_MUST_PASS, OPERATOR_LTE, OPERATOR_GT } from "src/Action.sol";
 
 abstract contract TestHelper is RhinestoneModuleKit, Test {
     event SignerAdded(address indexed account, uint112 indexed signerId, uint256 x, uint256 y);
@@ -78,6 +78,7 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
 
     Action public dummySendMax1EtherAction;
     Action public dummySendMax5EtherAction;
+    Action public dummyAlwaysFailAction;
     uint24 constant rootActionId = 0;
 
     uint224 constant rootRoleId = 0;
@@ -95,6 +96,10 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
         dummySendMax1EtherAction.payableOperator = OPERATOR_LTE;
         dummySendMax5EtherAction.payableValue = 5 ether;
         dummySendMax5EtherAction.payableOperator = OPERATOR_LTE;
+
+        dummyAlwaysFailAction.level = LEVEL_MUST_PASS;
+        dummyAlwaysFailAction.payableValue = type(uint256).max;
+        dummyAlwaysFailAction.payableOperator = OPERATOR_GT;
     }
 
     function _webAuthnSign(

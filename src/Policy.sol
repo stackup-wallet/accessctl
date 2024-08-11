@@ -135,17 +135,24 @@ library PolicyLib {
         (address target, uint256 value, bytes memory data) =
             _parseExecutionCallDataSingle(opCallData);
 
+        bool actionMatched = false;
         for (uint256 i = 0; i < actions.length; i++) {
             Action memory action = actions[i];
             if (action.isNull()) {
                 continue;
             }
 
-            if (action.verifyCall(target, value, data)) {
-                return (true, "");
+            (bool callOk, bool revertOnFail) = action.verifyCall(target, value, data);
+            if (callOk && !revertOnFail) {
+                actionMatched = true;
+            } else if (revertOnFail) {
+                return (false, "IAM13 execution not allowed");
             }
         }
-        return (false, "IAM13 execution not allowed");
+        if (!actionMatched) {
+            return (false, "IAM13 execution not allowed");
+        }
+        return (true, "");
     }
 
     function _parseExecutionCallDataSingle(
@@ -182,19 +189,22 @@ library PolicyLib {
         for (uint256 i = 0; i < executions.length; i++) {
             Execution memory execution = executions[i];
 
-            bool noActionsPassed = true;
+            bool actionMatched = false;
             for (uint256 j = 0; j < actions.length; j++) {
                 Action memory action = actions[j];
                 if (action.isNull()) {
                     continue;
                 }
 
-                if (action.verifyCall(execution.target, execution.value, execution.callData)) {
-                    noActionsPassed = false;
-                    break;
+                (bool callOk, bool revertOnFail) =
+                    action.verifyCall(execution.target, execution.value, execution.callData);
+                if (callOk && !revertOnFail) {
+                    actionMatched = true;
+                } else if (revertOnFail) {
+                    return (false, "IAM13 execution not allowed");
                 }
             }
-            if (noActionsPassed) {
+            if (!actionMatched) {
                 return (false, "IAM13 execution not allowed");
             }
         }

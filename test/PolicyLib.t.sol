@@ -21,6 +21,7 @@ contract PolicyLibTest is TestHelper {
     Action[] public nullActions;
     Action[] public sendMax5EtherActions;
     Action[] public sendMax1EtherActions;
+    Action[] public guaranteeFailActions;
 
     Execution[] public executionsLessThan1Eth;
     Execution[] public executionsLessThan10Eth;
@@ -28,6 +29,8 @@ contract PolicyLibTest is TestHelper {
     constructor() {
         sendMax5EtherActions.push(dummySendMax5EtherAction);
         sendMax1EtherActions.push(dummySendMax1EtherAction);
+        guaranteeFailActions.push(dummySendMax1EtherAction);
+        guaranteeFailActions.push(dummyAlwaysFailAction);
         executionsLessThan1Eth.push(Execution(address(0), uint256(0.5 ether), ""));
         executionsLessThan1Eth.push(Execution(address(0), uint256(0.75 ether), ""));
         executionsLessThan10Eth.push(Execution(address(0), uint256(5 ether), ""));
@@ -173,6 +176,34 @@ contract PolicyLibTest is TestHelper {
         (ok, reason) = dummy1EtherSinglePolicy.verifyUserOp(callTypeBatchOp, sendMax1EtherActions);
         assertFalse(ok);
         assertEq(reason, "IAM12 callType not allowed");
+    }
+
+    function testUserOperationExecutionCallDataSingleRevert() public {
+        PackedUserOperation memory callTypeSingeOp;
+        callTypeSingeOp.callData = abi.encodeWithSelector(
+            IERC7579Account.execute.selector,
+            bytes32(CallType.unwrap(CALLTYPE_SINGLE)),
+            abi.encodePacked(address(0), uint256(0.5 ether), hex"deadbeef")
+        );
+
+        (bool ok, string memory reason) =
+            dummy1EtherSinglePolicy.verifyUserOp(callTypeSingeOp, guaranteeFailActions);
+        assertFalse(ok);
+        assertEq(reason, "IAM13 execution not allowed");
+    }
+
+    function testUserOperationExecutionCallDataBatchRevert() public view {
+        PackedUserOperation memory callTypeBatchOp;
+        callTypeBatchOp.callData = abi.encodeWithSelector(
+            IERC7579Account.execute.selector,
+            bytes32(CallType.unwrap(CALLTYPE_BATCH)),
+            abi.encode(executionsLessThan1Eth)
+        );
+
+        (bool ok, string memory reason) =
+            dummy5EtherBatchPolicy.verifyUserOp(callTypeBatchOp, guaranteeFailActions);
+        assertFalse(ok);
+        assertEq(reason, "IAM13 execution not allowed");
     }
 
     function testVerifyERC1271Sender() public view {

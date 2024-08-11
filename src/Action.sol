@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.23;
 
+bytes1 constant LEVEL_ALLOW_FAIL = 0x00;
+bytes1 constant LEVEL_MUST_PASS_FOR_TARGET = 0x01;
+bytes1 constant LEVEL_MUST_PASS = 0x02;
+
 bytes1 constant OPERATOR_ALLOW_ALL = 0x00;
 bytes1 constant OPERATOR_EQ = 0x01;
 bytes1 constant OPERATOR_GT = 0x02;
 bytes1 constant OPERATOR_GTE = 0x03;
 bytes1 constant OPERATOR_LT = 0x04;
 bytes1 constant OPERATOR_LTE = 0x05;
-
-bytes1 constant LEVEL_ALLOW_FAIL = 0x00;
-bytes1 constant LEVEL_MUST_PASS_FOR_TARGET = 0x01;
-bytes1 constant LEVEL_MUST_PASS = 0x02;
 
 address constant TARGET_ALLOW_ALL = address(0);
 
@@ -66,21 +66,29 @@ library ActionLib {
     )
         public
         pure
-        returns (bool ok)
+        returns (bool callOk, bool revertOnFail)
     {
+        if (a.level == LEVEL_MUST_PASS) {
+            revertOnFail = true;
+        }
+
         if (!_assertTarget(a.target, target)) {
-            return false;
+            return (false, revertOnFail);
+        }
+
+        if (a.level == LEVEL_MUST_PASS_FOR_TARGET) {
+            revertOnFail = true;
         }
 
         if (!_assertSelector(a.selector, data)) {
-            return false;
+            return (false, revertOnFail);
         }
 
         if (!_assertArg(a.argValue, a.argOffset, a.argLength, a.argOperator, data)) {
-            return false;
+            return (false, revertOnFail);
         }
 
-        return _assertPayableValue(a.payableValue, a.payableOperator, value);
+        return (_assertPayableValue(a.payableValue, a.payableOperator, value), revertOnFail);
     }
 
     function _assertTarget(address ref, address target) internal pure returns (bool) {
