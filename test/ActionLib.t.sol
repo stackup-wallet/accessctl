@@ -62,7 +62,7 @@ contract ActionLibTest is TestHelper {
         Action memory action;
         action.selector = SELECTOR_ALLOW_ALL;
 
-        (bool callOk, bool revertOnFail) = action.verifyCall(address(0xdead), 0, "");
+        (bool callOk, bool revertOnFail) = action.verifyCall(address(0), 0, hex"BAAAAAAD");
         assertTrue(callOk);
         assertFalse(revertOnFail);
     }
