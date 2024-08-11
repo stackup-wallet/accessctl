@@ -27,10 +27,43 @@ contract PolicyLibTest is TestHelper {
     Execution[] public executionsLessThan10Eth;
 
     constructor() {
+        // Mimic 8 actions/policy
+        nullActions.push(nullAction);
+        nullActions.push(nullAction);
+        nullActions.push(nullAction);
+        nullActions.push(nullAction);
+        nullActions.push(nullAction);
+        nullActions.push(nullAction);
+        nullActions.push(nullAction);
+        nullActions.push(nullAction);
+
         sendMax5EtherActions.push(dummySendMax5EtherAction);
+        sendMax5EtherActions.push(nullAction);
+        sendMax5EtherActions.push(nullAction);
+        sendMax5EtherActions.push(nullAction);
+        sendMax5EtherActions.push(nullAction);
+        sendMax5EtherActions.push(nullAction);
+        sendMax5EtherActions.push(nullAction);
+        sendMax5EtherActions.push(nullAction);
+
         sendMax1EtherActions.push(dummySendMax1EtherAction);
+        sendMax1EtherActions.push(nullAction);
+        sendMax1EtherActions.push(nullAction);
+        sendMax1EtherActions.push(nullAction);
+        sendMax1EtherActions.push(nullAction);
+        sendMax1EtherActions.push(nullAction);
+        sendMax1EtherActions.push(nullAction);
+        sendMax1EtherActions.push(nullAction);
+
         guaranteeFailActions.push(dummySendMax1EtherAction);
         guaranteeFailActions.push(dummyAlwaysFailAction);
+        guaranteeFailActions.push(nullAction);
+        guaranteeFailActions.push(nullAction);
+        guaranteeFailActions.push(nullAction);
+        guaranteeFailActions.push(nullAction);
+        guaranteeFailActions.push(nullAction);
+        guaranteeFailActions.push(nullAction);
+
         executionsLessThan1Eth.push(Execution(address(0), uint256(0.5 ether), ""));
         executionsLessThan1Eth.push(Execution(address(0), uint256(0.75 ether), ""));
         executionsLessThan10Eth.push(Execution(address(0), uint256(5 ether), ""));
@@ -178,7 +211,7 @@ contract PolicyLibTest is TestHelper {
         assertEq(reason, "IAM12 callType not allowed");
     }
 
-    function testUserOperationExecutionCallDataSingleRevert() public {
+    function testUserOperationExecutionCallDataSingleRevert() public view {
         PackedUserOperation memory callTypeSingeOp;
         callTypeSingeOp.callData = abi.encodeWithSelector(
             IERC7579Account.execute.selector,
