@@ -88,7 +88,7 @@ contract ActionLibTest is TestHelper {
         );
     }
 
-    function testVerifyCallArgsAddressEq() public pure {
+    function testVerifyCallArgsAddressEQ() public pure {
         Action memory action;
         action.selector = ERC20.transfer.selector;
         action.argOffset = 4;
@@ -112,7 +112,7 @@ contract ActionLibTest is TestHelper {
         );
     }
 
-    function testVerifyCallPackedAddressEq() public pure {
+    function testVerifyCallPackedAddressEQ() public pure {
         Action memory action;
         action.selector = bytes4(0xffffffff);
         action.argOffset = 4 + 32 + 32;
@@ -140,7 +140,7 @@ contract ActionLibTest is TestHelper {
         );
     }
 
-    function testVerifyCallStructAddressEq() public pure {
+    function testVerifyCallStructAddressEQ() public pure {
         Action memory action;
         action.selector = bytes4(0xffffffff);
         action.argOffset = 4;
