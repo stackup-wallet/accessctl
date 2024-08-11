@@ -236,9 +236,11 @@ struct Action {
     bytes1 level;
     address target;
     bytes4 selector;
-    uint40 argOffset;
+    uint16 argOffset;
+    uint16 argLength;
     bytes1 argOperator;
     bytes1 payableOperator;
+    bytes1 unused;
     bytes32 argValue;
     uint256 payableValue;
 }
