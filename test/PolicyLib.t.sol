@@ -211,7 +211,7 @@ contract PolicyLibTest is TestHelper {
         assertEq(reason, "IAM12 callType not allowed");
     }
 
-    function testUserOperationExecutionCallDataSingleRevert() public {
+    function testUserOperationExecutionCallDataSingleRevert() public view {
         PackedUserOperation memory callTypeSingeOp;
         callTypeSingeOp.callData = abi.encodeWithSelector(
             IERC7579Account.execute.selector,
