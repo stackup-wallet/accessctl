@@ -79,6 +79,7 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
     Action public dummySendMax1EtherAction;
     Action public dummySendMax5EtherAction;
     Action public dummyAlwaysFailAction;
+    Action public nullAction;
     uint24 constant rootActionId = 0;
 
     uint224 constant rootRoleId = 0;

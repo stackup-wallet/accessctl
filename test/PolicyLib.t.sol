@@ -18,8 +18,6 @@ import { Action } from "src/Action.sol";
 contract PolicyLibTest is TestHelper {
     using PolicyLib for Policy;
 
-    Action public nullAction;
-
     Action[] public nullActions;
     Action[] public sendMax5EtherActions;
     Action[] public sendMax1EtherActions;
