@@ -161,17 +161,17 @@ flowchart TD
     isCallTypeOk-->|Yes|iterateCalls[Iterate calls]
     isCallTypeOk-->|No|iam12([Reverts with IAM12])
     iterateCalls-->isLastCall{All calls checked?}
-    isLastCall-->|Yes|allCallsOk{"is count(allowedCalls) == calls.length?"}
-    allCallsOk-->|Yes|ok
-    allCallsOk-->|No|iam13([Reverts with IAM13])
+    isLastCall-->|Yes|ok
     isLastCall-->|No|iterateActions[Iterate allowed actions]
     iterateActions-->isLastAction{All actions checked?}
-    isLastAction-->|Yes|iam13
-    isLastAction-->|No|isCallActionMatch{current call matches current action?}
-    isCallActionMatch-->|No|isStrictMode{current action is set to strict?}
+    isLastAction-->|Yes|minOneMatched{Has at least 1 match?}
+    isLastAction-->|No|isCallActionMatch{current call & action match?}
+    minOneMatched-->|Yes|iterateCalls
+    minOneMatched-->|No|iam13([Reverts with IAM13])
+    isCallActionMatch-->|No|isStrictMode{current action is strict?}
     isStrictMode-->|Yes|iam13
     isStrictMode-->|No|iterateActions
-    isCallActionMatch-->|Yes|iterateCalls
+    isCallActionMatch-->|Yes|iterateActions
 ```
 
 ### `Policy` data structure
