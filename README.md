@@ -159,17 +159,17 @@ flowchart TD
     isExec-->|No|iam12([Reverts with IAM12])
     getCallType-->isCallTypeOk{"Is policy's callType ok?"}
     isCallTypeOk-->|Yes|iterateCalls[Iterate calls]
-    isCallTypeOk-->|No|iam13([Reverts with IAM13])
+    isCallTypeOk-->|No|iam12([Reverts with IAM12])
     iterateCalls-->isLastCall{All calls checked?}
     isLastCall-->|Yes|allCallsOk{"is count(allowedCalls) == calls.length?"}
     allCallsOk-->|Yes|ok
-    allCallsOk-->|No|iam14([Reverts with IAM14])
+    allCallsOk-->|No|iam13([Reverts with IAM13])
     isLastCall-->|No|iterateActions[Iterate allowed actions]
     iterateActions-->isLastAction{All actions checked?}
-    isLastAction-->|Yes|iam14
+    isLastAction-->|Yes|iam13
     isLastAction-->|No|isCallActionMatch{current call matches current action?}
     isCallActionMatch-->|No|isStrictMode{current action is set to strict?}
-    isStrictMode-->|Yes|iam14
+    isStrictMode-->|Yes|iam13
     isStrictMode-->|No|iterateActions
     isCallActionMatch-->|Yes|iterateCalls
 ```
@@ -246,14 +246,6 @@ struct Action {
 }
 ```
 
-#### Allowed targets
-
-An external call can be authorized for a single address only using the `target` field. Encoding an `address(0)` here will allow all targets.
-
-#### Allowed selectors
-
-We can narrow down to specific functions on an external call using the `selector` field. For example to allow only calls to `	transfer(address,uint256)`, the 4 byte selector would be set to `0xa9059cbb`. A zero value here will allow all functions.
-
 #### Level of strictness
 
 The `level` field allows us to specify how strict this action is. All flag values are defined in [Action.sol](src/Action.sol).
@@ -263,6 +255,14 @@ The `level` field allows us to specify how strict this action is. All flag value
 - `LEVEL_MUST_PASS`: This action must pass for every call in the `UserOperation`. If one call fails regardless of the target, then the entire `UserOperation` is unauthorized to proceed.
 
 This allows us to build more secure policies by ensure a call matches multiple actions. For example, we can create two actions for an ERC20 transfer where one validates the address argument and the other validates the value argument. Both must pass for the top level policy to be validated.
+
+#### Allowed targets
+
+An external call can be authorized for a single address only using the `target` field. Encoding an `address(0)` here will allow all targets.
+
+#### Allowed selectors
+
+We can narrow down to specific functions on an external call using the `selector` field. For example to allow only calls to `	transfer(address,uint256)`, the 4 byte selector would be set to `0xa9059cbb`. A zero value here will allow all functions.
 
 #### Argument validation
 

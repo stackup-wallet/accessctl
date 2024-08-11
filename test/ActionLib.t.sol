@@ -7,6 +7,9 @@ import { PackedUserOperation } from "modulekit/external/ERC4337.sol";
 import {
     Action,
     ActionLib,
+    LEVEL_ALLOW_FAIL,
+    LEVEL_MUST_PASS_FOR_TARGET,
+    LEVEL_MUST_PASS,
     OPERATOR_ALLOW_ALL,
     OPERATOR_EQ,
     OPERATOR_GT,
@@ -41,35 +44,45 @@ contract ActionLibTest is TestHelper {
         Action memory action;
         action.target = TARGET_ALLOW_ALL;
 
-        assertTrue(action.verifyCall(address(0xdead), 0, ""));
+        (bool callOk, bool revertOnFail) = action.verifyCall(address(0xdead), 0, "");
+        assertTrue(callOk);
+        assertFalse(revertOnFail);
     }
 
     function testVerifyCallTargetAllowOne() public pure {
         Action memory action;
         action.target = address(0xbeef);
 
-        assertFalse(action.verifyCall(address(0xdead), 0, ""));
+        (bool callOk, bool revertOnFail) = action.verifyCall(address(0xdead), 0, "");
+        assertFalse(callOk);
+        assertFalse(revertOnFail);
     }
 
     function testVerifyCallSelectorAllowAll() public pure {
         Action memory action;
         action.selector = SELECTOR_ALLOW_ALL;
 
-        assertTrue(action.verifyCall(address(0), 0, hex"BAAAAAAD"));
+        (bool callOk, bool revertOnFail) = action.verifyCall(address(0xdead), 0, "");
+        assertTrue(callOk);
+        assertFalse(revertOnFail);
     }
 
     function testVerifyCallSelectorAllowOne() public pure {
         Action memory action;
         action.selector = bytes4(0xdeadbeef);
 
-        assertFalse(action.verifyCall(address(0), 0, hex"BAAAAAAD"));
+        (bool callOk, bool revertOnFail) = action.verifyCall(address(0), 0, hex"BAAAAAAD");
+        assertFalse(callOk);
+        assertFalse(revertOnFail);
     }
 
     function testVerifyCallSelectorBadData() public pure {
         Action memory action;
         action.selector = bytes4(0xdeadbeef);
 
-        assertFalse(action.verifyCall(address(0), 0, hex"BAAD"));
+        (bool callOk, bool revertOnFail) = action.verifyCall(address(0), 0, hex"BAAD");
+        assertFalse(callOk);
+        assertFalse(revertOnFail);
     }
 
     function testVerifyCallArgsAllowAll() public pure {
@@ -79,13 +92,13 @@ contract ActionLibTest is TestHelper {
         action.argLength = ARG_ALLOW_ALL;
         action.argOperator = OPERATOR_ALLOW_ALL;
 
-        assertTrue(
-            action.verifyCall(
-                address(0),
-                0,
-                abi.encodeWithSelector(ERC20.transfer.selector, address(0), type(uint256).max)
-            )
+        (bool callOk, bool revertOnFail) = action.verifyCall(
+            address(0),
+            0,
+            abi.encodeWithSelector(ERC20.transfer.selector, address(0), type(uint256).max)
         );
+        assertTrue(callOk);
+        assertFalse(revertOnFail);
     }
 
     function testVerifyCallArgsAddressEQ() public pure {
@@ -96,20 +109,20 @@ contract ActionLibTest is TestHelper {
         action.argOperator = OPERATOR_EQ;
         action.argValue = bytes32(abi.encode(address(0xdeadbeef)));
 
-        assertTrue(
-            action.verifyCall(
-                address(0),
-                0,
-                abi.encodeWithSelector(ERC20.transfer.selector, address(0xdeadbeef), 1 ether)
-            )
+        (bool callOk, bool revertOnFail) = action.verifyCall(
+            address(0),
+            0,
+            abi.encodeWithSelector(ERC20.transfer.selector, address(0xdeadbeef), 1 ether)
         );
-        assertFalse(
-            action.verifyCall(
-                address(0),
-                0,
-                abi.encodeWithSelector(ERC20.transfer.selector, address(0xBAAAAAAD), 1 ether)
-            )
+        assertTrue(callOk);
+        assertFalse(revertOnFail);
+        (callOk, revertOnFail) = action.verifyCall(
+            address(0),
+            0,
+            abi.encodeWithSelector(ERC20.transfer.selector, address(0xBAAAAAAD), 1 ether)
         );
+        assertFalse(callOk);
+        assertFalse(revertOnFail);
     }
 
     function testVerifyCallPackedAddressEQ() public pure {
@@ -120,24 +133,24 @@ contract ActionLibTest is TestHelper {
         action.argOperator = OPERATOR_EQ;
         action.argValue = bytes32(abi.encode(address(0xdeadbeef)));
 
-        assertTrue(
-            action.verifyCall(
-                address(0),
-                0,
-                abi.encodeWithSelector(
-                    bytes4(0xffffffff), abi.encodePacked(address(0xdeadbeef), uint256(1 ether))
-                )
+        (bool callOk, bool revertOnFail) = action.verifyCall(
+            address(0),
+            0,
+            abi.encodeWithSelector(
+                bytes4(0xffffffff), abi.encodePacked(address(0xdeadbeef), uint256(1 ether))
             )
         );
-        assertFalse(
-            action.verifyCall(
-                address(0),
-                0,
-                abi.encodeWithSelector(
-                    bytes4(0xffffffff), abi.encodePacked(address(0xBAAAAAAD), uint256(1 ether))
-                )
+        assertTrue(callOk);
+        assertFalse(revertOnFail);
+        (callOk, revertOnFail) = action.verifyCall(
+            address(0),
+            0,
+            abi.encodeWithSelector(
+                bytes4(0xffffffff), abi.encodePacked(address(0xBAAAAAAD), uint256(1 ether))
             )
         );
+        assertFalse(callOk);
+        assertFalse(revertOnFail);
     }
 
     function testVerifyCallStructAddressEQ() public pure {
@@ -148,24 +161,24 @@ contract ActionLibTest is TestHelper {
         action.argOperator = OPERATOR_EQ;
         action.argValue = bytes32(abi.encode(address(0xdeadbeef)));
 
-        assertTrue(
-            action.verifyCall(
-                address(0),
-                0,
-                abi.encodeWithSelector(
-                    bytes4(0xffffffff), TransferTuple(address(0xdeadbeef), uint256(1 ether))
-                )
+        (bool callOk, bool revertOnFail) = action.verifyCall(
+            address(0),
+            0,
+            abi.encodeWithSelector(
+                bytes4(0xffffffff), TransferTuple(address(0xdeadbeef), uint256(1 ether))
             )
         );
-        assertFalse(
-            action.verifyCall(
-                address(0),
-                0,
-                abi.encodeWithSelector(
-                    bytes4(0xffffffff), TransferTuple(address(0xBAAAAAAD), uint256(1 ether))
-                )
+        assertTrue(callOk);
+        assertFalse(revertOnFail);
+        (callOk, revertOnFail) = action.verifyCall(
+            address(0),
+            0,
+            abi.encodeWithSelector(
+                bytes4(0xffffffff), TransferTuple(address(0xBAAAAAAD), uint256(1 ether))
             )
         );
+        assertFalse(callOk);
+        assertFalse(revertOnFail);
     }
 
     function testVerifyCallOverflow() public pure {
@@ -177,7 +190,9 @@ contract ActionLibTest is TestHelper {
         action.argOperator = OPERATOR_EQ;
         action.argValue = bytes32(uint256(1 ether));
 
-        assertFalse(action.verifyCall(address(0), 0, data));
+        (bool callOk, bool revertOnFail) = action.verifyCall(address(0), 0, data);
+        assertFalse(callOk);
+        assertFalse(revertOnFail);
     }
 
     function testVerifyCallArgsUint256GT() public pure {
@@ -188,23 +203,21 @@ contract ActionLibTest is TestHelper {
         action.argOperator = OPERATOR_GT;
         action.argValue = bytes32(uint256(1 ether));
 
-        assertFalse(
-            action.verifyCall(
-                address(0),
-                0,
-                abi.encodeWithSelector(ERC20.transfer.selector, address(0), 0.5 ether)
-            )
+        (bool callOk, bool revertOnFail) = action.verifyCall(
+            address(0), 0, abi.encodeWithSelector(ERC20.transfer.selector, address(0), 0.5 ether)
         );
-        assertFalse(
-            action.verifyCall(
-                address(0), 0, abi.encodeWithSelector(ERC20.transfer.selector, address(0), 1 ether)
-            )
+        assertFalse(callOk);
+        assertFalse(revertOnFail);
+        (callOk, revertOnFail) = action.verifyCall(
+            address(0), 0, abi.encodeWithSelector(ERC20.transfer.selector, address(0), 1 ether)
         );
-        assertTrue(
-            action.verifyCall(
-                address(0), 0, abi.encodeWithSelector(ERC20.transfer.selector, address(0), 2 ether)
-            )
+        assertFalse(callOk);
+        assertFalse(revertOnFail);
+        (callOk, revertOnFail) = action.verifyCall(
+            address(0), 0, abi.encodeWithSelector(ERC20.transfer.selector, address(0), 2 ether)
         );
+        assertTrue(callOk);
+        assertFalse(revertOnFail);
     }
 
     function testVerifyCallArgsUint256GTE() public pure {
@@ -215,23 +228,21 @@ contract ActionLibTest is TestHelper {
         action.argOperator = OPERATOR_GTE;
         action.argValue = bytes32(uint256(1 ether));
 
-        assertFalse(
-            action.verifyCall(
-                address(0),
-                0,
-                abi.encodeWithSelector(ERC20.transfer.selector, address(0), 0.5 ether)
-            )
+        (bool callOk, bool revertOnFail) = action.verifyCall(
+            address(0), 0, abi.encodeWithSelector(ERC20.transfer.selector, address(0), 0.5 ether)
         );
-        assertTrue(
-            action.verifyCall(
-                address(0), 0, abi.encodeWithSelector(ERC20.transfer.selector, address(0), 1 ether)
-            )
+        assertFalse(callOk);
+        assertFalse(revertOnFail);
+        (callOk, revertOnFail) = action.verifyCall(
+            address(0), 0, abi.encodeWithSelector(ERC20.transfer.selector, address(0), 1 ether)
         );
-        assertTrue(
-            action.verifyCall(
-                address(0), 0, abi.encodeWithSelector(ERC20.transfer.selector, address(0), 2 ether)
-            )
+        assertTrue(callOk);
+        assertFalse(revertOnFail);
+        (callOk, revertOnFail) = action.verifyCall(
+            address(0), 0, abi.encodeWithSelector(ERC20.transfer.selector, address(0), 2 ether)
         );
+        assertTrue(callOk);
+        assertFalse(revertOnFail);
     }
 
     function testVerifyCallArgsUint256LT() public pure {
@@ -242,23 +253,21 @@ contract ActionLibTest is TestHelper {
         action.argOperator = OPERATOR_LT;
         action.argValue = bytes32(uint256(1 ether));
 
-        assertTrue(
-            action.verifyCall(
-                address(0),
-                0,
-                abi.encodeWithSelector(ERC20.transfer.selector, address(0), 0.5 ether)
-            )
+        (bool callOk, bool revertOnFail) = action.verifyCall(
+            address(0), 0, abi.encodeWithSelector(ERC20.transfer.selector, address(0), 0.5 ether)
         );
-        assertFalse(
-            action.verifyCall(
-                address(0), 0, abi.encodeWithSelector(ERC20.transfer.selector, address(0), 1 ether)
-            )
+        assertTrue(callOk);
+        assertFalse(revertOnFail);
+        (callOk, revertOnFail) = action.verifyCall(
+            address(0), 0, abi.encodeWithSelector(ERC20.transfer.selector, address(0), 1 ether)
         );
-        assertFalse(
-            action.verifyCall(
-                address(0), 0, abi.encodeWithSelector(ERC20.transfer.selector, address(0), 2 ether)
-            )
+        assertFalse(callOk);
+        assertFalse(revertOnFail);
+        (callOk, revertOnFail) = action.verifyCall(
+            address(0), 0, abi.encodeWithSelector(ERC20.transfer.selector, address(0), 2 ether)
         );
+        assertFalse(callOk);
+        assertFalse(revertOnFail);
     }
 
     function testVerifyCallArgsUint256LTE() public pure {
@@ -269,32 +278,88 @@ contract ActionLibTest is TestHelper {
         action.argOperator = OPERATOR_LTE;
         action.argValue = bytes32(uint256(1 ether));
 
-        assertTrue(
-            action.verifyCall(
-                address(0),
-                0,
-                abi.encodeWithSelector(ERC20.transfer.selector, address(0), 0.5 ether)
-            )
+        (bool callOk, bool revertOnFail) = action.verifyCall(
+            address(0), 0, abi.encodeWithSelector(ERC20.transfer.selector, address(0), 0.5 ether)
         );
-        assertTrue(
-            action.verifyCall(
-                address(0), 0, abi.encodeWithSelector(ERC20.transfer.selector, address(0), 1 ether)
-            )
+        assertTrue(callOk);
+        assertFalse(revertOnFail);
+        (callOk, revertOnFail) = action.verifyCall(
+            address(0), 0, abi.encodeWithSelector(ERC20.transfer.selector, address(0), 1 ether)
         );
-        assertFalse(
-            action.verifyCall(
-                address(0), 0, abi.encodeWithSelector(ERC20.transfer.selector, address(0), 2 ether)
-            )
+        assertTrue(callOk);
+        assertFalse(revertOnFail);
+        (callOk, revertOnFail) = action.verifyCall(
+            address(0), 0, abi.encodeWithSelector(ERC20.transfer.selector, address(0), 2 ether)
         );
+        assertFalse(callOk);
+        assertFalse(revertOnFail);
+    }
+
+    function testVerifyCallArgsMustPassForTarget() public pure {
+        Action memory action;
+        action.level = LEVEL_MUST_PASS_FOR_TARGET;
+        action.target = address(0xdeadbeef);
+        action.selector = ERC20.transfer.selector;
+        action.argOffset = 4 + 32;
+        action.argLength = 32;
+        action.argOperator = OPERATOR_LTE;
+        action.argValue = bytes32(uint256(1 ether));
+
+        (bool callOk, bool revertOnFail) = action.verifyCall(
+            address(0xBAAAAAAD),
+            0,
+            abi.encodeWithSelector(ERC20.transfer.selector, address(0), 2 ether)
+        );
+        assertFalse(callOk);
+        assertFalse(revertOnFail);
+        (callOk, revertOnFail) = action.verifyCall(
+            address(0xdeadbeef),
+            0,
+            abi.encodeWithSelector(ERC20.transfer.selector, address(0), 2 ether)
+        );
+        assertFalse(callOk);
+        assertTrue(revertOnFail);
+    }
+
+    function testVerifyCallArgsMustPass() public pure {
+        Action memory action;
+        action.level = LEVEL_MUST_PASS;
+        action.target = address(0xdeadbeef);
+        action.selector = ERC20.transfer.selector;
+        action.argOffset = 4 + 32;
+        action.argLength = 32;
+        action.argOperator = OPERATOR_LTE;
+        action.argValue = bytes32(uint256(1 ether));
+
+        (bool callOk, bool revertOnFail) = action.verifyCall(
+            address(0xBAAAAAAD),
+            0,
+            abi.encodeWithSelector(ERC20.transfer.selector, address(0), 2 ether)
+        );
+        assertFalse(callOk);
+        assertTrue(revertOnFail);
+        (callOk, revertOnFail) = action.verifyCall(
+            address(0xdeadbeef),
+            0,
+            abi.encodeWithSelector(ERC20.transfer.selector, address(0), 2 ether)
+        );
+        assertFalse(callOk);
+        assertTrue(revertOnFail);
     }
 
     function testVerifyCallPayableValueAllowAll() public pure {
         Action memory action;
         action.payableOperator = OPERATOR_ALLOW_ALL;
 
-        assertTrue(action.verifyCall(address(0), 1 ether, ""));
-        assertTrue(action.verifyCall(address(0), 0.5 ether, ""));
-        assertTrue(action.verifyCall(address(0), 2 ether, ""));
+        (bool callOk, bool revertOnFail) = action.verifyCall(address(0), 1 ether, "");
+        assertTrue(callOk);
+        assertFalse(revertOnFail);
+        (callOk, revertOnFail) = action.verifyCall(address(0), 0.5 ether, "");
+        assertTrue(callOk);
+        assertFalse(revertOnFail);
+        (callOk, revertOnFail) = action.verifyCall(address(0), 2 ether, "");
+        assertTrue(callOk);
+        assertFalse(revertOnFail);
     }
 
     function testVerifyCallPayableValueEQ() public pure {
@@ -302,9 +367,15 @@ contract ActionLibTest is TestHelper {
         action.payableValue = 1 ether;
         action.payableOperator = OPERATOR_EQ;
 
-        assertTrue(action.verifyCall(address(0), 1 ether, ""));
-        assertFalse(action.verifyCall(address(0), 0.5 ether, ""));
-        assertFalse(action.verifyCall(address(0), 2 ether, ""));
+        (bool callOk, bool revertOnFail) = action.verifyCall(address(0), 1 ether, "");
+        assertTrue(callOk);
+        assertFalse(revertOnFail);
+        (callOk, revertOnFail) = action.verifyCall(address(0), 0.5 ether, "");
+        assertFalse(callOk);
+        assertFalse(revertOnFail);
+        (callOk, revertOnFail) = action.verifyCall(address(0), 2 ether, "");
+        assertFalse(callOk);
+        assertFalse(revertOnFail);
     }
 
     function testVerifyCallPayableValueGT() public pure {
@@ -312,9 +383,15 @@ contract ActionLibTest is TestHelper {
         action.payableValue = 1 ether;
         action.payableOperator = OPERATOR_GT;
 
-        assertFalse(action.verifyCall(address(0), 1 ether, ""));
-        assertFalse(action.verifyCall(address(0), 0.5 ether, ""));
-        assertTrue(action.verifyCall(address(0), 2 ether, ""));
+        (bool callOk, bool revertOnFail) = action.verifyCall(address(0), 1 ether, "");
+        assertFalse(callOk);
+        assertFalse(revertOnFail);
+        (callOk, revertOnFail) = action.verifyCall(address(0), 0.5 ether, "");
+        assertFalse(callOk);
+        assertFalse(revertOnFail);
+        (callOk, revertOnFail) = action.verifyCall(address(0), 2 ether, "");
+        assertTrue(callOk);
+        assertFalse(revertOnFail);
     }
 
     function testVerifyCallPayableValueGTE() public pure {
@@ -322,9 +399,15 @@ contract ActionLibTest is TestHelper {
         action.payableValue = 1 ether;
         action.payableOperator = OPERATOR_GTE;
 
-        assertTrue(action.verifyCall(address(0), 1 ether, ""));
-        assertFalse(action.verifyCall(address(0), 0.5 ether, ""));
-        assertTrue(action.verifyCall(address(0), 2 ether, ""));
+        (bool callOk, bool revertOnFail) = action.verifyCall(address(0), 1 ether, "");
+        assertTrue(callOk);
+        assertFalse(revertOnFail);
+        (callOk, revertOnFail) = action.verifyCall(address(0), 0.5 ether, "");
+        assertFalse(callOk);
+        assertFalse(revertOnFail);
+        (callOk, revertOnFail) = action.verifyCall(address(0), 2 ether, "");
+        assertTrue(callOk);
+        assertFalse(revertOnFail);
     }
 
     function testVerifyCallPayableValueLT() public pure {
@@ -332,9 +415,15 @@ contract ActionLibTest is TestHelper {
         action.payableValue = 1 ether;
         action.payableOperator = OPERATOR_LT;
 
-        assertFalse(action.verifyCall(address(0), 1 ether, ""));
-        assertTrue(action.verifyCall(address(0), 0.5 ether, ""));
-        assertFalse(action.verifyCall(address(0), 2 ether, ""));
+        (bool callOk, bool revertOnFail) = action.verifyCall(address(0), 1 ether, "");
+        assertFalse(callOk);
+        assertFalse(revertOnFail);
+        (callOk, revertOnFail) = action.verifyCall(address(0), 0.5 ether, "");
+        assertTrue(callOk);
+        assertFalse(revertOnFail);
+        (callOk, revertOnFail) = action.verifyCall(address(0), 2 ether, "");
+        assertFalse(callOk);
+        assertFalse(revertOnFail);
     }
 
     function testVerifyCallPayableValueLTE() public pure {
@@ -342,8 +431,14 @@ contract ActionLibTest is TestHelper {
         action.payableValue = 1 ether;
         action.payableOperator = OPERATOR_LTE;
 
-        assertTrue(action.verifyCall(address(0), 1 ether, ""));
-        assertTrue(action.verifyCall(address(0), 0.5 ether, ""));
-        assertFalse(action.verifyCall(address(0), 2 ether, ""));
+        (bool callOk, bool revertOnFail) = action.verifyCall(address(0), 1 ether, "");
+        assertTrue(callOk);
+        assertFalse(revertOnFail);
+        (callOk, revertOnFail) = action.verifyCall(address(0), 0.5 ether, "");
+        assertTrue(callOk);
+        assertFalse(revertOnFail);
+        (callOk, revertOnFail) = action.verifyCall(address(0), 2 ether, "");
+        assertFalse(callOk);
+        assertFalse(revertOnFail);
     }
 }

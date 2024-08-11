@@ -141,8 +141,11 @@ library PolicyLib {
                 continue;
             }
 
-            if (action.verifyCall(target, value, data)) {
+            (bool callOk, bool revertOnFail) = action.verifyCall(target, value, data);
+            if (callOk && !revertOnFail) {
                 return (true, "");
+            } else if (revertOnFail) {
+                return (false, "IAM13 execution not allowed");
             }
         }
         return (false, "IAM13 execution not allowed");
@@ -189,9 +192,13 @@ library PolicyLib {
                     continue;
                 }
 
-                if (action.verifyCall(execution.target, execution.value, execution.callData)) {
+                (bool callOk, bool revertOnFail) =
+                    action.verifyCall(execution.target, execution.value, execution.callData);
+                if (callOk && !revertOnFail) {
                     noActionsPassed = false;
                     break;
+                } else if (revertOnFail) {
+                    return (false, "IAM13 execution not allowed");
                 }
             }
             if (noActionsPassed) {
