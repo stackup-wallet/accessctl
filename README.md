@@ -262,7 +262,7 @@ An external call can be authorized for a single address only using the `target` 
 
 #### Allowed selectors
 
-We can narrow down to specific functions on an external call using the `selector` field. For example to allow only calls to `	transfer(address,uint256)`, the 4 byte selector would be set to `0xa9059cbb`. A zero value here will allow all functions.
+We can narrow down to specific functions on an external call using the `selector` field. For example to allow only calls to `transfer(address,uint256)`, the 4 byte selector would be set to `0xa9059cbb`. A zero value here will allow all functions.
 
 #### Argument validation
 
