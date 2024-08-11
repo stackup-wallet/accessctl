@@ -233,15 +233,15 @@ This data structure stores information on what type of external calls are allowe
 
 ```solidity
 struct Action {
+    bytes1 level;
     address target;
     bytes4 selector;
-    bytes1 level;
-    uint8 argOffset;
-    uint8 argLength;
+    uint16 argOffset;
+    uint16 argLength;
     bytes1 argOperator;
     bytes1 payableOperator;
-    bytes3 unused;
-    uint256 argValue;
+    bytes1 unused;
+    bytes32 argValue;
     uint256 payableValue;
 }
 ```
@@ -272,6 +272,8 @@ The following fields allow us to validate specific arguments in a call.
 - `argLength`: How many bytes after the `argOffset` to end the slice.
 - `argOperator`: The conditional operator to use for the check (e.g. `<`, `>`, `==`, etc).
 - `argValue`: The reference value to compare the sliced call data value with.
+
+> _Note that we compare all arguments against a 32 byte `argValue` with left padding for smaller types. For instance an `argValue` for an address will be 20 bytes + 12 zero bytes added to the left._
 
 #### Payable validation
 

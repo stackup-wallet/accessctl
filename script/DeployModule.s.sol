@@ -10,12 +10,9 @@ import { IAMModule } from "src/IAMModule.sol";
 /// @title DeployModuleScript
 contract DeployModuleScript is Script, RegistryDeployer {
     function run() public {
-        bytes memory bytecode = type(IAMModule).creationCode;
-        bytes32 salt = 0;
-
         vm.startBroadcast(vm.envUint("PK"));
 
-        IAMModule module = new IAMModule{ salt: salt }();
+        IAMModule module = new IAMModule{ salt: 0 }();
 
         vm.stopBroadcast();
         console.log("Deploying module at: %s", address(module));
