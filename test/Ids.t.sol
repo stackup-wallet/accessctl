@@ -7,7 +7,7 @@ import { Signer } from "src/Signer.sol";
 import { Policy } from "src/Policy.sol";
 import { Action } from "src/Action.sol";
 
-contract UtilTest is TestHelper {
+contract IdsTest is TestHelper {
     function testGetNextIdsReturnsTheCorrectValues() public {
         (uint112 signerId, uint112 policyId, uint24 actionId) =
             module.getNextIds(address(instance.account));
