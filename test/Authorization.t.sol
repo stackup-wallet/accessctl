@@ -108,6 +108,36 @@ contract AuthorizationTest is TestHelper {
         }
     }
 
+    function testPolicyNoMinimumInterval() public {
+        Policy memory policy;
+        policy.mode = MODE_ADMIN;
+        _execUserOp(
+            address(module), 0, abi.encodeWithSelector(IAMModule.addPolicy.selector, policy)
+        );
+        _execUserOp(
+            address(module),
+            0,
+            abi.encodeWithSelector(IAMModule.addRole.selector, rootSignerId, rootPolicyId + 1)
+        );
+
+        address target = makeAddr("target");
+        uint256 value = 1 ether;
+        uint256 initBalance = target.balance;
+        uint224 roleId = uint224(rootSignerId) | (uint224(rootPolicyId + 1) << 112);
+
+        // First UserOp should pass.
+        _execUserOp(roleId, dummyP256PrivateKeyRoot, target, value, "");
+        assertEq(target.balance, initBalance + value);
+
+        // Second UserOp should pass.
+        _execUserOp(roleId, dummyP256PrivateKeyRoot, target, value, "");
+        assertEq(target.balance, initBalance + value + value);
+
+        // Third UserOp should pass.
+        _execUserOp(roleId, dummyP256PrivateKeyRoot, target, value, "");
+        assertEq(target.balance, initBalance + value + value + value);
+    }
+
     function testPolicyMinimumInterval() public {
         Policy memory policy;
         policy.mode = MODE_ADMIN;
