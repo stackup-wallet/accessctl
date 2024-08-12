@@ -5,7 +5,6 @@ import { WebAuthn } from "webauthn-sol/WebAuthn.sol";
 import { Base64 } from "openzeppelin-contracts/contracts/utils/Base64.sol";
 import { LibString } from "solady/utils/LibString.sol";
 import { ECDSA } from "solady/utils/ECDSA.sol";
-import { SignatureCheckerLib } from "solady/utils/SignatureCheckerLib.sol";
 
 bytes1 constant MODE_WEBAUTHN = 0x00;
 bytes1 constant MODE_ECDSA = 0x01;
@@ -54,9 +53,8 @@ library SignerLib {
             WebAuthn.WebAuthnAuth memory auth = _getWebAuthnAuth(signature, challange);
             return WebAuthn.verify(challange, true, auth, s.p256x, s.p256y);
         } else if (s.mode == MODE_ECDSA) {
-            return SignatureCheckerLib.isValidSignatureNow(
-                s.ecdsa, ECDSA.toEthSignedMessageHash(hash), _getECDSASignature(signature)
-            );
+            return s.ecdsa
+                == ECDSA.recover(ECDSA.toEthSignedMessageHash(hash), _getECDSASignature(signature));
         }
 
         // solhint-disable-next-line gas-custom-errors
