@@ -87,7 +87,7 @@ If the signature is valid, it returns a success response and proceeds to the exe
 
 ## `AccessCtl` interface
 
-The `AccessCtl` inherits from the base ERC7579 validator and hook module. The following interface relates only to the `AccessCtl`.
+The `AccessCtl` module inherits from the base ERC7579 validator and hook module. The following interface relates only to the `AccessCtl` contract.
 
 ### Signer functions
 
@@ -144,7 +144,7 @@ function removeRole(uint224 roleId) external;
 
 ## Error codes
 
-The `AccessCtl` has the following error codes:
+The `AccessCtl` module has the following error codes:
 
 - `IAM1x`: Validate `UserOperation` errors.
 - `IAM2x`: Validate ERC1271 signature errors.
@@ -152,7 +152,7 @@ The `AccessCtl` has the following error codes:
 
 ## Signers, Policies, and Actions
 
-The following is a flow chart of how the `AccessCtl` decides if a `UserOperation` is allowed based on a given `Signer`, `Policy`, and its associated `Actions`.
+The following is a flow chart of how `AccessCtl` decides if a `UserOperation` is allowed based on a given `Signer`, `Policy`, and its associated `Actions`.
 
 ```mermaid
 flowchart TD
