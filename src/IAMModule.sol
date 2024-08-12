@@ -446,6 +446,21 @@ contract IAMModule is ERC7579ValidatorBase, ERC7579HookBase {
         emit RoleRemoved(msg.sender, roleId);
     }
 
+    /**
+     * A utility method to get the next available signerId, policyId, and actionId.
+     * This is useful for building batched calls and determining future id assignments.
+     * All ids are assigned monotonically, i.e. incrementing by 1 on each add.
+     */
+    function getNextIds(
+        address account
+    )
+        public
+        view
+        returns (uint112 signerId, uint112 policyId, uint24 actionId)
+    {
+        (, signerId, policyId, actionId) = _parseCounter(Counters[account]);
+    }
+
     /*//////////////////////////////////////////////////////////////////////////
                                      INTERNAL
     //////////////////////////////////////////////////////////////////////////*/
