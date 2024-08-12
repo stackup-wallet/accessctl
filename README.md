@@ -80,7 +80,7 @@ This last phase is to ensure that the signature from `userOp.signature` was actu
 bool valid =  WebAuthn.verify(challenge, true, auth, signer.p256x, signer.p256y);
 
 // Or if using ECDSA
-signer.ecdsa == ECDSA.recover(ECDSA.toEthSignedMessageHash(hash), _getECDSASignature(signature))
+signer.ecdsa == ECDSA.recover(ECDSA.toEthSignedMessageHash(hash), _getECDSASignature(signature));
 ```
 
 If the signature is valid, it returns a success response and proceeds to the execution phase of a `UserOperation`.
