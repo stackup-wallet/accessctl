@@ -1,5 +1,7 @@
 # AccessControl
 
+> **⚠️ This module is still in early development. It is not yet recommended for production.**
+
 AccessControl (or `AccessCtl` for short) is a scalable identity and access management layer for ERC-7579 compliant smart accounts.
 
 # Architecture
