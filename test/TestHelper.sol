@@ -14,7 +14,7 @@ import { ECDSA } from "solady/utils/ECDSA.sol";
 import { LibString } from "solady/utils/LibString.sol";
 import { Base64 } from "openzeppelin-contracts/contracts/utils/Base64.sol";
 import { FCL_Elliptic_ZZ } from "FreshCryptoLib/FCL_elliptic.sol";
-import { IAMModule } from "src/IAMModule.sol";
+import { AccessCtl } from "src/AccessCtl.sol";
 import { Signer, MODE_WEBAUTHN, MODE_ECDSA } from "src/Signer.sol";
 import { Policy, MODE_ADMIN, CALL_TYPE_LEVEL_SINGLE, CALL_TYPE_LEVEL_BATCH } from "src/Policy.sol";
 import { Action, LEVEL_MUST_PASS, OPERATOR_LTE, OPERATOR_GT } from "src/Action.sol";
@@ -35,7 +35,7 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
 
     // account and modules
     AccountInstance internal instance;
-    IAMModule internal module;
+    AccessCtl internal module;
 
     // Dummy WebAuthn variables
     // From https://github.com/base-org/webauthn-sol/blob/main/test/WebAuthn.t.sol
@@ -261,8 +261,8 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
         init();
 
         // Create the module
-        module = new IAMModule();
-        vm.label(address(module), "IAMModule");
+        module = new AccessCtl();
+        vm.label(address(module), "AccessCtl");
 
         // Create the account and install the validator
         instance = makeAccountInstance("MainAccount");

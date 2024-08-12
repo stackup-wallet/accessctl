@@ -6,9 +6,9 @@ import { PackedUserOperation } from "modulekit/external/ERC4337.sol";
 import { Signer, SignerLib, MODE_WEBAUTHN, MODE_ECDSA } from "src/Signer.sol";
 import { Policy, PolicyLib, MODE_ADMIN } from "src/Policy.sol";
 import { Action } from "src/Action.sol";
-import { ContextQueue } from "src/ContextQueue.sol";
+import { CtxQueue } from "src/CtxQueue.sol";
 
-contract IAMModule is ERC7579ValidatorBase, ERC7579HookBase {
+contract AccessCtl is ERC7579ValidatorBase, ERC7579HookBase {
     /*//////////////////////////////////////////////////////////////////////////
                             CONSTANTS & STORAGE
     //////////////////////////////////////////////////////////////////////////*/
@@ -142,7 +142,7 @@ contract IAMModule is ERC7579ValidatorBase, ERC7579HookBase {
         override
         returns (bytes memory hookData)
     {
-        uint224 roleId = uint224(ContextQueue.dequeue(account));
+        uint224 roleId = uint224(CtxQueue.dequeue(account));
         (, uint112 policyId) = _parseRoleId(roleId);
         Policy memory p = getPolicy(account, policyId);
 
@@ -198,7 +198,7 @@ contract IAMModule is ERC7579ValidatorBase, ERC7579HookBase {
         Signer memory signer = getSigner(msg.sender, signerId);
         if (signer.verifySignature(userOpHash, userOp.signature)) {
             // Load required context to update validAfter in execution hook.
-            ContextQueue.enqueue(msg.sender, uint256(roleId));
+            CtxQueue.enqueue(msg.sender, uint256(roleId));
 
             return _packValidationData(false, p.validUntil, _maxTimestamp(validAfter, p.validAfter));
         }
@@ -605,7 +605,7 @@ contract IAMModule is ERC7579ValidatorBase, ERC7579HookBase {
      * @return name The name of the module
      */
     function name() external pure returns (string memory) {
-        return "ValidatorTemplate";
+        return "AccessCtl";
     }
 
     /**
@@ -614,7 +614,7 @@ contract IAMModule is ERC7579ValidatorBase, ERC7579HookBase {
      * @return version The version of the module
      */
     function version() external pure returns (string memory) {
-        return "0.0.1";
+        return "0.1.0";
     }
 
     /**

@@ -1,6 +1,6 @@
-# ERC-7579 IAM Module
+# AccessControl
 
-A scalable identity and access management layer for ERC-4337 modular smart accounts.
+AccessControl (or `AccessCtl` for short) is a scalable identity and access management layer for ERC-7579 compliant smart accounts.
 
 # Architecture
 
@@ -24,21 +24,21 @@ The following is a sequence diagram to illustrate the end to end flow of a `User
 sequenceDiagram
     Wallet->>EntryPoint:Send UserOp
     EntryPoint->>Smart Account: Calls validateUserOp
-    Smart Account->>IAM Validator: Proxy request
-    Note over IAM Validator: Role check
-    IAM Validator->>IAM Validator: Decode roleId and signature from op.signature
-    IAM Validator->>IAM Validator: Verify roleId
-    IAM Validator->>IAM Validator: Decode signerId and policyId from roleId
-    Note over IAM Validator: Authorization check
-    IAM Validator->>IAM Validator: Get policy from storage
-    IAM Validator->>IAM Validator: Hydrate policy with associated actions
-    IAM Validator->>IAM Validator: Verify userOp with policy
-    Note over IAM Validator,Signature Verifier: Authentication check
-    IAM Validator->>IAM Validator: Get signer from storage
-    IAM Validator->>Signature Verifier: Calls verifySignature
+    Smart Account->>AccessCtl: Proxy request
+    Note over AccessCtl: Role check
+    AccessCtl->>AccessCtl: Decode roleId and signature from op.signature
+    AccessCtl->>AccessCtl: Verify roleId
+    AccessCtl->>AccessCtl: Decode signerId and policyId from roleId
+    Note over AccessCtl: Authorization check
+    AccessCtl->>AccessCtl: Get policy from storage
+    AccessCtl->>AccessCtl: Hydrate policy with associated actions
+    AccessCtl->>AccessCtl: Verify userOp with policy
+    Note over AccessCtl,Signature Verifier: Authentication check
+    AccessCtl->>AccessCtl: Get signer from storage
+    AccessCtl->>Signature Verifier: Calls verifySignature
     Signature Verifier->>Signature Verifier: Verify sig with pub key & hash
-    Signature Verifier->>IAM Validator: Returns true
-    IAM Validator->>Smart Account: Returns success response
+    Signature Verifier->>AccessCtl: Returns true
+    AccessCtl->>Smart Account: Returns success response
     Smart Account->>EntryPoint: Pay prefund
     Note over EntryPoint,Smart Account: Validation done, execution next...
 ```
@@ -58,7 +58,7 @@ The `roleId` is a `uint224` value that is encoded into the `UserOperation` signa
 userOp.signature = abi.encode(roleId, r, s);
 ```
 
-During role check the IAM validator uses this `roleId` to verify with the state if the role is active. In other words, the module checks if a signer is allowed to assume a particular policy. If it is not active, validation will fail. Otherwise it continues with the authorization check.
+During role check the AccessCtl module uses this `roleId` to verify with the state if the role is active. In other words, the module checks if a signer is allowed to assume a particular policy. If it is not active, validation will fail. Otherwise it continues with the authorization check.
 
 The `roleId` is also unpacked into a `signerId` and `policyId` for authentication and authorization checks.
 
@@ -85,13 +85,13 @@ signer.ecdsa == ECDSA.recover(ECDSA.toEthSignedMessageHash(hash), _getECDSASigna
 
 If the signature is valid, it returns a success response and proceeds to the execution phase of a `UserOperation`.
 
-## `IAMModule` interface
+## `AccessCtl` interface
 
-The `IAMModule` inherits from the base ERC7579 validator and hook module. The following interface relates only to the `IAMModule`.
+The `AccessCtl` inherits from the base ERC7579 validator and hook module. The following interface relates only to the `AccessCtl`.
 
 ### Signer functions
 
-These functions relate to Authentication. The `signerId` is emitted via events and should be tracked on the application layer. For details, see definitions in [IAMModule.sol](src/IAMModule.sol) and [Signer.sol](src/Signer.sol).
+These functions relate to Authentication. The `signerId` is emitted via events and should be tracked on the application layer. For details, see definitions in [AccessCtl.sol](src/AccessCtl.sol) and [Signer.sol](src/Signer.sol).
 
 ```solidity
 event SignerAdded(address indexed account, uint112 indexed signerId, Signer signer);
@@ -105,7 +105,7 @@ function removeSigner(uint112 signerId) external;
 
 ### Policy functions
 
-These functions relate to Authorization. The `policyId` is emitted via events and should be tracked on the application layer. For details, see definitions in [IAMModule.sol](src/IAMModule.sol) and [Policy.sol](src/Policy.sol).
+These functions relate to Authorization. The `policyId` is emitted via events and should be tracked on the application layer. For details, see definitions in [AccessCtl.sol](src/AccessCtl.sol) and [Policy.sol](src/Policy.sol).
 
 ```solidity
 event PolicyAdded(address indexed account, uint112 indexed policyId, Policy policy);
@@ -118,7 +118,7 @@ function removePolicy(uint112 policyId) external;
 
 ### Action functions
 
-These functions also relate to Authorization. Every `Policy` can have up to 8 actions which are rules for evaluating an outgoing `CALL` from the smart account. The `actionId` is emitted via events and should be tracked by the application layer. For details, see definitions in [IAMModule.sol](src/IAMModule.sol) and [Action.sol](src/Action.sol).
+These functions also relate to Authorization. Every `Policy` can have up to 8 actions which are rules for evaluating an outgoing `CALL` from the smart account. The `actionId` is emitted via events and should be tracked by the application layer. For details, see definitions in [AccessCtl.sol](src/AccessCtl.sol) and [Action.sol](src/Action.sol).
 
 ```solidity
 event ActionAdded(address indexed account, uint24 indexed actionId, Action action);
@@ -131,7 +131,7 @@ function removeAction(uint24 actionId) external;
 
 ### Role functions
 
-These functions relate to the association between signer and policy. The `roleId` is emitted via events and should be tracked on the application layer. For details, see definitions in [IAMModule.sol](src/IAMModule.sol).
+These functions relate to the association between signer and policy. The `roleId` is emitted via events and should be tracked on the application layer. For details, see definitions in [AccessCtl.sol](src/AccessCtl.sol).
 
 ```solidity
 event RoleAdded(address indexed account, uint224 indexed roleId);
@@ -144,7 +144,7 @@ function removeRole(uint224 roleId) external;
 
 ## Error codes
 
-The `IAMModule` has the following error codes:
+The `AccessCtl` has the following error codes:
 
 - `IAM1x`: Validate `UserOperation` errors.
 - `IAM2x`: Validate ERC1271 signature errors.
@@ -152,11 +152,11 @@ The `IAMModule` has the following error codes:
 
 ## Signers, Policies, and Actions
 
-The following is a flow chart of how the `IAMModule` decides if a `UserOperation` is allowed based on a given `Signer`, `Policy`, and its associated `Actions`.
+The following is a flow chart of how the `AccessCtl` decides if a `UserOperation` is allowed based on a given `Signer`, `Policy`, and its associated `Actions`.
 
 ```mermaid
 flowchart TD
-    start(["call to policy.verifyUserOp(op)"])-->isAdmin{Is admin mode?}
+    start(["call to policy.verifyUserOp(op, actions)"])-->isAdmin{Is admin mode?}
     isAdmin-->|Yes|ok([Return true])
     isAdmin-->|No|isExec{"is calling account.execute(...)?"}
     isExec-->|Yes|getCallType["Get call type"]
@@ -318,7 +318,7 @@ The following fields allow us to validate the amount of ETH (or native tokens) s
 
 > _Note that this module MUST be explicitly installed as a `TYPE_VALIDATOR` and `TYPE_HOOK` to be considered as initialized. The following refers to installation of the validator. Installation of the hook is effectively a noop from the perspective of the module._
 
-On install, the `IAMModule` does the following steps:
+On install, the `AccessCtl` does the following steps:
 
 1. Adds the root signer passed in via call data. It assigns the `signerId` of `0`.
 2. Adds an admin policy (i.e. a blank `Policy` with `mode` set to `MODE_ADMIN`). It assigns the `policyId` of `0`.
@@ -327,7 +327,7 @@ On install, the `IAMModule` does the following steps:
 
 These steps are idempotent and will cause a revert if `onInstall` is called again on an initialized account.
 
-On uninstall, the `IAMModule` will effectively wipe all existing signers and policies from the account's state. It will also reset `signerId` and `policyId` back to `0`.
+On uninstall, the `AccessCtl` will effectively wipe all existing signers and policies from the account's state. It will also reset `signerId` and `policyId` back to `0`.
 
 # Contributing
 

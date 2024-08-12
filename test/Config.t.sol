@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 import { AccountType } from "modulekit/test/RhinestoneModuleKit.sol";
 import { TestHelper } from "test/TestHelper.sol";
-import { IAMModule } from "src/IAMModule.sol";
+import { AccessCtl } from "src/AccessCtl.sol";
 import { Signer, SignerLib } from "src/Signer.sol";
 
 contract ConfigTest is TestHelper {
@@ -28,14 +28,14 @@ contract ConfigTest is TestHelper {
             address(module),
             0,
             abi.encodeWithSelector(
-                IAMModule.addWebAuthnSigner.selector, dummyP256PubKeyX1, dummyP256PubKeyY1
+                AccessCtl.addWebAuthnSigner.selector, dummyP256PubKeyX1, dummyP256PubKeyY1
             )
         );
         _execUserOp(
             address(module),
             0,
             abi.encodeWithSelector(
-                IAMModule.addWebAuthnSigner.selector, dummyP256PubKeyX2, dummyP256PubKeyY2
+                AccessCtl.addWebAuthnSigner.selector, dummyP256PubKeyX2, dummyP256PubKeyY2
             )
         );
         _uninstallModule();
@@ -48,14 +48,14 @@ contract ConfigTest is TestHelper {
             address(module),
             0,
             abi.encodeWithSelector(
-                IAMModule.addWebAuthnSigner.selector, dummyP256PubKeyX1, dummyP256PubKeyY1
+                AccessCtl.addWebAuthnSigner.selector, dummyP256PubKeyX1, dummyP256PubKeyY1
             )
         );
         _execUserOp(
             address(module),
             0,
             abi.encodeWithSelector(
-                IAMModule.addWebAuthnSigner.selector, dummyP256PubKeyX2, dummyP256PubKeyY2
+                AccessCtl.addWebAuthnSigner.selector, dummyP256PubKeyX2, dummyP256PubKeyY2
             )
         );
         assertTrue(

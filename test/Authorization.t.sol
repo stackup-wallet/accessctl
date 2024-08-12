@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 import { ModuleKitHelpers, ModuleKitUserOp } from "modulekit/ModuleKit.sol";
 import { TestHelper } from "test/TestHelper.sol";
-import { IAMModule } from "src/IAMModule.sol";
+import { AccessCtl } from "src/AccessCtl.sol";
 import { Policy, PolicyLib, MODE_ADMIN } from "src/Policy.sol";
 import { Action, ActionLib } from "src/Action.sol";
 
@@ -23,7 +23,7 @@ contract AuthorizationTest is TestHelper {
         _execUserOp(
             address(module),
             0,
-            abi.encodeWithSelector(IAMModule.addPolicy.selector, dummy1EtherSinglePolicy)
+            abi.encodeWithSelector(AccessCtl.addPolicy.selector, dummy1EtherSinglePolicy)
         );
 
         assertTrue(
@@ -44,13 +44,13 @@ contract AuthorizationTest is TestHelper {
         _execUserOp(
             address(module),
             0,
-            abi.encodeWithSelector(IAMModule.addPolicy.selector, dummy1EtherSinglePolicy)
+            abi.encodeWithSelector(AccessCtl.addPolicy.selector, dummy1EtherSinglePolicy)
         );
 
         _execUserOp(
             address(module),
             0,
-            abi.encodeWithSelector(IAMModule.removePolicy.selector, expectedPolicyId)
+            abi.encodeWithSelector(AccessCtl.removePolicy.selector, expectedPolicyId)
         );
         assertTrue(module.getPolicy(address(instance.account), expectedPolicyId).isNull());
     }
@@ -84,7 +84,7 @@ contract AuthorizationTest is TestHelper {
             _execUserOp(
                 address(module),
                 0,
-                abi.encodeWithSelector(IAMModule.addAction.selector, expectedActions[i])
+                abi.encodeWithSelector(AccessCtl.addAction.selector, expectedActions[i])
             );
         }
         Policy memory policy;
@@ -94,7 +94,7 @@ contract AuthorizationTest is TestHelper {
             | (uint192(rootActionId + 6) << 24 * 5) | (uint192(rootActionId + 7) << 24 * 6)
             | (uint192(rootActionId + 8) << 24 * 7);
         _execUserOp(
-            address(module), 0, abi.encodeWithSelector(IAMModule.addPolicy.selector, policy)
+            address(module), 0, abi.encodeWithSelector(AccessCtl.addPolicy.selector, policy)
         );
 
         Action[] memory actualActions = module.getActions(
@@ -112,12 +112,12 @@ contract AuthorizationTest is TestHelper {
         Policy memory policy;
         policy.mode = MODE_ADMIN;
         _execUserOp(
-            address(module), 0, abi.encodeWithSelector(IAMModule.addPolicy.selector, policy)
+            address(module), 0, abi.encodeWithSelector(AccessCtl.addPolicy.selector, policy)
         );
         _execUserOp(
             address(module),
             0,
-            abi.encodeWithSelector(IAMModule.addRole.selector, rootSignerId, rootPolicyId + 1)
+            abi.encodeWithSelector(AccessCtl.addRole.selector, rootSignerId, rootPolicyId + 1)
         );
 
         address target = makeAddr("target");
@@ -143,12 +143,12 @@ contract AuthorizationTest is TestHelper {
         policy.mode = MODE_ADMIN;
         policy.minimumInterval = 86_400;
         _execUserOp(
-            address(module), 0, abi.encodeWithSelector(IAMModule.addPolicy.selector, policy)
+            address(module), 0, abi.encodeWithSelector(AccessCtl.addPolicy.selector, policy)
         );
         _execUserOp(
             address(module),
             0,
-            abi.encodeWithSelector(IAMModule.addRole.selector, rootSignerId, rootPolicyId + 1)
+            abi.encodeWithSelector(AccessCtl.addRole.selector, rootSignerId, rootPolicyId + 1)
         );
 
         address target = makeAddr("target");
@@ -177,12 +177,12 @@ contract AuthorizationTest is TestHelper {
         policy.validAfter = 2 * 86_400;
         policy.minimumInterval = 86_400;
         _execUserOp(
-            address(module), 0, abi.encodeWithSelector(IAMModule.addPolicy.selector, policy)
+            address(module), 0, abi.encodeWithSelector(AccessCtl.addPolicy.selector, policy)
         );
         _execUserOp(
             address(module),
             0,
-            abi.encodeWithSelector(IAMModule.addRole.selector, rootSignerId, rootPolicyId + 1)
+            abi.encodeWithSelector(AccessCtl.addRole.selector, rootSignerId, rootPolicyId + 1)
         );
 
         address target = makeAddr("target");
@@ -218,7 +218,7 @@ contract AuthorizationTest is TestHelper {
         _execUserOp(
             address(module),
             0,
-            abi.encodeWithSelector(IAMModule.removePolicy.selector, rootPolicyId)
+            abi.encodeWithSelector(AccessCtl.removePolicy.selector, rootPolicyId)
         );
         address target = makeAddr("target");
         uint256 initBalance = target.balance;

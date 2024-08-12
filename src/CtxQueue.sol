@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.23;
 
-library ContextQueue {
+library CtxQueue {
     /**
      * For calculating ERC-7562 compliant transient storage slots using
      * `keccak(A||x) + n`, where A is the smart account address.

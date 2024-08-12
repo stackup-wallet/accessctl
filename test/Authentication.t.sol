@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 import { ModuleKitHelpers, ModuleKitUserOp } from "modulekit/ModuleKit.sol";
 import { TestHelper } from "test/TestHelper.sol";
-import { IAMModule } from "src/IAMModule.sol";
+import { AccessCtl } from "src/AccessCtl.sol";
 import { Signer, SignerLib, MODE_WEBAUTHN, MODE_ECDSA } from "src/Signer.sol";
 
 contract AuthenticationTest is TestHelper {
@@ -20,7 +20,7 @@ contract AuthenticationTest is TestHelper {
             address(module),
             0,
             abi.encodeWithSelector(
-                IAMModule.addWebAuthnSigner.selector, dummyP256PubKeyX1, dummyP256PubKeyY1
+                AccessCtl.addWebAuthnSigner.selector, dummyP256PubKeyX1, dummyP256PubKeyY1
             )
         );
 
@@ -56,14 +56,14 @@ contract AuthenticationTest is TestHelper {
             address(module),
             0,
             abi.encodeWithSelector(
-                IAMModule.addWebAuthnSigner.selector, dummyP256PubKeyX1, dummyP256PubKeyY1
+                AccessCtl.addWebAuthnSigner.selector, dummyP256PubKeyX1, dummyP256PubKeyY1
             )
         );
 
         _execUserOp(
             address(module),
             0,
-            abi.encodeWithSelector(IAMModule.removeSigner.selector, expectedSignerId)
+            abi.encodeWithSelector(AccessCtl.removeSigner.selector, expectedSignerId)
         );
         Signer memory s = module.getSigner(address(instance.account), expectedSignerId);
         assertTrue(s.isNull());
@@ -89,7 +89,7 @@ contract AuthenticationTest is TestHelper {
         _execUserOp(
             address(module),
             0,
-            abi.encodeWithSelector(IAMModule.removeSigner.selector, rootSignerId)
+            abi.encodeWithSelector(AccessCtl.removeSigner.selector, rootSignerId)
         );
         address target = makeAddr("target");
         uint256 initBalance = target.balance;
@@ -103,12 +103,12 @@ contract AuthenticationTest is TestHelper {
         _execUserOp(
             address(module),
             0,
-            abi.encodeWithSelector(IAMModule.addECDSASigner.selector, member.addr)
+            abi.encodeWithSelector(AccessCtl.addECDSASigner.selector, member.addr)
         );
         _execUserOp(
             address(module),
             0,
-            abi.encodeWithSelector(IAMModule.addRole.selector, rootSignerId + 1, rootPolicyId)
+            abi.encodeWithSelector(AccessCtl.addRole.selector, rootSignerId + 1, rootPolicyId)
         );
 
         address target = makeAddr("target");
@@ -127,12 +127,12 @@ contract AuthenticationTest is TestHelper {
         _execUserOp(
             address(module),
             0,
-            abi.encodeWithSelector(IAMModule.addECDSASigner.selector, member.addr)
+            abi.encodeWithSelector(AccessCtl.addECDSASigner.selector, member.addr)
         );
         _execUserOp(
             address(module),
             0,
-            abi.encodeWithSelector(IAMModule.addRole.selector, rootSignerId + 1, rootPolicyId)
+            abi.encodeWithSelector(AccessCtl.addRole.selector, rootSignerId + 1, rootPolicyId)
         );
 
         address target = makeAddr("target");
