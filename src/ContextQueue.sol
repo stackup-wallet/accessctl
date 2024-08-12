@@ -5,8 +5,10 @@ library ContextQueue {
     /**
      * For calculating ERC-7562 compliant transient storage slots using
      * `keccak(A||x) + n`, where A is the smart account address.
+     *
+     * x = keccak256("accessctl.ctxqueue")
      */
-    bytes32 internal constant x = 0x00000000000000000000000000000000000000000000000000000000000010F1;
+    bytes32 internal constant x = 0xa383951bd72b09b9216aa25fc6078337e33234b7e2f40859622804a6c39e439f;
 
     function enqueue(address account, uint256 value) public {
         (uint128 start, uint128 end) = _parseRef(_tloadRef(account));
