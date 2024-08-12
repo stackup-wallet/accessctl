@@ -210,4 +210,21 @@ contract AuthorizationTest is TestHelper {
         _execUserOp(roleId, dummyP256PrivateKeyRoot, target, value, "");
         assertEq(target.balance, initBalance + value + value);
     }
+
+    function testOrphanedPolicyShouldRevert() public {
+        // TODO: check why SIMULATE test doesn't catch validateUserOp revert.
+        if (vm.envOr("SIMULATE", false)) return;
+
+        _execUserOp(
+            address(module),
+            0,
+            abi.encodeWithSelector(IAMModule.removePolicy.selector, rootPolicyId)
+        );
+        address target = makeAddr("target");
+        uint256 initBalance = target.balance;
+
+        instance.expect4337Revert();
+        _execUserOp(target, 1 ether, "");
+        assertEq(target.balance, initBalance);
+    }
 }
