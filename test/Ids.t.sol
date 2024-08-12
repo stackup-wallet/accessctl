@@ -72,7 +72,7 @@ contract IdsTest is TestHelper {
             abi.encodeWithSelector(IAMModule.removeAction.selector, rootActionId + 1)
         );
 
-        // Asser next ids will still go up
+        // Assert next ids will still go up
         (uint112 signerId, uint112 policyId, uint48 actionId) =
             module.getNextIds(address(instance.account));
         assertEq(signerId, rootSignerId + 2);
