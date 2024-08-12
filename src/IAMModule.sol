@@ -128,7 +128,7 @@ contract IAMModule is ERC7579ValidatorBase, ERC7579HookBase {
      * if applicable.
      */
     function _preCheck(
-        address,
+        address account,
         address,
         uint256,
         bytes calldata
@@ -139,10 +139,10 @@ contract IAMModule is ERC7579ValidatorBase, ERC7579HookBase {
     {
         uint224 roleId = uint224(ContextQueue.dequeue());
         (, uint112 policyId) = _parseRoleId(roleId);
-        Policy memory p = getPolicy(msg.sender, policyId);
+        Policy memory p = getPolicy(account, policyId);
 
-        (uint8 installCount,,,) = _parseCounter(Counters[msg.sender]);
-        RoleRegister[_packInstallCountAndRoleId(installCount, roleId)][msg.sender] =
+        (uint8 installCount,,,) = _parseCounter(Counters[account]);
+        RoleRegister[_packInstallCountAndRoleId(installCount, roleId)][account] =
             uint48(block.timestamp) + p.minimumInterval;
         return "";
     }
