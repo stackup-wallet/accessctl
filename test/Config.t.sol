@@ -28,14 +28,14 @@ contract ConfigTest is TestHelper {
             address(module),
             0,
             abi.encodeWithSelector(
-                IAMModule.addSigner.selector, dummyP256PubKeyX1, dummyP256PubKeyY1
+                IAMModule.addWebAuthnSigner.selector, dummyP256PubKeyX1, dummyP256PubKeyY1
             )
         );
         _execUserOp(
             address(module),
             0,
             abi.encodeWithSelector(
-                IAMModule.addSigner.selector, dummyP256PubKeyX2, dummyP256PubKeyY2
+                IAMModule.addWebAuthnSigner.selector, dummyP256PubKeyX2, dummyP256PubKeyY2
             )
         );
         _uninstallModule();
@@ -43,19 +43,19 @@ contract ConfigTest is TestHelper {
         assertTrue(module.getSigner(address(instance.account), rootSignerId + 1).isNull());
         assertTrue(module.getSigner(address(instance.account), rootSignerId + 2).isNull());
 
-        _installModule();
+        _installModuleWithWebAuthn();
         _execUserOp(
             address(module),
             0,
             abi.encodeWithSelector(
-                IAMModule.addSigner.selector, dummyP256PubKeyX1, dummyP256PubKeyY1
+                IAMModule.addWebAuthnSigner.selector, dummyP256PubKeyX1, dummyP256PubKeyY1
             )
         );
         _execUserOp(
             address(module),
             0,
             abi.encodeWithSelector(
-                IAMModule.addSigner.selector, dummyP256PubKeyX2, dummyP256PubKeyY2
+                IAMModule.addWebAuthnSigner.selector, dummyP256PubKeyX2, dummyP256PubKeyY2
             )
         );
         assertTrue(
@@ -67,5 +67,10 @@ contract ConfigTest is TestHelper {
         assertTrue(
             module.getSigner(address(instance.account), rootSignerId + 2).isEqual(dummySigner2)
         );
+    }
+
+    function testInstallWithECDSA() public {
+        _uninstallModule();
+        _installModuleWithECDSA();
     }
 }
