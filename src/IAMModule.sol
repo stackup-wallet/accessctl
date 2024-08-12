@@ -122,7 +122,7 @@ contract IAMModule is ERC7579ValidatorBase, ERC7579HookBase {
     //////////////////////////////////////////////////////////////////////////*/
 
     /**
-     * Called on precheck before every execution.
+     * Called on precheck before every execution
      *
      * This will update the assumed policy's validAfter to enforce a rate limit
      * if applicable.
