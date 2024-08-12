@@ -8,32 +8,32 @@ library ContextQueue {
      */
     bytes32 internal constant x = 0x00000000000000000000000000000000000000000000000000000000000010F1;
 
-    function enqueue(uint256 value) public {
-        (uint128 start, uint128 end) = _parseRef(_tloadRef());
+    function enqueue(address account, uint256 value) public {
+        (uint128 start, uint128 end) = _parseRef(_tloadRef(account));
 
-        _tstoreRef(_packRef(start, end + 1));
-        _tstoreMap(end, value);
+        _tstoreRef(account, _packRef(start, end + 1));
+        _tstoreMap(account, end, value);
     }
 
-    function dequeue() public returns (uint256 value) {
-        (uint128 start, uint128 end) = _parseRef(_tloadRef());
+    function dequeue(address account) public returns (uint256 value) {
+        (uint128 start, uint128 end) = _parseRef(_tloadRef(account));
 
-        _tstoreRef(_packRef(start + 1, end));
-        value = _tloadMap(start);
+        _tstoreRef(account, _packRef(start + 1, end));
+        value = _tloadMap(account, start);
     }
 
-    function _tloadRef() internal view returns (uint256 ref) {
+    function _tloadRef(address account) internal view returns (uint256 ref) {
         // solhint-disable-next-line no-inline-assembly
         assembly {
-            ref := tload(caller())
+            ref := tload(account)
         }
     }
 
-    function _tloadMap(uint256 n) internal view returns (uint256 ref) {
+    function _tloadMap(address account, uint256 n) internal view returns (uint256 ref) {
         // solhint-disable-next-line no-inline-assembly
         assembly {
             let ptr := mload(0x40)
-            mstore(ptr, caller())
+            mstore(ptr, account)
             mstore(add(ptr, 0x20), x)
 
             let hash := keccak256(ptr, 0x40)
@@ -43,18 +43,18 @@ library ContextQueue {
         }
     }
 
-    function _tstoreRef(uint256 value) internal {
+    function _tstoreRef(address account, uint256 value) internal {
         // solhint-disable-next-line no-inline-assembly
         assembly {
-            tstore(caller(), value)
+            tstore(account, value)
         }
     }
 
-    function _tstoreMap(uint256 n, uint256 value) internal {
+    function _tstoreMap(address account, uint256 n, uint256 value) internal {
         // solhint-disable-next-line no-inline-assembly
         assembly {
             let ptr := mload(0x40)
-            mstore(ptr, caller())
+            mstore(ptr, account)
             mstore(add(ptr, 0x20), x)
 
             let hash := keccak256(ptr, 0x40)

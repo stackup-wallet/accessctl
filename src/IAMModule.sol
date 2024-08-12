@@ -137,7 +137,7 @@ contract IAMModule is ERC7579ValidatorBase, ERC7579HookBase {
         override
         returns (bytes memory hookData)
     {
-        uint224 roleId = uint224(ContextQueue.dequeue());
+        uint224 roleId = uint224(ContextQueue.dequeue(account));
         (, uint112 policyId) = _parseRoleId(roleId);
         Policy memory p = getPolicy(account, policyId);
 
@@ -195,7 +195,7 @@ contract IAMModule is ERC7579ValidatorBase, ERC7579HookBase {
         WebAuthn.WebAuthnAuth memory auth = _getAuthFromSigAndChallange(userOp.signature, challange);
         if (WebAuthn.verify(challange, true, auth, signer.x, signer.y)) {
             // Load required context to update validAfter in execution hook.
-            ContextQueue.enqueue(uint256(roleId));
+            ContextQueue.enqueue(msg.sender, uint256(roleId));
 
             return _packValidationData(false, p.validUntil, _maxTimestamp(validAfter, p.validAfter));
         }

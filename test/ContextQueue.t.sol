@@ -6,24 +6,24 @@ import { ContextQueue } from "src/ContextQueue.sol";
 
 contract ContextQueueTest is TestHelper {
     function _enqueueForPrank(uint256 value) external {
-        ContextQueue.enqueue(value);
+        ContextQueue.enqueue(msg.sender, value);
     }
 
     function _dequeueForPrank() external returns (uint256) {
-        return ContextQueue.dequeue();
+        return ContextQueue.dequeue(msg.sender);
     }
 
     function testFIFOLogic() public {
         uint256 first = 1;
         uint256 second = 2;
         uint256 third = 3;
-        ContextQueue.enqueue(first);
-        ContextQueue.enqueue(second);
-        ContextQueue.enqueue(third);
+        ContextQueue.enqueue(msg.sender, first);
+        ContextQueue.enqueue(msg.sender, second);
+        ContextQueue.enqueue(msg.sender, third);
 
-        assertTrue(ContextQueue.dequeue() == first);
-        assertTrue(ContextQueue.dequeue() == second);
-        assertTrue(ContextQueue.dequeue() == third);
+        assertTrue(ContextQueue.dequeue(msg.sender) == first);
+        assertTrue(ContextQueue.dequeue(msg.sender) == second);
+        assertTrue(ContextQueue.dequeue(msg.sender) == third);
     }
 
     function testParallelFIFOLogic() public {
