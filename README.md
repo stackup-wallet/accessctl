@@ -104,7 +104,7 @@ function removeSigner(uint112 signerId) external;
 These functions relate to Authorization. The `policyId` is emitted via events and should be tracked on the application layer. For details, see definitions in [IAMModule.sol](src/IAMModule.sol) and [Policy.sol](src/Policy.sol).
 
 ```solidity
-event PolicyAdded(address indexed account, uint112 indexed policyId, Policy p);
+event PolicyAdded(address indexed account, uint112 indexed policyId, Policy policy);
 event PolicyRemoved(address indexed account, uint112 indexed policyId);
 
 function getPolicy(address account, uint112 policyId) public view returns (Policy memory);
@@ -117,7 +117,7 @@ function removePolicy(uint112 policyId) external;
 These functions also relate to Authorization. Every `Policy` can have up to 8 actions which are rules for evaluating an outgoing `CALL` from the smart account. The `actionId` is emitted via events and should be tracked by the application layer. For details, see definitions in [IAMModule.sol](src/IAMModule.sol) and [Action.sol](src/Action.sol).
 
 ```solidity
-event ActionAdded(address indexed account, uint24 indexed actionId, Action a);
+event ActionAdded(address indexed account, uint24 indexed actionId, Action action);
 event ActionRemoved(address indexed account, uint24 indexed actionId);
 
 function getAction(address account, uint24 actionId) public view returns (Action memory);

@@ -21,9 +21,9 @@ contract IAMModule is ERC7579ValidatorBase, ERC7579HookBase {
 
     event SignerAdded(address indexed account, uint112 indexed signerId, uint256 x, uint256 y);
     event SignerRemoved(address indexed account, uint112 indexed signerId);
-    event PolicyAdded(address indexed account, uint112 indexed policyId, Policy p);
+    event PolicyAdded(address indexed account, uint112 indexed policyId, Policy policy);
     event PolicyRemoved(address indexed account, uint112 indexed policyId);
-    event ActionAdded(address indexed account, uint24 indexed actionId, Action a);
+    event ActionAdded(address indexed account, uint24 indexed actionId, Action action);
     event ActionRemoved(address indexed account, uint24 indexed actionId);
     event RoleAdded(address indexed account, uint224 indexed roleId);
     event RoleRemoved(address indexed account, uint224 indexed roleId);

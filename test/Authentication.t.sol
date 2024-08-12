@@ -1,12 +1,15 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.23;
 
+import { ModuleKitHelpers, ModuleKitUserOp } from "modulekit/ModuleKit.sol";
 import { TestHelper } from "test/TestHelper.sol";
 import { IAMModule } from "src/IAMModule.sol";
 import { Signer, SignerLib } from "src/Signer.sol";
 
 contract AuthenticationTest is TestHelper {
     using SignerLib for Signer;
+    using ModuleKitHelpers for *;
+    using ModuleKitUserOp for *;
 
     function testAddSignerWritesToState() public {
         uint112 expectedSignerId = rootSignerId + 1;
@@ -65,5 +68,19 @@ contract AuthenticationTest is TestHelper {
         vm.expectEmit(true, true, true, true, address(module));
         emit SignerRemoved(address(this), rootSignerId + 1);
         module.removeSigner(rootSignerId + 1);
+    }
+
+    function testOrphanedSignerShouldRevert() public {
+        _execUserOp(
+            address(module),
+            0,
+            abi.encodeWithSelector(IAMModule.removeSigner.selector, rootSignerId)
+        );
+        address target = makeAddr("target");
+        uint256 initBalance = target.balance;
+
+        instance.expect4337Revert();
+        _execUserOp(target, 1 ether, "");
+        assertEq(target.balance, initBalance);
     }
 }
