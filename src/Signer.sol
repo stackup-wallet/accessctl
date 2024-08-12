@@ -49,9 +49,9 @@ library SignerLib {
         returns (bool)
     {
         if (s.mode == MODE_WEBAUTHN) {
-            bytes memory challange = abi.encode(hash);
-            WebAuthn.WebAuthnAuth memory auth = _getWebAuthnAuth(signature, challange);
-            return WebAuthn.verify(challange, true, auth, s.p256x, s.p256y);
+            bytes memory challenge = abi.encode(hash);
+            WebAuthn.WebAuthnAuth memory auth = _getWebAuthnAuth(signature, challenge);
+            return WebAuthn.verify(challenge, true, auth, s.p256x, s.p256y);
         } else if (s.mode == MODE_ECDSA) {
             return s.ecdsa
                 == ECDSA.recover(ECDSA.toEthSignedMessageHash(hash), _getECDSASignature(signature));
