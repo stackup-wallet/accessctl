@@ -63,8 +63,8 @@ contract IAMModule is ERC7579ValidatorBase, ERC7579HookBase {
 
     /**
      * A register to determine if a given signer can assume a policy. The key is
-     * equal to concat(install count, roleId). The value contains the validAfter
-     * timestamp for this role.
+     * equal to concat(install count, roleId). The value contains the latest
+     * validAfter timestamp for this role.
      */
     mapping(uint232 installCountAndRoleId => mapping(address account => uint48 validAfter)) internal
         RoleRegister;
