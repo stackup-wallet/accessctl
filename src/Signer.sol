@@ -10,7 +10,7 @@ bytes1 constant MODE_WEBAUTHN = 0x00;
 bytes1 constant MODE_ECDSA = 0x01;
 
 /**
- * A data structure for storing an associated signer's public keys.
+ * A data structure for storing an associated signer's public key.
  */
 struct Signer {
     /*
