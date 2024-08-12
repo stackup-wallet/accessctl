@@ -2,28 +2,28 @@
 pragma solidity ^0.8.23;
 
 import { TestHelper } from "test/TestHelper.sol";
-import { ContextQueue } from "src/ContextQueue.sol";
+import { CtxQueue } from "src/CtxQueue.sol";
 
 contract ContextQueueTest is TestHelper {
     function _enqueueForPrank(uint256 value) external {
-        ContextQueue.enqueue(msg.sender, value);
+        CtxQueue.enqueue(msg.sender, value);
     }
 
     function _dequeueForPrank() external returns (uint256) {
-        return ContextQueue.dequeue(msg.sender);
+        return CtxQueue.dequeue(msg.sender);
     }
 
     function testFIFOLogic() public {
         uint256 first = 1;
         uint256 second = 2;
         uint256 third = 3;
-        ContextQueue.enqueue(msg.sender, first);
-        ContextQueue.enqueue(msg.sender, second);
-        ContextQueue.enqueue(msg.sender, third);
+        CtxQueue.enqueue(msg.sender, first);
+        CtxQueue.enqueue(msg.sender, second);
+        CtxQueue.enqueue(msg.sender, third);
 
-        assertTrue(ContextQueue.dequeue(msg.sender) == first);
-        assertTrue(ContextQueue.dequeue(msg.sender) == second);
-        assertTrue(ContextQueue.dequeue(msg.sender) == third);
+        assertTrue(CtxQueue.dequeue(msg.sender) == first);
+        assertTrue(CtxQueue.dequeue(msg.sender) == second);
+        assertTrue(CtxQueue.dequeue(msg.sender) == third);
     }
 
     function testParallelFIFOLogic() public {

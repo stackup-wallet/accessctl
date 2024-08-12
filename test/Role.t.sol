@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 import { TestHelper } from "test/TestHelper.sol";
-import { IAMModule } from "src/IAMModule.sol";
+import { AccessCtl } from "src/AccessCtl.sol";
 
 contract RoleTest is TestHelper {
     function testRootSignerWithAdminPolicyRoleExists() public view {
@@ -13,7 +13,7 @@ contract RoleTest is TestHelper {
         _execUserOp(
             address(module),
             0,
-            abi.encodeWithSelector(IAMModule.addRole.selector, type(uint112).max, type(uint112).max)
+            abi.encodeWithSelector(AccessCtl.addRole.selector, type(uint112).max, type(uint112).max)
         );
 
         assertTrue(module.hasRole(address(instance.account), type(uint224).max));
@@ -29,13 +29,13 @@ contract RoleTest is TestHelper {
         _execUserOp(
             address(module),
             0,
-            abi.encodeWithSelector(IAMModule.addRole.selector, type(uint112).max, type(uint112).max)
+            abi.encodeWithSelector(AccessCtl.addRole.selector, type(uint112).max, type(uint112).max)
         );
 
         _execUserOp(
             address(module),
             0,
-            abi.encodeWithSelector(IAMModule.removeRole.selector, type(uint224).max)
+            abi.encodeWithSelector(AccessCtl.removeRole.selector, type(uint224).max)
         );
         assertFalse(module.hasRole(address(instance.account), type(uint224).max));
     }

@@ -5,14 +5,14 @@ import "forge-std/Script.sol";
 import { RegistryDeployer } from "modulekit/deployment/RegistryDeployer.sol";
 
 // Import modules here
-import { IAMModule } from "src/IAMModule.sol";
+import { AccessCtl } from "src/AccessCtl.sol";
 
 /// @title DeployModuleScript
 contract DeployModuleScript is Script, RegistryDeployer {
     function run() public {
         vm.startBroadcast(vm.envUint("PK"));
 
-        IAMModule module = new IAMModule{ salt: 0 }();
+        AccessCtl module = new AccessCtl{ salt: 0 }();
 
         vm.stopBroadcast();
         console.log("Deploying module at: %s", address(module));
