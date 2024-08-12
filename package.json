@@ -1,5 +1,5 @@
 {
-  "name": "accesscontrol",
+  "name": "accessctl",
   "version": "0.1.0",
   "description": "A scalable identity and access management layer for ERC-7579 compliant smart accounts.",
   "license": "GPL-3.0",
@@ -35,13 +35,13 @@
     "foundry.toml",
     "remappings.txt"
   ],
-  "homepage": "https://github.com/stackup-wallet/accesscontrol",
+  "homepage": "https://github.com/stackup-wallet/accessctl",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/stackup-wallet/accesscontrol.git"
+    "url": "git+https://github.com/stackup-wallet/accessctl.git"
   },
   "bugs": {
-    "url": "https://github.com/stackup-wallet/accesscontrol/issues"
+    "url": "https://github.com/stackup-wallet/accessctl/issues"
   },
   "keywords": [
     "account abstraction",
