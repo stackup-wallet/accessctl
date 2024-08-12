@@ -150,9 +150,9 @@ The `IAMModule` has the following error codes:
 - `IAM2x`: Validate ERC1271 signature errors.
 - `IAM3x`: Configuration errors.
 
-## Policies and Actions
+## Signers, Policies, and Actions
 
-The following is a flow chart of how the `IAMModule` decides if a `UserOperation` is allowed based on a given `Policy` and its associated `Actions`.
+The following is a flow chart of how the `IAMModule` decides if a `UserOperation` is allowed based on a given `Signer`, `Policy`, and its associated `Actions`.
 
 ```mermaid
 flowchart TD
@@ -177,6 +177,34 @@ flowchart TD
     isStrictMode-->|No|iterateActions
     isCallActionMatch-->|Yes|iterateActions
 ```
+
+### `Signer` data structure
+
+This data structure stores information on how to authenticate a `UserOperation`.
+
+```solidity
+struct Signer {
+    uint256 p256x;
+    uint256 p256y;
+    address ecdsa;
+    bytes1 mode;
+}
+```
+
+#### Mode
+
+This field determines which method to verify a signature with.
+
+- `MODE_WEBAUTHN`: uses `p256x` and `p256y` to verify a signature using the WebAuthn standard.
+- `MODE_ECDSA`: uses `ecdsa` to verify a signature using the [ERC-191](https://eips.ethereum.org/EIPS/eip-191) standard.
+
+#### `p256x` and `p256y`
+
+These are the `x` and `y` coordinates of a `secp256r1` public key used for WebAuthn verification.
+
+#### `ecdsa` address
+
+This is the related address that is used to check against the result of an `ecrecover` for ECDSA verification.
 
 ### `Policy` data structure
 
