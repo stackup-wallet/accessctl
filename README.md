@@ -6,7 +6,7 @@ A scalable identity and access management layer for ERC-4337 modular smart accou
 
 This project refers to an ERC-7579 validator and hook module that can be installed on any compliant smart account to enable advanced IAM features. The module is built with the following design goals in mind to support onchain organizations at every scale:
 
-- **Authentication**: support for adding many `secp256r1` signers to an account.
+- **Authentication**: support for adding many `WebAuthn` and `ECDSA` signers to an account.
 - **Authorization**: support for attaching transaction policies to each signer.
 - **Gas optimized**: can scale for a large number of active signers and policies.
 - **Easily auditable**: allows verifiable changelogs for tracking every validation update.
@@ -33,11 +33,11 @@ sequenceDiagram
     IAM Validator->>IAM Validator: Get policy from storage
     IAM Validator->>IAM Validator: Hydrate policy with associated actions
     IAM Validator->>IAM Validator: Verify userOp with policy
-    Note over IAM Validator,P256 Verifier: Authentication check
+    Note over IAM Validator,Signature Verifier: Authentication check
     IAM Validator->>IAM Validator: Get signer from storage
-    IAM Validator->>P256 Verifier: Calls verifySignature
-    P256 Verifier->>P256 Verifier: Verify sig with pub key & hash
-    P256 Verifier->>IAM Validator: Returns true
+    IAM Validator->>Signature Verifier: Calls verifySignature
+    Signature Verifier->>Signature Verifier: Verify sig with pub key & hash
+    Signature Verifier->>IAM Validator: Returns true
     IAM Validator->>Smart Account: Returns success response
     Smart Account->>EntryPoint: Pay prefund
     Note over EntryPoint,Smart Account: Validation done, execution next...
@@ -74,10 +74,13 @@ If the userOp passes the policy check it then moves on to the final phase.
 
 ### Authentication check
 
-This last phase is to ensure that the signature from `userOp.signature` was actually signed by the relevant private key. The `signerId` is used to fetch the corresponding `x` and `y` coordinate of the public key from storage and validate it with a `P256` verifier.
+This last phase is to ensure that the signature from `userOp.signature` was actually signed by the relevant private key. The `signerId` is used to fetch the corresponding public key from storage and validate it with either a `WebAuthn` or `ECDSA` verifier.
 
 ```solidity
-bool valid = P256.verifySignature(userOpHash, r, s, x, y);
+bool valid =  WebAuthn.verify(challenge, true, auth, signer.p256x, signer.p256y);
+
+// Or if using ECDSA
+signer.ecdsa == ECDSA.recover(ECDSA.toEthSignedMessageHash(hash), _getECDSASignature(signature));
 ```
 
 If the signature is valid, it returns a success response and proceeds to the execution phase of a `UserOperation`.
@@ -91,11 +94,12 @@ The `IAMModule` inherits from the base ERC7579 validator and hook module. The fo
 These functions relate to Authentication. The `signerId` is emitted via events and should be tracked on the application layer. For details, see definitions in [IAMModule.sol](src/IAMModule.sol) and [Signer.sol](src/Signer.sol).
 
 ```solidity
-event SignerAdded(address indexed account, uint112 indexed signerId, uint256 x, uint256 y);
+event SignerAdded(address indexed account, uint112 indexed signerId, Signer signer);
 event SignerRemoved(address indexed account, uint112 indexed signerId);
 
 function getSigner(address account, uint112 signerId) public view returns (Signer memory);
-function addSigner(uint256 x, uint256 y) external;
+function addWebAuthnSigner(uint256 x, uint256 y) external;
+function addECDSASigner(address member) external;
 function removeSigner(uint112 signerId) external;
 ```
 
@@ -146,9 +150,9 @@ The `IAMModule` has the following error codes:
 - `IAM2x`: Validate ERC1271 signature errors.
 - `IAM3x`: Configuration errors.
 
-## Policies and Actions
+## Signers, Policies, and Actions
 
-The following is a flow chart of how the `IAMModule` decides if a `UserOperation` is allowed based on a given `Policy` and its associated `Actions`.
+The following is a flow chart of how the `IAMModule` decides if a `UserOperation` is allowed based on a given `Signer`, `Policy`, and its associated `Actions`.
 
 ```mermaid
 flowchart TD
@@ -173,6 +177,34 @@ flowchart TD
     isStrictMode-->|No|iterateActions
     isCallActionMatch-->|Yes|iterateActions
 ```
+
+### `Signer` data structure
+
+This data structure stores information on how to authenticate a `UserOperation`.
+
+```solidity
+struct Signer {
+    uint256 p256x;
+    uint256 p256y;
+    address ecdsa;
+    bytes1 mode;
+}
+```
+
+#### Mode
+
+This field determines which method to verify a signature with.
+
+- `MODE_WEBAUTHN`: uses `p256x` and `p256y` to verify a signature using the WebAuthn standard.
+- `MODE_ECDSA`: uses `ecdsa` to verify a signature using the [ERC-191](https://eips.ethereum.org/EIPS/eip-191) standard.
+
+#### `p256x` and `p256y`
+
+These are the `x` and `y` coordinates of a `secp256r1` public key used for WebAuthn verification.
+
+#### `ecdsa` address
+
+This is the related address that is used to check against the result of an `ecrecover` for ECDSA verification.
 
 ### `Policy` data structure
 

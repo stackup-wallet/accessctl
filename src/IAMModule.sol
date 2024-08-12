@@ -3,10 +3,7 @@ pragma solidity ^0.8.23;
 
 import { ERC7579ValidatorBase, ERC7579HookBase } from "modulekit/Modules.sol";
 import { PackedUserOperation } from "modulekit/external/ERC4337.sol";
-import { WebAuthn } from "webauthn-sol/WebAuthn.sol";
-import { LibString } from "solady/utils/LibString.sol";
-import { Base64 } from "openzeppelin-contracts/contracts/utils/Base64.sol";
-import { Signer } from "src/Signer.sol";
+import { Signer, SignerLib, MODE_WEBAUTHN, MODE_ECDSA } from "src/Signer.sol";
 import { Policy, PolicyLib, MODE_ADMIN } from "src/Policy.sol";
 import { Action } from "src/Action.sol";
 import { ContextQueue } from "src/ContextQueue.sol";
@@ -16,10 +13,10 @@ contract IAMModule is ERC7579ValidatorBase, ERC7579HookBase {
                             CONSTANTS & STORAGE
     //////////////////////////////////////////////////////////////////////////*/
 
-    using LibString for string;
+    using SignerLib for Signer;
     using PolicyLib for Policy;
 
-    event SignerAdded(address indexed account, uint112 indexed signerId, uint256 x, uint256 y);
+    event SignerAdded(address indexed account, uint112 indexed signerId, Signer signer);
     event SignerRemoved(address indexed account, uint112 indexed signerId);
     event PolicyAdded(address indexed account, uint112 indexed policyId, Policy policy);
     event PolicyRemoved(address indexed account, uint112 indexed policyId);
@@ -82,8 +79,16 @@ contract IAMModule is ERC7579ValidatorBase, ERC7579HookBase {
     function onInstall(bytes calldata data) external override {
         if (this.isInitialized(msg.sender) || data.length == 0) return;
 
-        (uint256 x, uint256 y) = abi.decode(data, (uint256, uint256));
-        _addSigner(x, y);
+        bytes1 mode = bytes1(data[0]);
+        if (mode == MODE_WEBAUTHN) {
+            (, uint256 x, uint256 y) = abi.decode(data, (bytes1, uint256, uint256));
+            _addWebAuthnSigner(x, y);
+        } else if (mode == MODE_ECDSA) {
+            (, address member) = abi.decode(data, (bytes1, address));
+            _addECDSASigner(member);
+        } else {
+            revert("IAM30 unexpected mode");
+        }
 
         Policy memory p;
         p.mode = MODE_ADMIN;
@@ -191,9 +196,7 @@ contract IAMModule is ERC7579ValidatorBase, ERC7579HookBase {
 
         // Authentication check
         Signer memory signer = getSigner(msg.sender, signerId);
-        bytes memory challange = abi.encode(userOpHash);
-        WebAuthn.WebAuthnAuth memory auth = _getAuthFromSigAndChallange(userOp.signature, challange);
-        if (WebAuthn.verify(challange, true, auth, signer.x, signer.y)) {
+        if (signer.verifySignature(userOpHash, userOp.signature)) {
             // Load required context to update validAfter in execution hook.
             ContextQueue.enqueue(msg.sender, uint256(roleId));
 
@@ -238,11 +241,7 @@ contract IAMModule is ERC7579ValidatorBase, ERC7579HookBase {
 
         // Authentication check
         Signer memory signer = getSigner(msg.sender, signerId);
-        bytes memory challange = abi.encode(hash);
-        WebAuthn.WebAuthnAuth memory auth = _getAuthFromSigAndChallange(signature, challange);
-        return WebAuthn.verify(challange, true, auth, signer.x, signer.y)
-            ? EIP1271_SUCCESS
-            : EIP1271_FAILED;
+        return signer.verifySignature(hash, signature) ? EIP1271_SUCCESS : EIP1271_FAILED;
     }
 
     /**
@@ -338,8 +337,18 @@ contract IAMModule is ERC7579ValidatorBase, ERC7579HookBase {
      * @param x The x-coordinate of the public key.
      * @param y The y-coordinate of the public key.
      */
-    function addSigner(uint256 x, uint256 y) external {
-        _addSigner(x, y);
+    function addWebAuthnSigner(uint256 x, uint256 y) external {
+        _addWebAuthnSigner(x, y);
+    }
+
+    /**
+     * Registers a public key to the account under a unique signerId. Emits a
+     * SignerAdded event on success.
+     *
+     * @param member The derived address of the public key.
+     */
+    function addECDSASigner(address member) external {
+        _addECDSASigner(member);
     }
 
     /**
@@ -445,42 +454,23 @@ contract IAMModule is ERC7579ValidatorBase, ERC7579HookBase {
         return uint224(bytes28(data[:28]));
     }
 
-    function _getAuthFromSigAndChallange(
-        bytes calldata data,
-        bytes memory challange
-    )
-        internal
-        pure
-        returns (WebAuthn.WebAuthnAuth memory auth)
-    {
-        (
-            bytes memory authenticatorData,
-            string memory clientDataJSONPre,
-            string memory clientDataJSONPost,
-            uint256 challengeIndex,
-            uint256 typeIndex,
-            uint256 r,
-            uint256 s
-        ) = abi.decode(data[28:], (bytes, string, string, uint256, uint256, uint256, uint256));
-        auth = WebAuthn.WebAuthnAuth({
-            authenticatorData: authenticatorData,
-            clientDataJSON: clientDataJSONPre.concat(Base64.encodeURL(challange)).concat(
-                clientDataJSONPost
-            ),
-            challengeIndex: challengeIndex,
-            typeIndex: typeIndex,
-            r: r,
-            s: s
-        });
-    }
-
-    function _addSigner(uint256 x, uint256 y) internal {
+    function _addWebAuthnSigner(uint256 x, uint256 y) internal {
         (uint8 installCount, uint112 signerId, uint112 policyId, uint24 actionId) =
             _parseCounter(Counters[msg.sender]);
-        Signer memory signer = Signer(x, y);
+        Signer memory signer = Signer(x, y, address(0), MODE_WEBAUTHN);
 
         SignerRegister[_packInstallCountAndId(installCount, signerId)][msg.sender] = signer;
-        emit SignerAdded(msg.sender, signerId, x, y);
+        emit SignerAdded(msg.sender, signerId, signer);
+        Counters[msg.sender] = _packCounter(installCount, signerId + 1, policyId, actionId);
+    }
+
+    function _addECDSASigner(address member) internal {
+        (uint8 installCount, uint112 signerId, uint112 policyId, uint24 actionId) =
+            _parseCounter(Counters[msg.sender]);
+        Signer memory signer = Signer(0, 0, member, MODE_ECDSA);
+
+        SignerRegister[_packInstallCountAndId(installCount, signerId)][msg.sender] = signer;
+        emit SignerAdded(msg.sender, signerId, signer);
         Counters[msg.sender] = _packCounter(installCount, signerId + 1, policyId, actionId);
     }
 

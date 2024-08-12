@@ -10,16 +10,17 @@ import {
     UserOpData
 } from "modulekit/ModuleKit.sol";
 import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_HOOK } from "modulekit/external/ERC7579.sol";
+import { ECDSA } from "solady/utils/ECDSA.sol";
 import { LibString } from "solady/utils/LibString.sol";
 import { Base64 } from "openzeppelin-contracts/contracts/utils/Base64.sol";
 import { FCL_Elliptic_ZZ } from "FreshCryptoLib/FCL_elliptic.sol";
 import { IAMModule } from "src/IAMModule.sol";
-import { Signer } from "src/Signer.sol";
+import { Signer, MODE_WEBAUTHN, MODE_ECDSA } from "src/Signer.sol";
 import { Policy, MODE_ADMIN, CALL_TYPE_LEVEL_SINGLE, CALL_TYPE_LEVEL_BATCH } from "src/Policy.sol";
 import { Action, LEVEL_MUST_PASS, OPERATOR_LTE, OPERATOR_GT } from "src/Action.sol";
 
 abstract contract TestHelper is RhinestoneModuleKit, Test {
-    event SignerAdded(address indexed account, uint112 indexed signerId, uint256 x, uint256 y);
+    event SignerAdded(address indexed account, uint112 indexed signerId, Signer signer);
     event SignerRemoved(address indexed account, uint112 indexed signerId);
     event PolicyAdded(address indexed account, uint112 indexed policyId, Policy policy);
     event PolicyRemoved(address indexed account, uint112 indexed policyId);
@@ -67,9 +68,14 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
     uint256 constant dummyP256PubKeyY2 =
         0x6f8ced2c10424a460bbec2099ed6688ee8d4ad9df325be516917bafcb21fe55a;
 
-    Signer public dummyRootSigner = Signer(dummyP256PubKeyXRoot, dummyP256PubKeyYRoot);
-    Signer public dummySigner1 = Signer(dummyP256PubKeyX1, dummyP256PubKeyY1);
-    Signer public dummySigner2 = Signer(dummyP256PubKeyX2, dummyP256PubKeyY2);
+    Account public member = makeAccount("member");
+
+    Signer public dummyRootSigner =
+        Signer(dummyP256PubKeyXRoot, dummyP256PubKeyYRoot, address(0), MODE_WEBAUTHN);
+    Signer public dummySigner1 =
+        Signer(dummyP256PubKeyX1, dummyP256PubKeyY1, address(0), MODE_WEBAUTHN);
+    Signer public dummySigner2 =
+        Signer(dummyP256PubKeyX2, dummyP256PubKeyY2, address(0), MODE_WEBAUTHN);
 
     Policy public dummyAdminPolicy;
     Policy public dummy1EtherSinglePolicy;
@@ -138,6 +144,19 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
         );
     }
 
+    function _ecdsaSign(
+        uint224 roleId,
+        bytes32 message,
+        uint256 pk
+    )
+        internal
+        pure
+        returns (bytes memory signature)
+    {
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(pk, ECDSA.toEthSignedMessageHash(message));
+        signature = abi.encodePacked(roleId, r, s, v);
+    }
+
     function _execUserOp(address target, uint256 value, bytes memory data) internal {
         UserOpData memory userOpData = instance.getExecOps({
             target: target,
@@ -173,6 +192,25 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
         return instance.formatERC1271Hash(validatorModule, hash);
     }
 
+    function _execUserOpWithECDSA(
+        uint224 roleId,
+        uint256 pk,
+        address target,
+        uint256 value,
+        bytes memory data
+    )
+        internal
+    {
+        UserOpData memory userOpData = instance.getExecOps({
+            target: target,
+            value: value,
+            callData: data,
+            txValidator: address(module)
+        });
+        userOpData.userOp.signature = _ecdsaSign(roleId, userOpData.userOpHash, pk);
+        userOpData.execUserOps();
+    }
+
     function _verifyERC1271Signature(
         address validatorModule,
         bytes32 hash,
@@ -188,11 +226,20 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
         });
     }
 
-    function _installModule() internal {
+    function _installModuleWithWebAuthn() internal {
         instance.installModule({
             moduleTypeId: MODULE_TYPE_VALIDATOR,
             module: address(module),
-            data: abi.encode(dummyP256PubKeyXRoot, dummyP256PubKeyYRoot)
+            data: abi.encode(MODE_WEBAUTHN, dummyP256PubKeyXRoot, dummyP256PubKeyYRoot)
+        });
+        instance.installModule({ moduleTypeId: MODULE_TYPE_HOOK, module: address(module), data: "" });
+    }
+
+    function _installModuleWithECDSA() internal {
+        instance.installModule({
+            moduleTypeId: MODULE_TYPE_VALIDATOR,
+            module: address(module),
+            data: abi.encode(MODE_ECDSA, member.addr)
         });
         instance.installModule({ moduleTypeId: MODULE_TYPE_HOOK, module: address(module), data: "" });
     }
@@ -220,6 +267,6 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
         // Create the account and install the validator
         instance = makeAccountInstance("MainAccount");
         vm.deal(address(instance.account), 10 ether);
-        _installModule();
+        _installModuleWithWebAuthn();
     }
 }
