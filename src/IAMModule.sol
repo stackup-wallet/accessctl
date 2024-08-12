@@ -63,9 +63,10 @@ contract IAMModule is ERC7579ValidatorBase, ERC7579HookBase {
 
     /**
      * A register to determine if a given signer can assume a policy. The key is
-     * equal to concat(install count, roleId).
+     * equal to concat(install count, roleId). The value contains the latest
+     * validAfter timestamp for this role.
      */
-    mapping(uint232 installCountAndRoleId => mapping(address account => bool ok)) internal
+    mapping(uint232 installCountAndRoleId => mapping(address account => uint48 validAfter)) internal
         RoleRegister;
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -122,9 +123,12 @@ contract IAMModule is ERC7579ValidatorBase, ERC7579HookBase {
 
     /**
      * Called on precheck before every execution
+     *
+     * This will update the assumed role's validAfter to enforce a rate limit if
+     * applicable.
      */
     function _preCheck(
-        address,
+        address account,
         address,
         uint256,
         bytes calldata
@@ -133,11 +137,20 @@ contract IAMModule is ERC7579ValidatorBase, ERC7579HookBase {
         override
         returns (bytes memory hookData)
     {
-        hookData = abi.encode(uint224(ContextQueue.dequeue()));
+        uint224 roleId = uint224(ContextQueue.dequeue(account));
+        (, uint112 policyId) = _parseRoleId(roleId);
+        Policy memory p = getPolicy(account, policyId);
+
+        (uint8 installCount,,,) = _parseCounter(Counters[account]);
+        RoleRegister[_packInstallCountAndRoleId(installCount, roleId)][account] =
+            uint48(block.timestamp) + p.minimumInterval;
+        return "";
     }
 
     /**
      * Called on postcheck after every execution
+     *
+     * This is a noop for our usecase.
      */
     function _postCheck(address, bytes calldata data) internal pure override { }
 
@@ -163,8 +176,9 @@ contract IAMModule is ERC7579ValidatorBase, ERC7579HookBase {
     {
         // Role check
         uint224 roleId = _getRoleIdFromSig(userOp.signature);
+        uint48 validAfter = getValidAfterForRole(msg.sender, roleId);
         // solhint-disable-next-line gas-custom-errors
-        require(hasRole(msg.sender, roleId), "IAM10 invalid role");
+        require(validAfter > 0, "IAM10 invalid role");
 
         (uint112 signerId, uint112 policyId) = _parseRoleId(roleId);
 
@@ -180,12 +194,12 @@ contract IAMModule is ERC7579ValidatorBase, ERC7579HookBase {
         bytes memory challange = abi.encode(userOpHash);
         WebAuthn.WebAuthnAuth memory auth = _getAuthFromSigAndChallange(userOp.signature, challange);
         if (WebAuthn.verify(challange, true, auth, signer.x, signer.y)) {
-            // Load required context for execution hooks
-            ContextQueue.enqueue(uint256(roleId));
+            // Load required context to update validAfter in execution hook.
+            ContextQueue.enqueue(msg.sender, uint256(roleId));
 
-            return _packValidationData(false, p.validUntil, p.validAfter);
+            return _packValidationData(false, p.validUntil, _maxTimestamp(validAfter, p.validAfter));
         }
-        return _packValidationData(true, p.validUntil, p.validAfter);
+        return _packValidationData(true, p.validUntil, _maxTimestamp(validAfter, p.validAfter));
     }
 
     /**
@@ -303,6 +317,17 @@ contract IAMModule is ERC7579ValidatorBase, ERC7579HookBase {
      */
     function hasRole(address account, uint224 roleId) public view returns (bool) {
         (uint8 installCount,,,) = _parseCounter(Counters[account]);
+        return RoleRegister[_packInstallCountAndRoleId(installCount, roleId)][account] > 0;
+    }
+
+    /**
+     * Returns the validAfter value for a given account and roleId.
+     * @param account the address of the modular smart account.
+     * @param roleId a unique uint224 value assigned to the role during
+     * registration.
+     */
+    function getValidAfterForRole(address account, uint224 roleId) public view returns (uint48) {
+        (uint8 installCount,,,) = _parseCounter(Counters[account]);
         return RoleRegister[_packInstallCountAndRoleId(installCount, roleId)][account];
     }
 
@@ -408,7 +433,7 @@ contract IAMModule is ERC7579ValidatorBase, ERC7579HookBase {
     function removeRole(uint224 roleId) external {
         (uint8 installCount,,,) = _parseCounter(Counters[msg.sender]);
 
-        RoleRegister[_packInstallCountAndRoleId(installCount, roleId)][msg.sender] = false;
+        RoleRegister[_packInstallCountAndRoleId(installCount, roleId)][msg.sender] = 0;
         emit RoleRemoved(msg.sender, roleId);
     }
 
@@ -481,7 +506,8 @@ contract IAMModule is ERC7579ValidatorBase, ERC7579HookBase {
         (uint8 installCount,,,) = _parseCounter(Counters[msg.sender]);
         uint224 roleId = _packRoleId(signerId, policyId);
 
-        RoleRegister[_packInstallCountAndRoleId(installCount, roleId)][msg.sender] = true;
+        RoleRegister[_packInstallCountAndRoleId(installCount, roleId)][msg.sender] =
+            uint48(block.timestamp);
         emit RoleAdded(msg.sender, roleId);
     }
 
@@ -558,6 +584,10 @@ contract IAMModule is ERC7579ValidatorBase, ERC7579HookBase {
     {
         signerId = uint112(roleId);
         policyId = uint112(roleId >> 112);
+    }
+
+    function _maxTimestamp(uint48 fromRole, uint48 fromPolicy) internal pure returns (uint48) {
+        return fromRole >= fromPolicy ? fromRole : fromPolicy;
     }
 
     /*//////////////////////////////////////////////////////////////////////////

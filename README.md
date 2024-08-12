@@ -185,7 +185,7 @@ struct Policy {
     address erc1271Caller;
     bytes1 mode;
     bytes1 callTypeLevel;
-    uint48 validInterval;
+    uint48 minimumInterval;
     uint192 allowActions;
 }
 ```
@@ -221,7 +221,7 @@ Note that other call types defined in the ERC-7579 spec such as `staticcall` and
 
 #### Rate limits
 
-A policy can enable rate limits on a `UserOperation` via the `validInterval` field. This is a unix timestamp to specify how long a signer must wait between consecutive `UserOperations`.
+A policy can impose rate limits on a `UserOperation` via the `minimumInterval` field. This is a unix timestamp to specify how long a signer must wait between consecutive `UserOperations`.
 
 #### Allow actions
 

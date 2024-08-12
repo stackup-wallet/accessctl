@@ -150,6 +150,25 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
         userOpData.execUserOps();
     }
 
+    function _execUserOp(
+        uint224 roleId,
+        uint256 pk,
+        address target,
+        uint256 value,
+        bytes memory data
+    )
+        internal
+    {
+        UserOpData memory userOpData = instance.getExecOps({
+            target: target,
+            value: value,
+            callData: data,
+            txValidator: address(module)
+        });
+        userOpData.userOp.signature = _webAuthnSign(roleId, userOpData.userOpHash, pk);
+        userOpData.execUserOps();
+    }
+
     function _formatERC1271Hash(address validatorModule, bytes32 hash) internal returns (bytes32) {
         return instance.formatERC1271Hash(validatorModule, hash);
     }

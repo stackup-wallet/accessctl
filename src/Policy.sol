@@ -27,7 +27,7 @@ struct Policy {
     */
     bytes1 mode; //             1 byte
     bytes1 callTypeLevel; //    1 byte
-    uint48 validInterval; //    6 bytes
+    uint48 minimumInterval; //  6 bytes
     uint192 allowActions; //    24 bytes (up to 8 actions per policy)
 }
 
@@ -37,13 +37,13 @@ library PolicyLib {
     function isEqual(Policy calldata p, Policy memory q) public pure returns (bool) {
         return p.validAfter == q.validAfter && p.validUntil == q.validUntil
             && p.erc1271Caller == q.erc1271Caller && p.mode == q.mode
-            && p.callTypeLevel == q.callTypeLevel && p.validInterval == q.validInterval
+            && p.callTypeLevel == q.callTypeLevel && p.minimumInterval == q.minimumInterval
             && p.allowActions == q.allowActions;
     }
 
     function isNull(Policy calldata p) public pure returns (bool) {
         return p.validAfter == 0 && p.validUntil == 0 && p.erc1271Caller == address(0)
-            && p.mode == 0 && p.callTypeLevel == 0 && p.validInterval == 0 && p.allowActions == 0;
+            && p.mode == 0 && p.callTypeLevel == 0 && p.minimumInterval == 0 && p.allowActions == 0;
     }
 
     function verifyUserOp(

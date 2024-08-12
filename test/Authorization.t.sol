@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.23;
 
+import { ModuleKitHelpers, ModuleKitUserOp } from "modulekit/ModuleKit.sol";
 import { TestHelper } from "test/TestHelper.sol";
 import { IAMModule } from "src/IAMModule.sol";
 import { Policy, PolicyLib, MODE_ADMIN } from "src/Policy.sol";
@@ -9,6 +10,8 @@ import { Action, ActionLib } from "src/Action.sol";
 contract AuthorizationTest is TestHelper {
     using PolicyLib for Policy;
     using ActionLib for Action;
+    using ModuleKitHelpers for *;
+    using ModuleKitUserOp for *;
 
     function testAdminPolicyExists() public view {
         assertTrue(
@@ -103,5 +106,108 @@ contract AuthorizationTest is TestHelper {
         for (uint256 i = 0; i < actualActions.length; i++) {
             assertTrue(actualActions[i].isEqual(expectedActions[i]));
         }
+    }
+
+    function testPolicyNoMinimumInterval() public {
+        Policy memory policy;
+        policy.mode = MODE_ADMIN;
+        _execUserOp(
+            address(module), 0, abi.encodeWithSelector(IAMModule.addPolicy.selector, policy)
+        );
+        _execUserOp(
+            address(module),
+            0,
+            abi.encodeWithSelector(IAMModule.addRole.selector, rootSignerId, rootPolicyId + 1)
+        );
+
+        address target = makeAddr("target");
+        uint256 value = 1 ether;
+        uint256 initBalance = target.balance;
+        uint224 roleId = uint224(rootSignerId) | (uint224(rootPolicyId + 1) << 112);
+
+        // First UserOp should pass.
+        _execUserOp(roleId, dummyP256PrivateKeyRoot, target, value, "");
+        assertEq(target.balance, initBalance + value);
+
+        // Second UserOp should pass.
+        _execUserOp(roleId, dummyP256PrivateKeyRoot, target, value, "");
+        assertEq(target.balance, initBalance + value + value);
+
+        // Third UserOp should pass.
+        _execUserOp(roleId, dummyP256PrivateKeyRoot, target, value, "");
+        assertEq(target.balance, initBalance + value + value + value);
+    }
+
+    function testPolicyMinimumInterval() public {
+        Policy memory policy;
+        policy.mode = MODE_ADMIN;
+        policy.minimumInterval = 86_400;
+        _execUserOp(
+            address(module), 0, abi.encodeWithSelector(IAMModule.addPolicy.selector, policy)
+        );
+        _execUserOp(
+            address(module),
+            0,
+            abi.encodeWithSelector(IAMModule.addRole.selector, rootSignerId, rootPolicyId + 1)
+        );
+
+        address target = makeAddr("target");
+        uint256 value = 1 ether;
+        uint256 initBalance = target.balance;
+        uint224 roleId = uint224(rootSignerId) | (uint224(rootPolicyId + 1) << 112);
+
+        // First UserOp should pass.
+        _execUserOp(roleId, dummyP256PrivateKeyRoot, target, value, "");
+        assertEq(target.balance, initBalance + value);
+
+        // Second UserOp should fail due to rate limit.
+        instance.expect4337Revert();
+        _execUserOp(roleId, dummyP256PrivateKeyRoot, target, value, "");
+        assertEq(target.balance, initBalance + value);
+
+        // Third UserOp should pass after rate limit has reset.
+        skip(uint256(policy.minimumInterval));
+        _execUserOp(roleId, dummyP256PrivateKeyRoot, target, value, "");
+        assertEq(target.balance, initBalance + value + value);
+    }
+
+    function testPolicyMinimumIntervalWithValidAfter() public {
+        Policy memory policy;
+        policy.mode = MODE_ADMIN;
+        policy.validAfter = 2 * 86_400;
+        policy.minimumInterval = 86_400;
+        _execUserOp(
+            address(module), 0, abi.encodeWithSelector(IAMModule.addPolicy.selector, policy)
+        );
+        _execUserOp(
+            address(module),
+            0,
+            abi.encodeWithSelector(IAMModule.addRole.selector, rootSignerId, rootPolicyId + 1)
+        );
+
+        address target = makeAddr("target");
+        uint256 value = 1 ether;
+        uint256 initBalance = target.balance;
+        uint224 roleId = uint224(rootSignerId) | (uint224(rootPolicyId + 1) << 112);
+
+        // First UserOp should fail due to inactive policy.
+        instance.expect4337Revert();
+        _execUserOp(roleId, dummyP256PrivateKeyRoot, target, value, "");
+        assertEq(target.balance, initBalance);
+
+        // Second UserOp should pass due to active policy.
+        skip(uint256(policy.validAfter));
+        _execUserOp(roleId, dummyP256PrivateKeyRoot, target, value, "");
+        assertEq(target.balance, initBalance + value);
+
+        // Third UserOp should fail due to rate limit.
+        instance.expect4337Revert();
+        _execUserOp(roleId, dummyP256PrivateKeyRoot, target, value, "");
+        assertEq(target.balance, initBalance + value);
+
+        // Fourth UserOp should pass after rate limit has reset.
+        skip(uint256(policy.minimumInterval));
+        _execUserOp(roleId, dummyP256PrivateKeyRoot, target, value, "");
+        assertEq(target.balance, initBalance + value + value);
     }
 }
