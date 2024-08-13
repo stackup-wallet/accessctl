@@ -64,7 +64,7 @@ contract AccessCtl is ERC7579ValidatorBase, ERC7579HookBase {
      * A register to determine if a given signer can assume a policy. The key is
      * equal to concat(install count, roleId). The value contains the latest
      * validAfter timestamp for this role and always initializes to 1 in order
-     * to satisfy  the isInitialized() implementation and ensure no use of TIMESTAMP
+     * to satisfy the isInitialized() implementation and ensure no use of TIMESTAMP
      * during creation.
      */
     mapping(uint232 installCountAndRoleId => mapping(address account => uint48 validAfter)) internal
