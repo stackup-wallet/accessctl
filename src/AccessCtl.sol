@@ -13,6 +13,8 @@ contract AccessCtl is ERC7579ValidatorBase, ERC7579HookBase {
                             CONSTANTS & STORAGE
     //////////////////////////////////////////////////////////////////////////*/
 
+    uint48 internal constant INIT_ROLE_VALUE = 1;
+
     using SignerLib for Signer;
     using PolicyLib for Policy;
 
@@ -60,8 +62,10 @@ contract AccessCtl is ERC7579ValidatorBase, ERC7579HookBase {
 
     /**
      * A register to determine if a given signer can assume a policy. The key is
-     * equal to concat(install count, roleId). The value contains the latest
-     * validAfter timestamp for this role.
+     * equal to concat(install count, roleId). The value initializes to 1 in order
+     * to satisfy the isInitialized() implementation and ensure no use of TIMESTAMP
+     * during creation. On subsequent transactions, this value is updated to the
+     * latest validAfter timestamp as defined in _preCheck().
      */
     mapping(uint232 installCountAndRoleId => mapping(address account => uint48 validAfter)) internal
         RoleRegister;
@@ -511,8 +515,7 @@ contract AccessCtl is ERC7579ValidatorBase, ERC7579HookBase {
         (uint8 installCount,,,) = _parseCounter(Counters[msg.sender]);
         uint224 roleId = _packRoleId(signerId, policyId);
 
-        RoleRegister[_packInstallCountAndRoleId(installCount, roleId)][msg.sender] =
-            uint48(block.timestamp);
+        RoleRegister[_packInstallCountAndRoleId(installCount, roleId)][msg.sender] = INIT_ROLE_VALUE;
         emit RoleAdded(msg.sender, roleId);
     }
 
