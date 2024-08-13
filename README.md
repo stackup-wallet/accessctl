@@ -8,9 +8,9 @@ AccessControl (or `AccessCtl` for short) is a scalable identity and access manag
 
 AccessCtl is deployed using the [deterministic deployment proxy](https://github.com/Arachnid/deterministic-deployment-proxy) and has the same address on all chains.
 
-| Version | Address                                      | Commit                                                                                               | Audit |
-| ------- | -------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ----- |
-| `0.1.0` | `0x042d25377E7A13Da35446785BC9e0fD27Bab13c0` | [e7a0422](https://github.com/stackup-wallet/accessctl/tree/e7a0422a20ff54f3fcab48fcc1db021d7489ca14) | N/A   |
+| Version | Address | Commit | Audit |
+| ------- | ------- | ------ | ----- |
+| `0.1.0` | ``      | []()   | N/A   |
 
 # Architecture
 
