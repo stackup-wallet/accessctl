@@ -7,10 +7,11 @@ bytes1 constant LEVEL_MUST_PASS = 0x02;
 
 bytes1 constant OPERATOR_ALLOW_ALL = 0x00;
 bytes1 constant OPERATOR_EQ = 0x01;
-bytes1 constant OPERATOR_GT = 0x02;
-bytes1 constant OPERATOR_GTE = 0x03;
-bytes1 constant OPERATOR_LT = 0x04;
-bytes1 constant OPERATOR_LTE = 0x05;
+bytes1 constant OPERATOR_NEQ = 0x02;
+bytes1 constant OPERATOR_GT = 0x03;
+bytes1 constant OPERATOR_GTE = 0x04;
+bytes1 constant OPERATOR_LT = 0x05;
+bytes1 constant OPERATOR_LTE = 0x06;
 
 address constant TARGET_ALLOW_ALL = address(0);
 
@@ -132,6 +133,8 @@ library ActionLib {
         bytes32 value = (bytes32(data[offset:offset + length]) >> (8 * (32 - length)));
         if (operator == OPERATOR_EQ) {
             return value == ref;
+        } else if (operator == OPERATOR_NEQ) {
+            return value != ref;
         } else if (operator == OPERATOR_GT) {
             return value > ref;
         } else if (operator == OPERATOR_GTE) {
@@ -157,6 +160,8 @@ library ActionLib {
     {
         if (operator == OPERATOR_EQ) {
             return value == ref;
+        } else if (operator == OPERATOR_NEQ) {
+            return value != ref;
         } else if (operator == OPERATOR_GT) {
             return value > ref;
         } else if (operator == OPERATOR_GTE) {
