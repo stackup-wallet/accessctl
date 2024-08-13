@@ -12,6 +12,7 @@ import {
     LEVEL_MUST_PASS,
     OPERATOR_ALLOW_ALL,
     OPERATOR_EQ,
+    OPERATOR_NEQ,
     OPERATOR_GT,
     OPERATOR_GTE,
     OPERATOR_LT,
@@ -122,6 +123,30 @@ contract ActionLibTest is TestHelper {
             abi.encodeWithSelector(ERC20.transfer.selector, address(0xBAAAAAAD), 1 ether)
         );
         assertFalse(callOk);
+        assertFalse(revertOnFail);
+    }
+
+    function testVerifyCallArgsAddressNEQ() public pure {
+        Action memory action;
+        action.selector = ERC20.transfer.selector;
+        action.argOffset = 4;
+        action.argLength = 32;
+        action.argOperator = OPERATOR_NEQ;
+        action.argValue = bytes32(abi.encode(address(0xdeadbeef)));
+
+        (bool callOk, bool revertOnFail) = action.verifyCall(
+            address(0),
+            0,
+            abi.encodeWithSelector(ERC20.transfer.selector, address(0xdeadbeef), 1 ether)
+        );
+        assertFalse(callOk);
+        assertFalse(revertOnFail);
+        (callOk, revertOnFail) = action.verifyCall(
+            address(0),
+            0,
+            abi.encodeWithSelector(ERC20.transfer.selector, address(0xBAAAAAAD), 1 ether)
+        );
+        assertTrue(callOk);
         assertFalse(revertOnFail);
     }
 
@@ -375,6 +400,22 @@ contract ActionLibTest is TestHelper {
         assertFalse(revertOnFail);
         (callOk, revertOnFail) = action.verifyCall(address(0), 2 ether, "");
         assertFalse(callOk);
+        assertFalse(revertOnFail);
+    }
+
+    function testVerifyCallPayableValueNEQ() public pure {
+        Action memory action;
+        action.payableValue = 1 ether;
+        action.payableOperator = OPERATOR_NEQ;
+
+        (bool callOk, bool revertOnFail) = action.verifyCall(address(0), 1 ether, "");
+        assertFalse(callOk);
+        assertFalse(revertOnFail);
+        (callOk, revertOnFail) = action.verifyCall(address(0), 0.5 ether, "");
+        assertTrue(callOk);
+        assertFalse(revertOnFail);
+        (callOk, revertOnFail) = action.verifyCall(address(0), 2 ether, "");
+        assertTrue(callOk);
         assertFalse(revertOnFail);
     }
 
