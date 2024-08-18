@@ -83,9 +83,6 @@ contract AuthenticationTest is TestHelper {
     }
 
     function testOrphanedSignerShouldRevert() public {
-        // TODO: check why SIMULATE test doesn't catch validateUserOp revert.
-        if (vm.envOr("SIMULATE", false)) return;
-
         _execUserOp(
             address(module),
             0,
@@ -121,9 +118,6 @@ contract AuthenticationTest is TestHelper {
     }
 
     function testECDSASignerFail() public {
-        // TODO: check why SIMULATE test doesn't catch validateUserOp revert.
-        if (vm.envOr("SIMULATE", false)) return;
-
         _execUserOp(
             address(module),
             0,

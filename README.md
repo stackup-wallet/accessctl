@@ -16,9 +16,9 @@ AccessCtl is deployed using the [deterministic deployment proxy](https://github.
 
 A "✅" means that AccessCtl has been end to end tested with the following Smart Account versions and confirmed compatible.
 
-|         | Kernel `v3.1` | Safe7579 `v1.0.2` |
-| ------- | ------------- | ----------------- |
-| `0.1.0` | ✅            | ❌                |
+|         | Kernel `v3.1` | Safe7579 `v1.0.2` | Nexus |
+| ------- | ------------- | ----------------- | ----- |
+| `0.1.0` | ✅            | ❌                | ❌    |
 
 # Architecture
 
