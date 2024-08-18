@@ -212,9 +212,6 @@ contract AuthorizationTest is TestHelper {
     }
 
     function testOrphanedPolicyShouldRevert() public {
-        // TODO: check why SIMULATE test doesn't catch validateUserOp revert.
-        if (vm.envOr("SIMULATE", false)) return;
-
         _execUserOp(
             address(module),
             0,

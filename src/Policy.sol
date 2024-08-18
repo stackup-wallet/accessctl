@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.23;
 
-import { PackedUserOperation } from "modulekit/external/ERC4337.sol";
+import { PackedUserOperation, IAccountExecute } from "modulekit/external/ERC4337.sol";
 import { IERC7579Account, Execution, ERC7579ExecutionLib } from "modulekit/external/ERC7579.sol";
 import { Action, ActionLib } from "src/Action.sol";
 
@@ -55,20 +55,32 @@ library PolicyLib {
         pure
         returns (bool ok, string memory reason)
     {
+        // TODO: This might need to change for non Kernel account compatibility.
+        // Kernel requires accounts configured with a root validator and hook to
+        // be called via `executeUserOp` which runs the hooks and delegatecalls
+        // itself for the remaining execution phase.
+        //
+        // If non kernel accounts implement executeUserOp in a different way then
+        // it may break the remaining policy checks below.
+        bytes calldata data = op.callData;
+        if (_isCallingExecuteUserOp(data)) {
+            data = data[4:];
+        }
+
         if (_isAdmin(p.mode)) {
             return (true, "");
         }
 
-        if (!_isCallingExecute(op.callData)) {
+        if (!_isCallingExecute(data)) {
             return (false, "IAM11 not calling execute");
         }
 
-        bytes1 callType = _parseCallType(op.callData);
+        bytes1 callType = _parseCallType(data);
         if (callType > CALL_TYPE_LEVEL_BATCH || callType > p.callTypeLevel) {
             return (false, "IAM12 callType not allowed");
         }
 
-        return _verifyExecutionCallData(callType, op.callData, actions);
+        return _verifyExecutionCallData(callType, data, actions);
     }
 
     function verifyERC1271Caller(Policy calldata p, address) public pure returns (bool) {
@@ -90,6 +102,10 @@ library PolicyLib {
             uint24(packedActionIds >> (24 * 6)),
             uint24(packedActionIds >> (24 * 7))
         ];
+    }
+
+    function _isCallingExecuteUserOp(bytes calldata call) internal pure returns (bool) {
+        return bytes4(call[:4]) == IAccountExecute.executeUserOp.selector;
     }
 
     function _isAdmin(bytes1 mode) internal pure returns (bool) {

@@ -26,14 +26,14 @@ library CtxQueue {
 
     function _tloadRef(address account) internal view returns (uint256 ref) {
         // solhint-disable-next-line no-inline-assembly
-        assembly {
+        assembly ("memory-safe") {
             ref := tload(account)
         }
     }
 
     function _tloadMap(address account, uint256 n) internal view returns (uint256 ref) {
         // solhint-disable-next-line no-inline-assembly
-        assembly {
+        assembly ("memory-safe") {
             let ptr := mload(0x40)
             mstore(ptr, account)
             mstore(add(ptr, 0x20), x)
@@ -47,14 +47,14 @@ library CtxQueue {
 
     function _tstoreRef(address account, uint256 value) internal {
         // solhint-disable-next-line no-inline-assembly
-        assembly {
+        assembly ("memory-safe") {
             tstore(account, value)
         }
     }
 
     function _tstoreMap(address account, uint256 n, uint256 value) internal {
         // solhint-disable-next-line no-inline-assembly
-        assembly {
+        assembly ("memory-safe") {
             let ptr := mload(0x40)
             mstore(ptr, account)
             mstore(add(ptr, 0x20), x)
