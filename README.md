@@ -4,13 +4,21 @@
 
 AccessControl (or `AccessCtl` for short) is a scalable identity and access management layer for ERC-7579 compliant smart accounts.
 
-## Module addresses
+## Module status
 
 AccessCtl is deployed using the [deterministic deployment proxy](https://github.com/Arachnid/deterministic-deployment-proxy) and has the same address on all chains.
 
-| Version | Address                                      | Commit                                                                                               | Audit |
-| ------- | -------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ----- |
-| `0.1.0` | `0xccAbDf6BBB51715f3dDF71193811c2803E03c293` | [5e18b05](https://github.com/stackup-wallet/accessctl/tree/5e18b05d95ce0f464070f4bead5bac4c3b4d631a) | N/A   |
+| Version | Address | Commit | Audit |
+| ------- | ------- | ------ | ----- |
+| `0.1.0` | ``      | []()   | N/A   |
+
+## Compatibility status
+
+A "✅" means that AccessCtl has been end to end tested with the following Smart Account versions and confirmed compatible.
+
+|         | Kernel `v3.1` | Safe7579 `v1.0.2` |
+| ------- | ------------- | ----------------- |
+| `0.1.0` | ✅            | ❌                |
 
 # Architecture
 
