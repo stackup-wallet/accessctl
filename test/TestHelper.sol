@@ -91,7 +91,7 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
     Action public dummySendMax1EtherAction;
     Action public dummySendMax5EtherAction;
     Action public dummyAlwaysFailAction;
-    Action public dummyStrictPayableForTarget;
+    Action public dummyStrictPayableForTargetAction;
     Action public nullAction;
     uint24 constant rootActionId = 0;
 
@@ -115,10 +115,10 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
         dummyAlwaysFailAction.payableValue = type(uint256).max;
         dummyAlwaysFailAction.payableOperator = OPERATOR_GT;
 
-        dummyStrictPayableForTarget.level = LEVEL_MUST_PASS_FOR_TARGET;
-        dummyStrictPayableForTarget.target = address(0xdead);
-        dummyStrictPayableForTarget.payableValue = 1 ether;
-        dummyStrictPayableForTarget.payableOperator = OPERATOR_LTE;
+        dummyStrictPayableForTargetAction.level = LEVEL_MUST_PASS_FOR_TARGET;
+        dummyStrictPayableForTargetAction.target = address(0xdead);
+        dummyStrictPayableForTargetAction.payableValue = 1 ether;
+        dummyStrictPayableForTargetAction.payableOperator = OPERATOR_LTE;
     }
 
     function _webAuthnSign(
