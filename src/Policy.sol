@@ -159,7 +159,7 @@ library PolicyLib {
             }
 
             (bool callOk, bool revertOnFail) = action.verifyCall(target, value, data);
-            if (callOk && !revertOnFail) {
+            if (callOk) {
                 actionMatched = true;
             } else if (revertOnFail) {
                 return (false, "IAM13 execution not allowed");
@@ -214,7 +214,7 @@ library PolicyLib {
 
                 (bool callOk, bool revertOnFail) =
                     action.verifyCall(execution.target, execution.value, execution.callData);
-                if (callOk && !revertOnFail) {
+                if (callOk) {
                     actionMatched = true;
                 } else if (revertOnFail) {
                     return (false, "IAM13 execution not allowed");

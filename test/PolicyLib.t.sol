@@ -22,8 +22,10 @@ contract PolicyLibTest is TestHelper {
     Action[] public sendMax5EtherActions;
     Action[] public sendMax1EtherActions;
     Action[] public guaranteeFailActions;
+    Action[] public strictForTargetActions;
 
     Execution[] public executionsLessThan1Eth;
+    Execution[] public executionsLessThan1EthToDEAD;
     Execution[] public executionsLessThan10Eth;
 
     constructor() {
@@ -64,8 +66,19 @@ contract PolicyLibTest is TestHelper {
         guaranteeFailActions.push(nullAction);
         guaranteeFailActions.push(nullAction);
 
+        strictForTargetActions.push(dummyStrictPayable);
+        strictForTargetActions.push(nullAction);
+        strictForTargetActions.push(nullAction);
+        strictForTargetActions.push(nullAction);
+        strictForTargetActions.push(nullAction);
+        strictForTargetActions.push(nullAction);
+        strictForTargetActions.push(nullAction);
+        strictForTargetActions.push(nullAction);
+
         executionsLessThan1Eth.push(Execution(address(0), uint256(0.5 ether), ""));
         executionsLessThan1Eth.push(Execution(address(0), uint256(0.75 ether), ""));
+        executionsLessThan1EthToDEAD.push(Execution(address(0xdead), uint256(0.5 ether), ""));
+        executionsLessThan1EthToDEAD.push(Execution(address(0xdead), uint256(0.75 ether), ""));
         executionsLessThan10Eth.push(Execution(address(0), uint256(5 ether), ""));
         executionsLessThan10Eth.push(Execution(address(0), uint256(7.5 ether), ""));
     }
@@ -260,6 +273,34 @@ contract PolicyLibTest is TestHelper {
             dummy5EtherBatchPolicy.verifyUserOp(callTypeBatchOp, guaranteeFailActions);
         assertFalse(ok);
         assertEq(reason, "IAM13 execution not allowed");
+    }
+
+    function testUserOperationExecutionCallDataSingleStrictOk() public view {
+        PackedUserOperation memory callTypeSingleOp;
+        callTypeSingleOp.callData = abi.encodeWithSelector(
+            IERC7579Account.execute.selector,
+            bytes32(CallType.unwrap(CALLTYPE_SINGLE)),
+            abi.encodePacked(address(0xdead), uint256(0.5 ether), "")
+        );
+
+        (bool ok, string memory reason) =
+            dummy1EtherSinglePolicy.verifyUserOp(callTypeSingleOp, strictForTargetActions);
+        assertTrue(ok);
+        assertEq(reason, "");
+    }
+
+    function testUserOperationExecutionCallDataBatchStrictOk() public view {
+        PackedUserOperation memory callTypeBatchOp;
+        callTypeBatchOp.callData = abi.encodeWithSelector(
+            IERC7579Account.execute.selector,
+            bytes32(CallType.unwrap(CALLTYPE_BATCH)),
+            abi.encode(executionsLessThan1EthToDEAD)
+        );
+
+        (bool ok, string memory reason) =
+            dummy5EtherBatchPolicy.verifyUserOp(callTypeBatchOp, strictForTargetActions);
+        assertTrue(ok);
+        assertEq(reason, "");
     }
 
     function testVerifyERC1271Sender() public view {
