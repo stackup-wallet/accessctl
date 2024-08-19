@@ -66,7 +66,7 @@ contract PolicyLibTest is TestHelper {
         guaranteeFailActions.push(nullAction);
         guaranteeFailActions.push(nullAction);
 
-        strictPayableForTargetActions.push(dummyStrictPayable);
+        strictPayableForTargetActions.push(dummyStrictPayableForTarget);
         strictPayableForTargetActions.push(nullAction);
         strictPayableForTargetActions.push(nullAction);
         strictPayableForTargetActions.push(nullAction);
