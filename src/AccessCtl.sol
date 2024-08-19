@@ -91,6 +91,7 @@ contract AccessCtl is ERC7579ValidatorBase, ERC7579HookBase {
             (, address member) = abi.decode(data, (bytes1, address));
             _addECDSASigner(member);
         } else {
+            // solhint-disable-next-line gas-custom-errors
             revert("IAM30 unexpected mode");
         }
 
