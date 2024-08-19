@@ -22,7 +22,7 @@ contract PolicyLibTest is TestHelper {
     Action[] public sendMax5EtherActions;
     Action[] public sendMax1EtherActions;
     Action[] public guaranteeFailActions;
-    Action[] public strictForTargetActions;
+    Action[] public strictPayableForTargetActions;
 
     Execution[] public executionsLessThan1Eth;
     Execution[] public executionsLessThan1EthToDEAD;
@@ -66,14 +66,14 @@ contract PolicyLibTest is TestHelper {
         guaranteeFailActions.push(nullAction);
         guaranteeFailActions.push(nullAction);
 
-        strictForTargetActions.push(dummyStrictPayable);
-        strictForTargetActions.push(nullAction);
-        strictForTargetActions.push(nullAction);
-        strictForTargetActions.push(nullAction);
-        strictForTargetActions.push(nullAction);
-        strictForTargetActions.push(nullAction);
-        strictForTargetActions.push(nullAction);
-        strictForTargetActions.push(nullAction);
+        strictPayableForTargetActions.push(dummyStrictPayable);
+        strictPayableForTargetActions.push(nullAction);
+        strictPayableForTargetActions.push(nullAction);
+        strictPayableForTargetActions.push(nullAction);
+        strictPayableForTargetActions.push(nullAction);
+        strictPayableForTargetActions.push(nullAction);
+        strictPayableForTargetActions.push(nullAction);
+        strictPayableForTargetActions.push(nullAction);
 
         executionsLessThan1Eth.push(Execution(address(0), uint256(0.5 ether), ""));
         executionsLessThan1Eth.push(Execution(address(0), uint256(0.75 ether), ""));
@@ -284,7 +284,7 @@ contract PolicyLibTest is TestHelper {
         );
 
         (bool ok, string memory reason) =
-            dummy1EtherSinglePolicy.verifyUserOp(callTypeSingleOp, strictForTargetActions);
+            dummy1EtherSinglePolicy.verifyUserOp(callTypeSingleOp, strictPayableForTargetActions);
         assertTrue(ok);
         assertEq(reason, "");
     }
@@ -298,7 +298,7 @@ contract PolicyLibTest is TestHelper {
         );
 
         (bool ok, string memory reason) =
-            dummy5EtherBatchPolicy.verifyUserOp(callTypeBatchOp, strictForTargetActions);
+            dummy5EtherBatchPolicy.verifyUserOp(callTypeBatchOp, strictPayableForTargetActions);
         assertTrue(ok);
         assertEq(reason, "");
     }
