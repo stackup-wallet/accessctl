@@ -347,6 +347,30 @@ contract AccessCtl is ERC7579ValidatorBase, ERC7579HookBase {
     }
 
     /**
+     * Enables any entity to register a public key to the account under a unique
+     * signerId given they have a valid admin signature. Emits a SignerAdded event
+     * on success.
+     *
+     * @param account the address of the modular smart account.
+     * @param x The x-coordinate of the public key.
+     * @param y The y-coordinate of the public key.
+     * @param validUntil The timestamp for when the signature will expire.
+     * @param initCode The userOp initCode for undeployed accounts.
+     * @param signature The packed roleId and admin signature over x, y, validUntil,
+     * and initCode.
+     */
+    function addWebAuthnSignerTo(
+        address account,
+        uint256 x,
+        uint256 y,
+        uint48 validUntil,
+        bytes calldata initCode,
+        bytes calldata signature
+    )
+        external
+    { }
+
+    /**
      * Registers a public key to the account under a unique signerId. Emits a
      * SignerAdded event on success.
      *
@@ -355,6 +379,28 @@ contract AccessCtl is ERC7579ValidatorBase, ERC7579HookBase {
     function addECDSASigner(address member) external {
         _addECDSASigner(member);
     }
+
+    /**
+     * Enables any entity to register a public key to the account under a unique
+     * signerId given they have a valid admin signature. Emits a SignerAdded event
+     * on success.
+     *
+     * @param account the address of the modular smart account.
+     * @param member The derived address of the public key.
+     * @param validUntil The timestamp for when the signature will expire.
+     * @param initCode The userOp initCode for undeployed accounts.
+     * @param signature The packed roleId and admin signature over x, y, validUntil,
+     * and initCode.
+     */
+    function addECDSASignerTo(
+        address account,
+        address member,
+        uint48 validUntil,
+        bytes calldata initCode,
+        bytes calldata signature
+    )
+        external
+    { }
 
     /**
      * Deletes a public key registered to the account under a unique signerId.
@@ -373,6 +419,27 @@ contract AccessCtl is ERC7579ValidatorBase, ERC7579HookBase {
     }
 
     /**
+     * Enables any entity to delete a public key registered to the account under
+     * a unique signerId given they have a valid admin signature. Emits a
+     * SignerRemoved event on success.
+     *
+     * @param account the address of the modular smart account.
+     * @param signerId A unique uint112 value assgined to the public key during
+     * registration.
+     * @param validUntil The timestamp for when the signature will expire.
+     * @param signature The packed roleId and admin signature over signerId and
+     * validUntil.
+     */
+    function removeSignerFrom(
+        address account,
+        uint112 signerId,
+        uint48 validUntil,
+        bytes calldata signature
+    )
+        external
+    { }
+
+    /**
      * Registers a policy to the account under a unique policyId. Emits a
      * PolicyAdded event on success.
      *
@@ -381,6 +448,28 @@ contract AccessCtl is ERC7579ValidatorBase, ERC7579HookBase {
     function addPolicy(Policy calldata p) external {
         _addPolicy(p);
     }
+
+    /**
+     * Enables any entity to add register a policy to the account under a unique
+     * policyId given they have a valid admin signature. Emits PolicyAdded event
+     * on success.
+     *
+     * @param account the address of the modular smart account.
+     * @param p The Policy struct to add.
+     * @param validUntil The timestamp for when the signature will expire.
+     * @param initCode The userOp initCode for undeployed accounts.
+     * @param signature The packed roleId and admin signature over p, validUntil,
+     * and initCode.
+     */
+    function addPolicyTo(
+        address account,
+        Policy calldata p,
+        uint48 validUntil,
+        bytes calldata initCode,
+        bytes calldata signature
+    )
+        external
+    { }
 
     /**
      * Deletes a policy registered to the account under a unique policyId.
@@ -399,6 +488,27 @@ contract AccessCtl is ERC7579ValidatorBase, ERC7579HookBase {
     }
 
     /**
+     * Enables any entity to delete a policy registered to the account under a
+     * unique policyId given they have a valid admin signature. Emits a
+     * PolicyRemoved event on success.
+     *
+     * @param account the address of the modular smart account.
+     * @param policyId A unique uint112 value assgined to the policy during
+     * registration.
+     * @param validUntil The timestamp for when the signature will expire.
+     * @param signature The packed roleId and admin signature over policyId and
+     * validUntil.
+     */
+    function removePolicyFrom(
+        address account,
+        uint112 policyId,
+        uint48 validUntil,
+        bytes calldata signature
+    )
+        external
+    { }
+
+    /**
      * Registers an action to the account under a unique actionId. Emits an
      * actionAdded event on success.
      *
@@ -407,6 +517,28 @@ contract AccessCtl is ERC7579ValidatorBase, ERC7579HookBase {
     function addAction(Action calldata a) external {
         _addAction(a);
     }
+
+    /**
+     * Enables any entity to register an action to the account under a unique
+     * actionId given they have a valid admin signature. Emits an ActionAdded
+     * event on success.
+     *
+     * @param account the address of the modular smart account.
+     * @param a The Action struct to add.
+     * @param validUntil The timestamp for when the signature will expire.
+     * @param initCode The userOp initCode for undeployed accounts.
+     * @param signature The packed roleId and admin signature over a, validUntil,
+     * and initCode.
+     */
+    function addActionTo(
+        address account,
+        Action calldata a,
+        uint48 validUntil,
+        bytes calldata initCode,
+        bytes calldata signature
+    )
+        external
+    { }
 
     /**
      * Deletes an action registered to the account under a unique actionId.
@@ -425,6 +557,27 @@ contract AccessCtl is ERC7579ValidatorBase, ERC7579HookBase {
     }
 
     /**
+     * Enables any entity to delete an action registered to the account under a
+     * unique actionId given they have a valid admin signature. Emits an ActionRemoved
+     * event on success.
+     *
+     * @param account the address of the modular smart account.
+     * @param actionId A unique uint24 value assgined to the action during
+     * registration.
+     * @param validUntil The timestamp for when the signature will expire.
+     * @param signature The packed roleId and admin signature over actionId and
+     * validUntil.
+     */
+    function removeActionFrom(
+        address account,
+        uint24 actionId,
+        uint48 validUntil,
+        bytes calldata signature
+    )
+        external
+    { }
+
+    /**
      * Associates a registered signer with a registered policy. Emits a
      * RoleAdded event on success.
      *
@@ -436,6 +589,31 @@ contract AccessCtl is ERC7579ValidatorBase, ERC7579HookBase {
     function addRole(uint112 signerId, uint112 policyId) external {
         _addRole(signerId, policyId);
     }
+
+    /**
+     * Allows any entity to associate a registered signer with a registered policy
+     * given they have a valid admin signature. Emits a RoleAdded event on success.
+     *
+     * @param account the address of the modular smart account.
+     * @param signerId A unique uint112 value assgined to the public key during
+     * registration.
+     * @param policyId A unique uint112 value assgined to the policy during
+     * registration.
+     * @param validUntil The timestamp for when the signature will expire.
+     * * @param initCode The userOp initCode for undeployed accounts.
+     * @param signature The packed roleId and admin signature over signerId,
+     * policyId, validUntil, and initCode.
+     */
+    function addRoleTo(
+        address account,
+        uint112 signerId,
+        uint112 policyId,
+        uint48 validUntil,
+        bytes calldata initCode,
+        bytes calldata signature
+    )
+        external
+    { }
 
     /**
      * Removes an association between a signer and policy. Emits a RoleRemoved
@@ -450,6 +628,24 @@ contract AccessCtl is ERC7579ValidatorBase, ERC7579HookBase {
         RoleRegister[_packInstallCountAndRoleId(installCount, roleId)][msg.sender] = 0;
         emit RoleRemoved(msg.sender, roleId);
     }
+
+    /**
+     *
+     * @param account the address of the modular smart account.
+     * @param roleId A unique uint224 value assgined to the role during
+     * registration.
+     * @param validUntil The timestamp for when the signature will expire.
+     * @param signature The packed roleId and admin signature over roleId and
+     * validUntil.
+     */
+    function removeRoleFrom(
+        address account,
+        uint224 roleId,
+        uint48 validUntil,
+        bytes calldata signature
+    )
+        external
+    { }
 
     /**
      * A utility method to get the next available signerId, policyId, and actionId.
