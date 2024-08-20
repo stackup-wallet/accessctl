@@ -630,8 +630,8 @@ contract AccessCtl is ERC7579ValidatorBase, ERC7579HookBase {
     }
 
     /**
-     * Enables any entity to remove an association between a signer and policy given they have a
-     * valid admin signature. Emits a RoleRemoved event on success.
+     * Enables any entity to remove an association between a signer and policy given
+     * they have a valid admin signature. Emits a RoleRemoved event on success.
      *
      * @param account the address of the modular smart account.
      * @param roleId A unique uint224 value assgined to the role during
