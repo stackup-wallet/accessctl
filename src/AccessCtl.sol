@@ -450,7 +450,7 @@ contract AccessCtl is ERC7579ValidatorBase, ERC7579HookBase {
     }
 
     /**
-     * Enables any entity to add register a policy to the account under a unique
+     * Enables any entity to register a policy to the account under a unique
      * policyId given they have a valid admin signature. Emits PolicyAdded event
      * on success.
      *
