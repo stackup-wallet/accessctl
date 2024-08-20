@@ -9,9 +9,9 @@ import { Action } from "src/Action.sol";
 import { CtxQueue } from "src/CtxQueue.sol";
 
 contract AccessCtl is ERC7579ValidatorBase, ERC7579HookBase {
-    /*//////////////////////////////////////////////////////////////////////////
-                            CONSTANTS & STORAGE
-    //////////////////////////////////////////////////////////////////////////*/
+    // ========================================================================
+    // Constants, Libraries, Events and Storage Definitions
+    // ========================================================================
 
     uint48 internal constant INIT_ROLE_VALUE = 1;
 
@@ -70,9 +70,9 @@ contract AccessCtl is ERC7579ValidatorBase, ERC7579HookBase {
     mapping(uint232 installCountAndRoleId => mapping(address account => uint48 validAfter)) internal
         RoleRegister;
 
-    /*//////////////////////////////////////////////////////////////////////////
-                                     CONFIG
-    //////////////////////////////////////////////////////////////////////////*/
+    // ========================================================================
+    // ERC-7579 Module: Configuration Functions
+    // ========================================================================
 
     /**
      * Initialize the module with the given root signer, adds an admin policy,
@@ -127,9 +127,9 @@ contract AccessCtl is ERC7579ValidatorBase, ERC7579HookBase {
         return signerId > 0;
     }
 
-    /*//////////////////////////////////////////////////////////////////////////
-                                     MODULE LOGIC
-    //////////////////////////////////////////////////////////////////////////*/
+    // ========================================================================
+    // ERC-7579 Module: Execution Hook Functions
+    // ========================================================================
 
     /**
      * Called on precheck before every execution
@@ -163,6 +163,10 @@ contract AccessCtl is ERC7579ValidatorBase, ERC7579HookBase {
      * This is a noop for our usecase.
      */
     function _postCheck(address, bytes calldata data) internal pure override { }
+
+    // ========================================================================
+    // ERC-7579 Module: Validator Functions
+    // ========================================================================
 
     /**
      * Validates PackedUserOperation
@@ -249,6 +253,10 @@ contract AccessCtl is ERC7579ValidatorBase, ERC7579HookBase {
         return signer.verifySignature(hash, signature) ? EIP1271_SUCCESS : EIP1271_FAILED;
     }
 
+    // ========================================================================
+    // IAM Public Capabilities: Getter Functions
+    // ========================================================================
+
     /**
      * Gets the public key for a given account and signerId.
      *
@@ -334,6 +342,25 @@ contract AccessCtl is ERC7579ValidatorBase, ERC7579HookBase {
         (uint8 installCount,,,) = _parseCounter(Counters[account]);
         return RoleRegister[_packInstallCountAndRoleId(installCount, roleId)][account];
     }
+
+    /**
+     * A utility method to get the next available signerId, policyId, and actionId.
+     * This is useful for building batched calls and determining future id assignments.
+     * All ids are assigned monotonically, i.e. incrementing by 1 on each add.
+     */
+    function getNextIds(
+        address account
+    )
+        public
+        view
+        returns (uint112 signerId, uint112 policyId, uint24 actionId)
+    {
+        (, signerId, policyId, actionId) = _parseCounter(Counters[account]);
+    }
+
+    // ========================================================================
+    // IAM Public Capabilities: Update Signer Functions
+    // ========================================================================
 
     /**
      * Registers a public key to the account under a unique signerId. Emits a
@@ -439,6 +466,10 @@ contract AccessCtl is ERC7579ValidatorBase, ERC7579HookBase {
         external
     { }
 
+    // ========================================================================
+    // IAM Public Capabilities: Update Policy Functions
+    // ========================================================================
+
     /**
      * Registers a policy to the account under a unique policyId. Emits a
      * PolicyAdded event on success.
@@ -508,6 +539,10 @@ contract AccessCtl is ERC7579ValidatorBase, ERC7579HookBase {
         external
     { }
 
+    // ========================================================================
+    // IAM Public Capabilities: Update Action Functions
+    // ========================================================================
+
     /**
      * Registers an action to the account under a unique actionId. Emits an
      * actionAdded event on success.
@@ -576,6 +611,10 @@ contract AccessCtl is ERC7579ValidatorBase, ERC7579HookBase {
     )
         external
     { }
+
+    // ========================================================================
+    // IAM Public Capabilities: Update Role Functions
+    // ========================================================================
 
     /**
      * Associates a registered signer with a registered policy. Emits a
@@ -649,28 +688,17 @@ contract AccessCtl is ERC7579ValidatorBase, ERC7579HookBase {
         external
     { }
 
-    /**
-     * A utility method to get the next available signerId, policyId, and actionId.
-     * This is useful for building batched calls and determining future id assignments.
-     * All ids are assigned monotonically, i.e. incrementing by 1 on each add.
-     */
-    function getNextIds(
-        address account
-    )
-        public
-        view
-        returns (uint112 signerId, uint112 policyId, uint24 actionId)
-    {
-        (, signerId, policyId, actionId) = _parseCounter(Counters[account]);
-    }
-
-    /*//////////////////////////////////////////////////////////////////////////
-                                     INTERNAL
-    //////////////////////////////////////////////////////////////////////////*/
+    // ========================================================================
+    // IAM Internal Capabilities: Getter Functions
+    // ========================================================================
 
     function _getRoleIdFromSig(bytes calldata data) internal pure returns (uint224) {
         return uint224(bytes28(data[:28]));
     }
+
+    // ========================================================================
+    // IAM Internal Capabilities: Update Signer Functions
+    // ========================================================================
 
     function _addWebAuthnSigner(uint256 x, uint256 y) internal {
         (uint8 installCount, uint112 signerId, uint112 policyId, uint24 actionId) =
@@ -692,6 +720,10 @@ contract AccessCtl is ERC7579ValidatorBase, ERC7579HookBase {
         Counters[msg.sender] = _packCounter(installCount, signerId + 1, policyId, actionId);
     }
 
+    // ========================================================================
+    // IAM Internal Capabilities: Update Policy Functions
+    // ========================================================================
+
     function _addPolicy(Policy memory p) internal {
         (uint8 installCount, uint112 signerId, uint112 policyId, uint24 actionId) =
             _parseCounter(Counters[msg.sender]);
@@ -700,6 +732,10 @@ contract AccessCtl is ERC7579ValidatorBase, ERC7579HookBase {
         emit PolicyAdded(msg.sender, policyId, p);
         Counters[msg.sender] = _packCounter(installCount, signerId, policyId + 1, actionId);
     }
+
+    // ========================================================================
+    // IAM Internal Capabilities: Update Action Functions
+    // ========================================================================
 
     function _addAction(Action memory a) internal {
         (uint8 installCount, uint112 signerId, uint112 policyId, uint24 actionId) =
@@ -710,6 +746,10 @@ contract AccessCtl is ERC7579ValidatorBase, ERC7579HookBase {
         Counters[msg.sender] = _packCounter(installCount, signerId, policyId, actionId + 1);
     }
 
+    // ========================================================================
+    // IAM Internal Capabilities: Update Role Functions
+    // ========================================================================
+
     function _addRole(uint112 signerId, uint112 policyId) internal {
         (uint8 installCount,,,) = _parseCounter(Counters[msg.sender]);
         uint224 roleId = _packRoleId(signerId, policyId);
@@ -717,6 +757,10 @@ contract AccessCtl is ERC7579ValidatorBase, ERC7579HookBase {
         RoleRegister[_packInstallCountAndRoleId(installCount, roleId)][msg.sender] = INIT_ROLE_VALUE;
         emit RoleAdded(msg.sender, roleId);
     }
+
+    // ========================================================================
+    // IAM Internal Capabilities: Utility Functions
+    // ========================================================================
 
     function _packCounter(
         uint8 installCount,
@@ -797,9 +841,9 @@ contract AccessCtl is ERC7579ValidatorBase, ERC7579HookBase {
         return fromRole >= fromPolicy ? fromRole : fromPolicy;
     }
 
-    /*//////////////////////////////////////////////////////////////////////////
-                                     METADATA
-    //////////////////////////////////////////////////////////////////////////*/
+    // ========================================================================
+    // ERC-7579 Module: Metadata Functions
+    // ========================================================================
 
     /**
      * The name of the module
