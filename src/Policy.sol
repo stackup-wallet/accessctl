@@ -127,7 +127,7 @@ library PolicyLib {
     }
 
     function _isAdmin(bytes1 mode) internal pure returns (bool) {
-        return mode == MODE_ADMIN;
+        return mode == MODE_ADMIN || mode == MODE_ADMIN_NO_CROSS_CHAIN_REPLAY;
     }
 
     function _isCallingExecute(bytes calldata call) internal pure returns (bool) {
