@@ -4,7 +4,7 @@ pragma solidity ^0.8.23;
 import { ModuleKitHelpers, ModuleKitUserOp } from "modulekit/ModuleKit.sol";
 import { TestHelper } from "test/TestHelper.sol";
 import { AccessCtl } from "src/AccessCtl.sol";
-import { Policy, PolicyLib, MODE_ADMIN } from "src/Policy.sol";
+import { Policy, PolicyLib, MODE_ADMIN, MODE_ADMIN_NO_CROSS_CHAIN_REPLAY } from "src/Policy.sol";
 import { Action, ActionLib } from "src/Action.sol";
 
 contract AuthorizationTest is TestHelper {
@@ -223,5 +223,36 @@ contract AuthorizationTest is TestHelper {
         instance.expect4337Revert();
         _execUserOp(target, 1 ether, "");
         assertEq(target.balance, initBalance);
+    }
+
+    function testCrossChainReplay() public {
+        Policy memory policy;
+        policy.mode = MODE_ADMIN_NO_CROSS_CHAIN_REPLAY;
+        _execUserOp(
+            address(module), 0, abi.encodeWithSelector(AccessCtl.addPolicy.selector, policy)
+        );
+        _execUserOp(
+            address(module),
+            0,
+            abi.encodeWithSelector(AccessCtl.addRole.selector, rootSignerId, rootPolicyId + 1)
+        );
+
+        address target = makeAddr("target");
+        uint256 value = 1 ether;
+        uint256 initBalance = target.balance;
+        uint224 roleId = uint224(rootSignerId) | (uint224(rootPolicyId + 1) << 112);
+
+        // First UserOp should pass.
+        _execCrossChainUserOp(rootRoleId, dummyP256PrivateKeyRoot, target, value, "");
+        assertEq(target.balance, initBalance + value);
+
+        // Second UserOp should fail since policy does not allow cross chain replay.
+        instance.expect4337Revert();
+        _execCrossChainUserOp(roleId, dummyP256PrivateKeyRoot, target, value, "");
+        assertEq(target.balance, initBalance + value);
+
+        // Third UserOp should pass since not using cross chain replay.
+        _execUserOp(roleId, dummyP256PrivateKeyRoot, target, value, "");
+        assertEq(target.balance, initBalance + value + value);
     }
 }

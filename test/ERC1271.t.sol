@@ -12,7 +12,8 @@ contract AuthenticationTest is TestHelper {
         bytes32 rawHash = keccak256("0xdead");
         bytes32 formattedHash = _formatERC1271Hash(address(module), rawHash);
 
-        bytes memory signature = _webAuthnSign(rootRoleId, formattedHash, dummyP256PrivateKeyRoot);
+        bytes memory signature =
+            _webAuthnSign(0x00, rootRoleId, formattedHash, dummyP256PrivateKeyRoot);
         assertTrue(_verifyERC1271Signature(address(module), rawHash, signature));
     }
 
@@ -23,7 +24,8 @@ contract AuthenticationTest is TestHelper {
         bytes32 rawHash = keccak256("0xdead");
         bytes32 formattedHash = _formatERC1271Hash(address(module), rawHash);
 
-        bytes memory signature = _webAuthnSign(rootRoleId, formattedHash, dummyP256PrivateKey1);
+        bytes memory signature =
+            _webAuthnSign(0x00, rootRoleId, formattedHash, dummyP256PrivateKey1);
         assertFalse(_verifyERC1271Signature(address(module), rawHash, signature));
     }
 }

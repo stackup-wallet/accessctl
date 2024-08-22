@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 import { ERC7579ValidatorBase, ERC7579HookBase } from "modulekit/Modules.sol";
-import { PackedUserOperation } from "modulekit/external/ERC4337.sol";
+import { PackedUserOperation, UserOperationLib } from "modulekit/external/ERC4337.sol";
 import { Signer, SignerLib, MODE_WEBAUTHN, MODE_ECDSA } from "src/Signer.sol";
 import { Policy, PolicyLib, MODE_ADMIN } from "src/Policy.sol";
 import { Action } from "src/Action.sol";
@@ -14,9 +14,11 @@ contract AccessCtl is ERC7579ValidatorBase, ERC7579HookBase {
     // ========================================================================
 
     uint48 internal constant INIT_ROLE_VALUE = 1;
+    address public constant ENTRY_POINT = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
 
     using SignerLib for Signer;
     using PolicyLib for Policy;
+    using UserOperationLib for PackedUserOperation;
 
     event SignerAdded(address indexed account, uint112 indexed signerId, Signer signer);
     event SignerRemoved(address indexed account, uint112 indexed signerId);
@@ -197,21 +199,29 @@ contract AccessCtl is ERC7579ValidatorBase, ERC7579HookBase {
         (uint112 signerId, uint112 policyId) = _parseRoleId(roleId);
 
         // Authorization check
-        Policy memory p = getPolicy(msg.sender, policyId);
-        Action[] memory a = getActions(msg.sender, p.allowActions);
-        (bool policyOk, string memory reason) = p.verifyUserOp(userOp, a);
+        Policy memory policy = getPolicy(msg.sender, policyId);
+        if (_isValidCrossChainReplay(policy, _getCrossChainReplayFlagFromSig(userOp.signature))) {
+            // Recalculate userOpHash without chainId
+            userOpHash = getUserOpHashForCrossChainReplay(userOp);
+        }
+        (bool policyOk, string memory reason) =
+            policy.verifyUserOp(userOp, getActions(msg.sender, policy.allowActions));
         // solhint-disable-next-line gas-custom-errors
         require(policyOk, reason);
 
         // Authentication check
         Signer memory signer = getSigner(msg.sender, signerId);
-        if (signer.verifySignature(userOpHash, userOp.signature)) {
+        if (signer.verifySignature(userOpHash, _getActualSigFromSig(userOp.signature))) {
             // Load required context to update validAfter in execution hook.
             CtxQueue.enqueue(msg.sender, uint256(roleId));
 
-            return _packValidationData(false, p.validUntil, _maxTimestamp(validAfter, p.validAfter));
+            return _packValidationData(
+                false, policy.validUntil, _maxTimestamp(validAfter, policy.validAfter)
+            );
         }
-        return _packValidationData(true, p.validUntil, _maxTimestamp(validAfter, p.validAfter));
+        return _packValidationData(
+            true, policy.validUntil, _maxTimestamp(validAfter, policy.validAfter)
+        );
     }
 
     /**
@@ -250,7 +260,9 @@ contract AccessCtl is ERC7579ValidatorBase, ERC7579HookBase {
 
         // Authentication check
         Signer memory signer = getSigner(msg.sender, signerId);
-        return signer.verifySignature(hash, signature) ? EIP1271_SUCCESS : EIP1271_FAILED;
+        return signer.verifySignature(hash, _getActualSigFromSig(signature))
+            ? EIP1271_SUCCESS
+            : EIP1271_FAILED;
     }
 
     // ========================================================================
@@ -356,6 +368,26 @@ contract AccessCtl is ERC7579ValidatorBase, ERC7579HookBase {
         returns (uint112 signerId, uint112 policyId, uint24 actionId)
     {
         (, signerId, policyId, actionId) = _parseCounter(Counters[account]);
+    }
+
+    /**
+     * A utility method to get the userOpHash without the chainId. This is used if
+     * the userOp.signature has explicity signaled this to be the case with
+     * the USEROP_CROSS_CHAIN_REPLAYABLE flag in the first byte.
+     *
+     * With cross chain replay enabled, a UserOperation can be executed across
+     * different networks with the same signature. This can enable user flows that
+     * allow one admin signature to update IAM state on all networks. However this
+     * feature should be used with care to prevent unwanted cross chain replays.
+     */
+    function getUserOpHashForCrossChainReplay(
+        PackedUserOperation calldata userOp
+    )
+        public
+        pure
+        returns (bytes32)
+    {
+        return keccak256(abi.encode(userOp.hash(), ENTRY_POINT));
     }
 
     // ========================================================================
@@ -494,8 +526,16 @@ contract AccessCtl is ERC7579ValidatorBase, ERC7579HookBase {
     // IAM Internal Capabilities: Getter Functions
     // ========================================================================
 
+    function _getCrossChainReplayFlagFromSig(bytes calldata data) internal pure returns (bytes1) {
+        return bytes1(data[:1]);
+    }
+
     function _getRoleIdFromSig(bytes calldata data) internal pure returns (uint224) {
-        return uint224(bytes28(data[:28]));
+        return uint224(bytes28(data[1:29]));
+    }
+
+    function _getActualSigFromSig(bytes calldata data) internal pure returns (bytes calldata) {
+        return data[29:];
     }
 
     // ========================================================================
@@ -641,6 +681,22 @@ contract AccessCtl is ERC7579ValidatorBase, ERC7579HookBase {
 
     function _maxTimestamp(uint48 fromRole, uint48 fromPolicy) internal pure returns (uint48) {
         return fromRole >= fromPolicy ? fromRole : fromPolicy;
+    }
+
+    function _isValidCrossChainReplay(
+        Policy memory p,
+        bytes1 crossChainReplayFlag
+    )
+        internal
+        pure
+        returns (bool)
+    {
+        (bool xchain, bool ok, string memory reason) =
+            p.verifyCrossChainReplay(crossChainReplayFlag);
+        // solhint-disable-next-line gas-custom-errors
+        require(ok, reason);
+
+        return xchain;
     }
 
     // ========================================================================
