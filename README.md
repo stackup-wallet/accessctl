@@ -68,15 +68,19 @@ From the diagram, there are three variables that must be known to the wallet.
 3. `policyId`: An ID assigned by the module for every policy added.
 4. `actionId`: An ID assigned by the module for every action added.
 
+### Signature format
+
+The `UserOperation` signature field is an `abi.encodePacked` of three values.
+
+1. 1 byte cross chain replay flag.
+2. 28 bytes `roleId`.
+3. The remaining bytes allocated to the actual signature.
+
+If the first byte is set to `USEROP_CROSS_CHAIN_REPLAYABLE` (as defined in [Policy.sol](src/Policy.sol)), then the `UserOperation` can be broadcasted on all networks since it signs over a `userOpHash` that excludes the `chainId`. This should be used with care and off by default to prevent unwanted cross chain replay attacks. However it can enable a better UX that allows admins to sign a AccessCtl update once and push out to all relevant networks.
+
 ### Role check
 
-The `roleId` is a `uint224` value that is encoded into the `UserOperation` signature field along with the `r` and `s` values of the signed `userOpHash`.
-
-```solidity
-userOp.signature = abi.encode(roleId, r, s);
-```
-
-During role check the AccessCtl module uses this `roleId` to verify with the state if the role is active. In other words, the module checks if a signer is allowed to assume a particular policy. If it is not active, validation will fail. Otherwise it continues with the authorization check.
+During role check the AccessCtl module uses the `roleId` to verify with the state if the role is active. In other words, the module checks if a signer is allowed to assume a particular policy. If it is not active, validation will fail. Otherwise it continues with the authorization check.
 
 The `roleId` is also unpacked into a `signerId` and `policyId` for authentication and authorization checks.
 
