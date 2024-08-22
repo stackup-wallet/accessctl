@@ -224,4 +224,14 @@ contract AuthorizationTest is TestHelper {
         _execUserOp(target, 1 ether, "");
         assertEq(target.balance, initBalance);
     }
+
+    function testCrossChainReplay() public {
+        address target = makeAddr("target");
+        uint256 value = 1 ether;
+        uint256 initBalance = target.balance;
+
+        // Root admin should pass.
+        _execCrossChainUserOp(rootRoleId, dummyP256PrivateKeyRoot, target, value, "");
+        assertEq(target.balance, initBalance + value);
+    }
 }

@@ -16,7 +16,13 @@ import { Base64 } from "openzeppelin-contracts/contracts/utils/Base64.sol";
 import { FCL_Elliptic_ZZ } from "FreshCryptoLib/FCL_elliptic.sol";
 import { AccessCtl } from "src/AccessCtl.sol";
 import { Signer, MODE_WEBAUTHN, MODE_ECDSA } from "src/Signer.sol";
-import { Policy, MODE_ADMIN, CALL_TYPE_LEVEL_SINGLE, CALL_TYPE_LEVEL_BATCH } from "src/Policy.sol";
+import {
+    Policy,
+    MODE_ADMIN,
+    CALL_TYPE_LEVEL_SINGLE,
+    CALL_TYPE_LEVEL_BATCH,
+    USEROP_CROSS_CHAIN_REPLAYABLE
+} from "src/Policy.sol";
 import {
     Action,
     LEVEL_MUST_PASS,
@@ -122,6 +128,7 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
     }
 
     function _webAuthnSign(
+        bytes1 crossChainReplayFlag,
         uint224 roleId,
         bytes32 message,
         uint256 privateKey
@@ -143,6 +150,7 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
         }
 
         signature = abi.encodePacked(
+            crossChainReplayFlag,
             roleId,
             abi.encode(
                 authenticatorData,
@@ -157,6 +165,7 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
     }
 
     function _ecdsaSign(
+        bytes1 crossChainReplayFlag,
         uint224 roleId,
         bytes32 message,
         uint256 pk
@@ -166,7 +175,7 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
         returns (bytes memory signature)
     {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(pk, ECDSA.toEthSignedMessageHash(message));
-        signature = abi.encodePacked(roleId, r, s, v);
+        signature = abi.encodePacked(crossChainReplayFlag, roleId, r, s, v);
     }
 
     function _execUserOp(address target, uint256 value, bytes memory data) internal {
@@ -177,7 +186,7 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
             txValidator: address(module)
         });
         userOpData.userOp.signature =
-            _webAuthnSign(rootRoleId, userOpData.userOpHash, dummyP256PrivateKeyRoot);
+            _webAuthnSign(0x00, rootRoleId, userOpData.userOpHash, dummyP256PrivateKeyRoot);
         userOpData.execUserOps();
     }
 
@@ -196,7 +205,31 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
             callData: data,
             txValidator: address(module)
         });
-        userOpData.userOp.signature = _webAuthnSign(roleId, userOpData.userOpHash, pk);
+        userOpData.userOp.signature = _webAuthnSign(0x00, roleId, userOpData.userOpHash, pk);
+        userOpData.execUserOps();
+    }
+
+    function _execCrossChainUserOp(
+        uint224 roleId,
+        uint256 pk,
+        address target,
+        uint256 value,
+        bytes memory data
+    )
+        internal
+    {
+        UserOpData memory userOpData = instance.getExecOps({
+            target: target,
+            value: value,
+            callData: data,
+            txValidator: address(module)
+        });
+        userOpData.userOp.signature = _webAuthnSign(
+            USEROP_CROSS_CHAIN_REPLAYABLE,
+            roleId,
+            module.getUserOpHashForCrossChainReplay(userOpData.userOp),
+            pk
+        );
         userOpData.execUserOps();
     }
 
@@ -219,7 +252,7 @@ abstract contract TestHelper is RhinestoneModuleKit, Test {
             callData: data,
             txValidator: address(module)
         });
-        userOpData.userOp.signature = _ecdsaSign(roleId, userOpData.userOpHash, pk);
+        userOpData.userOp.signature = _ecdsaSign(0x00, roleId, userOpData.userOpHash, pk);
         userOpData.execUserOps();
     }
 

@@ -12,7 +12,13 @@ import {
     CALLTYPE_DELEGATECALL,
     Execution
 } from "modulekit/external/ERC7579.sol";
-import { Policy, PolicyLib, MODE_ADMIN } from "src/Policy.sol";
+import {
+    Policy,
+    PolicyLib,
+    MODE_ADMIN,
+    MODE_ADMIN_NO_CROSS_CHAIN_REPLAY,
+    USEROP_CROSS_CHAIN_REPLAYABLE
+} from "src/Policy.sol";
 import { Action } from "src/Action.sol";
 
 contract PolicyLibTest is TestHelper {
@@ -92,6 +98,28 @@ contract PolicyLibTest is TestHelper {
         Policy memory testNullPolicy;
         assertTrue(testNullPolicy.isNull());
         assertFalse(dummy1EtherSinglePolicy.isNull());
+    }
+
+    function testVerifyCrossChainReplay() public view {
+        Policy memory adminWithoutCrossChainReplay;
+        adminWithoutCrossChainReplay.mode = MODE_ADMIN_NO_CROSS_CHAIN_REPLAY;
+
+        (bool xchain, bool ok, string memory reason) =
+            dummyAdminPolicy.verifyCrossChainReplay(USEROP_CROSS_CHAIN_REPLAYABLE);
+        assertTrue(xchain);
+        assertTrue(ok);
+        assertEq(reason, "");
+
+        (xchain, ok, reason) =
+            adminWithoutCrossChainReplay.verifyCrossChainReplay(USEROP_CROSS_CHAIN_REPLAYABLE);
+        assertTrue(xchain);
+        assertFalse(ok);
+        assertEq(reason, "IAM15 xchain replay not allowed");
+
+        (xchain, ok, reason) = adminWithoutCrossChainReplay.verifyCrossChainReplay(0x00);
+        assertFalse(xchain);
+        assertTrue(ok);
+        assertEq(reason, "");
     }
 
     function testUserOperationNotCallingExecute() public view {

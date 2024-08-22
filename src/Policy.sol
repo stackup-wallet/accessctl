@@ -6,10 +6,13 @@ import { IERC7579Account, Execution, ERC7579ExecutionLib } from "modulekit/exter
 import { Action, ActionLib } from "src/Action.sol";
 
 bytes1 constant MODE_ADMIN = 0x01;
-bytes1 constant MODE_ERC1271_ADMIN = 0x02;
+bytes1 constant MODE_ADMIN_NO_CROSS_CHAIN_REPLAY = 0x02;
+bytes1 constant MODE_ERC1271_ADMIN = 0x03;
 
 bytes1 constant CALL_TYPE_LEVEL_SINGLE = 0x00;
 bytes1 constant CALL_TYPE_LEVEL_BATCH = 0x01;
+
+bytes1 constant USEROP_CROSS_CHAIN_REPLAYABLE = 0xff;
 
 /**
  * A data structure for storing transaction permissions that can be attached to
@@ -44,6 +47,21 @@ library PolicyLib {
     function isNull(Policy calldata p) public pure returns (bool) {
         return p.validAfter == 0 && p.validUntil == 0 && p.erc1271Caller == address(0)
             && p.mode == 0 && p.callTypeLevel == 0 && p.minimumInterval == 0 && p.allowActions == 0;
+    }
+
+    function verifyCrossChainReplay(
+        Policy calldata p,
+        bytes1 crossChainReplayFlag
+    )
+        public
+        pure
+        returns (bool xchain, bool ok, string memory reason)
+    {
+        xchain = crossChainReplayFlag == USEROP_CROSS_CHAIN_REPLAYABLE;
+        if (xchain && p.mode != MODE_ADMIN) {
+            return (xchain, false, "IAM15 xchain replay not allowed");
+        }
+        return (xchain, true, "");
     }
 
     function verifyUserOp(

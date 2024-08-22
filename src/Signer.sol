@@ -18,7 +18,7 @@ struct Signer {
     */
     uint256 p256x;
     /*
-    * 2st storage slot
+    * 2nd storage slot
     */
     uint256 p256y;
     /*
@@ -53,8 +53,7 @@ library SignerLib {
             WebAuthn.WebAuthnAuth memory auth = _getWebAuthnAuth(signature, challenge);
             return WebAuthn.verify(challenge, true, auth, s.p256x, s.p256y);
         } else if (s.mode == MODE_ECDSA) {
-            return s.ecdsa
-                == ECDSA.recover(ECDSA.toEthSignedMessageHash(hash), _getECDSASignature(signature));
+            return s.ecdsa == ECDSA.recover(ECDSA.toEthSignedMessageHash(hash), signature);
         }
 
         // solhint-disable-next-line gas-custom-errors
@@ -77,7 +76,7 @@ library SignerLib {
             uint256 typeIndex,
             uint256 r,
             uint256 s
-        ) = abi.decode(data[28:], (bytes, string, string, uint256, uint256, uint256, uint256));
+        ) = abi.decode(data, (bytes, string, string, uint256, uint256, uint256, uint256));
         auth = WebAuthn.WebAuthnAuth({
             authenticatorData: authenticatorData,
             clientDataJSON: clientDataJSONPre.concat(Base64.encodeURL(challange)).concat(
@@ -88,15 +87,5 @@ library SignerLib {
             r: r,
             s: s
         });
-    }
-
-    function _getECDSASignature(
-        bytes calldata data
-    )
-        internal
-        pure
-        returns (bytes memory signature)
-    {
-        signature = data[28:];
     }
 }
