@@ -372,8 +372,8 @@ contract AccessCtl is ERC7579ValidatorBase, ERC7579HookBase {
 
     /**
      * A utility method to get the userOpHash without the chainId. This is used if
-     * the nonce key is greater than or equal to the `crossChainNonceKeyOffset`
-     * constant.
+     * the userOp.signature has explicity signaled this to be the case with
+     * the USEROP_CROSS_CHAIN_REPLAYABLE flag in the first byte.
      *
      * With cross chain replay enabled, a UserOperation can be executed across
      * different networks with the same signature. This can enable user flows that
