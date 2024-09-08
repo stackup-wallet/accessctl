@@ -5,16 +5,16 @@ import "forge-std/Script.sol";
 import { RegistryDeployer } from "modulekit/deployment/RegistryDeployer.sol";
 
 // Import modules here
-import { AccessCtl } from "src/AccessCtl.sol";
+import { WebAuthnGroups } from "src/signers/WebAuthnGroups.sol";
 
 /// @title DeployModuleScript
 contract DeployModuleScript is Script, RegistryDeployer {
     function run() public {
         vm.startBroadcast(vm.envUint("PK"));
 
-        AccessCtl module = new AccessCtl{ salt: 0 }();
+        WebAuthnGroups sessionValidator = new WebAuthnGroups{ salt: 0 }();
 
         vm.stopBroadcast();
-        console.log("Deploying module at: %s", address(module));
+        console.log("Deploying WebAuthnGroups at: %s", address(sessionValidator));
     }
 }
