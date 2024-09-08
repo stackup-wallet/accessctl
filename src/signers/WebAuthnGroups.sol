@@ -54,9 +54,7 @@ contract WebAuthnGroups is ISessionValidator {
         return interfaceID == WebAuthnGroups.validateSignatureWithData.selector;
     }
 
-    function _unpackSignerIdAndSignature(
-        bytes calldata sig
-    )
+    function _unpackSignerIdAndSignature(bytes calldata sig)
         internal
         pure
         returns (SignerId sid, bytes memory packedSig)
