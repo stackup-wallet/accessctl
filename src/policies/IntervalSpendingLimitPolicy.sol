@@ -159,8 +159,8 @@ contract IntervalSpendingLimitPolicy is IActionPolicy {
         view
         returns (uint256 timestamp)
     {
-        // This is the line that will use violate the TIMESTAMP restriction for
-        // the canonical UserOperation mempool.
+        // This is the line that will violate the TIMESTAMP restriction for the
+        // canonical UserOperation mempool.
         uint256 currentTimestamp = block.timestamp;
 
         if (interval == Intervals.Daily) {
