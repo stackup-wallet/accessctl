@@ -5,16 +5,21 @@ import "forge-std/Script.sol";
 import { RegistryDeployer } from "modulekit/deployment/RegistryDeployer.sol";
 
 // Import modules here
-import { AccessCtl } from "src/AccessCtl.sol";
+import { WebAuthnValidator } from "src/signers/WebAuthnValidator.sol";
+import { IntervalSpendingLimitPolicy } from "src/policies/IntervalSpendingLimitPolicy.sol";
 
 /// @title DeployModuleScript
 contract DeployModuleScript is Script, RegistryDeployer {
     function run() public {
         vm.startBroadcast(vm.envUint("PK"));
 
-        AccessCtl module = new AccessCtl{ salt: 0 }();
+        WebAuthnValidator sessionValidator = new WebAuthnValidator{ salt: 0 }();
+
+        IntervalSpendingLimitPolicy spendingLimitPolicy =
+            new IntervalSpendingLimitPolicy{ salt: 0 }();
 
         vm.stopBroadcast();
-        console.log("Deploying module at: %s", address(module));
+        console.log("Deploying WebAuthnValidator at: %s", address(sessionValidator));
+        console.log("Deploying IntervalSpendingLimitPolicy at: %s", address(spendingLimitPolicy));
     }
 }

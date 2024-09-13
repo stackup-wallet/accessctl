@@ -1,3 +1,6 @@
 [submodule "lib/webauthn-sol"]
 	path = lib/webauthn-sol
 	url = https://github.com/base-org/webauthn-sol
+[submodule "lib/smartsessions"]
+	path = lib/smartsessions
+	url = https://github.com/erc7579/smartsessions
