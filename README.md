@@ -23,12 +23,12 @@ A "✅" means that AccessCtl has been end to end tested with the following Smart
 
 # Architecture
 
-This project refers to a collection of session validators and policies to extend the ERC-7579 Smart Sessions module. The extensions are built with the following design goals in mind to support onchain organizations at every scale:
+This project refers to a collection of signer and policy contracts to extend the ERC-7579 Smart Sessions module. The extensions are built with the following design goals in mind to support onchain organizations at every scale:
 
-- **Authentication**: support for adding signers to specific roles on a smart account.
-- **Authorization**: support for adding custom policies to each role.
-- **Gas optimized**: can scale for a large number of active roles, signers, and policies.
-- **Easily auditable**: allows verifiable changelogs for tracking every validation update.
+- **Authentication**: support for adding users (or bots) under an attribute based access control model (ABAC).
+- **Authorization**: support for adding custom attributes to each user.
+- **Gas optimized**: can scale for a large number of active users and attributes.
+- **Easily auditable**: allows verifiable changelogs for tracking every access control update.
 
 The remaining documentation will assume knowledge on ERC-4337 (Account Abstraction), ERC-7579 (Minimal Modular Smart Accounts), and Smart Sessions. If you are unfamiliar, we recommend the following resources to get started:
 
