@@ -8,18 +8,24 @@ AccessControl (or `AccessCtl` for short) builds of the [Smart Sessions module](h
 
 AccessCtl is deployed using the [deterministic deployment proxy](https://github.com/Arachnid/deterministic-deployment-proxy) and has the same address on all chains.
 
-| Contract                                                                            | Version | Address | Commit | Audit |
-| ----------------------------------------------------------------------------------- | ------- | ------- | ------ | ----- |
-| [`WebAuthnValidator.sol`](./src/signers/WebAuthnValidator.sol)                      | `0.1.0` | ``      | []()   | N/A   |
-| [`IntervalSpendingLimitPolicy.sol`](./src/policies/IntervalSpendingLimitPolicy.sol) | `0.1.0` | ``      | []()   | N/A   |
+### `v0.1.x` (WIP)
 
-## Compatibility status
+_Note: `SmartSession.sol` and `SudoPolicy.sol` deployed directly from [erc7579/smartsessions](https://github.com/erc7579/smartsessions)._
+
+| Contracts                                                                                                                                                                   | Address                                      | Commit                                                                                               | Audit |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ----- |
+| [`SmartSession.sol`](https://github.com/erc7579/smartsessions/blob/b1624f851f56ec67cc677dce129e9caa12fcafd9/contracts/SmartSession.sol)                                     | `0x63E28dcfe4C0E6b32c021D8FBDe77F376ee8967e` | [b1624f8](https://github.com/erc7579/smartsessions/tree/b1624f851f56ec67cc677dce129e9caa12fcafd9)    | N/A   |
+| [`SudoPolicy.sol`](https://github.com/erc7579/smartsessions/blob/b1624f851f56ec67cc677dce129e9caa12fcafd9/contracts/external/policies/SudoPolicy.sol)                       | `0xbA37a0Dc3f059cDAdEF5cc97F92191d14AC9ee39` | [b1624f8](https://github.com/erc7579/smartsessions/tree/b1624f851f56ec67cc677dce129e9caa12fcafd9)    | N/A   |
+| [`WebAuthnValidator.sol`](https://github.com/stackup-wallet/accessctl/blob/c83029d4bacc6dd8a4d7133f58a278d9b12e374e/src/signers/WebAuthnValidator.sol)                      | `0xcB6D0D07f8304db1bfa06D75bD4F9a9F559b312e` | [c83029d](https://github.com/stackup-wallet/accessctl/tree/c83029d4bacc6dd8a4d7133f58a278d9b12e374e) | N/A   |
+| [`IntervalSpendingLimitPolicy.sol`](https://github.com/stackup-wallet/accessctl/blob/c83029d4bacc6dd8a4d7133f58a278d9b12e374e/src/policies/IntervalSpendingLimitPolicy.sol) | `0xa9C63723e9070B5d2a534fE3D25e2e403F09860A` | [c83029d](https://github.com/stackup-wallet/accessctl/tree/c83029d4bacc6dd8a4d7133f58a278d9b12e374e) | N/A   |
+
+#### Compatibility status
 
 A "✅" means that AccessCtl has been end to end tested with the following Smart Account versions and confirmed compatible.
 
-|         | Kernel `v3.1` | Safe7579 `v1.0.2` | Nexus |
-| ------- | ------------- | ----------------- | ----- |
-| `0.1.0` | ✅            | ❌                | ❌    |
+| Kernel `v3.1` | Safe7579 `v1.0.2` | Nexus |
+| ------------- | ----------------- | ----- |
+| ✅            | ❌                | ❌    |
 
 # Architecture
 
