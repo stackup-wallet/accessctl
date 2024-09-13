@@ -2,7 +2,7 @@
 
 > **⚠️ This module is still in early development. It is not yet recommended for production.**
 
-AccessControl (or `AccessCtl` for short) builds of the [Smart Sessions module](https://github.com/erc7579/smartsessions) to enable attribute-based access control (RBAC) for ERC-7579 smart accounts.
+AccessControl (or `AccessCtl` for short) builds of the [Smart Sessions module](https://github.com/erc7579/smartsessions) to enable attribute-based access control (ABAC) for ERC-7579 smart accounts.
 
 ## Module status
 
@@ -25,7 +25,7 @@ A "✅" means that AccessCtl has been end to end tested with the following Smart
 
 This project refers to a collection of signer and policy contracts to extend the ERC-7579 Smart Sessions module. The extensions are built with the following design goals in mind to support onchain organizations at every scale:
 
-- **Authentication**: support for adding users (or bots) under an attribute based access control model (ABAC).
+- **Authentication**: support for adding users (or bots) under an ABAC model.
 - **Authorization**: support for adding custom attributes to each user.
 - **Gas optimized**: can scale for a large number of active users and attributes.
 - **Easily auditable**: allows verifiable changelogs for tracking every access control update.
