@@ -13,10 +13,6 @@ struct P256PublicKey {
 library P256PublicKeyLib {
     using LibString for string;
 
-    function isNull(P256PublicKey calldata signer) public pure returns (bool) {
-        return signer.x == 0 && signer.y == 0;
-    }
-
     function verifyWebAuthnSignature(
         P256PublicKey calldata signer,
         bytes32 hash,

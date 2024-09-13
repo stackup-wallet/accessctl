@@ -8,9 +8,9 @@ AccessControl (or `AccessCtl` for short) builds of the [Smart Sessions module](h
 
 AccessCtl is deployed using the [deterministic deployment proxy](https://github.com/Arachnid/deterministic-deployment-proxy) and has the same address on all chains.
 
-| Contract                                                 | Version | Address | Commit | Audit |
-| -------------------------------------------------------- | ------- | ------- | ------ | ----- |
-| [`WebAuthnGroups.sol`](./src/signers/WebAuthnGroups.sol) | `0.1.0` | ``      | []()   | N/A   |
+| Contract                                                       | Version | Address | Commit | Audit |
+| -------------------------------------------------------------- | ------- | ------- | ------ | ----- |
+| [`WebAuthnValidator.sol`](./src/signers/WebAuthnValidator.sol) | `0.1.0` | ``      | []()   | N/A   |
 
 ## Compatibility status
 
@@ -57,21 +57,18 @@ sequenceDiagram
         end
     end
     Smart Sessions->>Smart Sessions: Calculates intersected validation data
-    Smart Sessions->>WebAuthn Groups: Calls validateSignatureWithData
-    Note over WebAuthn Groups: Authentication check
-    WebAuthn Groups->>WebAuthn Groups: Decodes sig into signerId and signature
-    WebAuthn Groups->>WebAuthn Groups: Gets relevant signer for session
-    WebAuthn Groups->>WebAuthn Groups: Verifies signature
-    WebAuthn Groups->>Smart Sessions: Returns success response
+    Smart Sessions->>WebAuthn Validator: Calls validateSignatureWithData
+    Note over WebAuthn Validator: Authentication check
+    WebAuthn Validator->>WebAuthn Validator: Verifies webAuthn signature
+    WebAuthn Validator->>Smart Sessions: Returns success response
     Smart Sessions->>Smart Account: Returns success response
     Smart Account->>EntryPoint: Pay prefund
     Note over EntryPoint,Smart Account: Validation done, execution next...
 ```
 
-`AccessCtl` has 2 main id types to track.
+### `WebAuthnValidator.sol`
 
-1. `permissionId`: a `bytes32` value assigned to every session.
-2. `signerId`: a `bytes32` value assigned to every signer within a session.
+The [WebAuthnValidator.sol](./src/signers/WebAuthnValidator.sol) is a minimal wrapper around [webauthn-sol](https://github.com/base-org/webauthn-sol) to enable compatibility with the required smart session interface. This allows sessions to be authenticated directly with an end user's passkey.
 
 # Contributing
 

@@ -5,14 +5,14 @@ import { Test } from "forge-std/Test.sol";
 import { LibString } from "solady/utils/LibString.sol";
 import { Base64 } from "openzeppelin-contracts/contracts/utils/Base64.sol";
 import { FCL_Elliptic_ZZ } from "FreshCryptoLib/FCL_elliptic.sol";
-import { SignerId } from "src/signers/DataTypes.sol";
-import { P256PublicKey } from "src/signers/P256PublicKey.sol";
-import { WebAuthnGroups } from "src/signers/WebAuthnGroups.sol";
+import { WebAuthnValidator } from "src/signers/WebAuthnValidator.sol";
+import { IntervalSpendingLimitPolicy } from "src/policies/IntervalSpendingLimitPolicy.sol";
 
 abstract contract TestHelper is Test {
     using LibString for string;
 
-    WebAuthnGroups internal sessionValidator;
+    WebAuthnValidator internal sessionValidator;
+    IntervalSpendingLimitPolicy internal spendingLimitPolicy;
 
     // Dummy WebAuthn variables
     // From https://github.com/base-org/webauthn-sol/blob/main/test/WebAuthn.t.sol
@@ -29,15 +29,8 @@ abstract contract TestHelper is Test {
         0xf24b7cd0e0d84317f2fbba39add412ddd3df7cb84be213b67fb340373e9275ec;
     uint256 constant dummyP256PubKeyYRoot =
         0x255417d4c6780a9db69e2023685c95a344f3e59e930e758f3829b0b10bf87ebc;
-    P256PublicKey public dummyRootP256PublicKey;
-
-    constructor() {
-        dummyRootP256PublicKey.x = dummyP256PubKeyXRoot;
-        dummyRootP256PublicKey.y = dummyP256PubKeyYRoot;
-    }
 
     function _webAuthnSign(
-        SignerId sid,
         uint256 privateKey,
         bytes32 message
     )
@@ -57,22 +50,22 @@ abstract contract TestHelper is Test {
             s = FCL_Elliptic_ZZ.n - s;
         }
 
-        signature = abi.encodePacked(
-            sid,
-            abi.encode(
-                authenticatorData,
-                clientDataJSONPre,
-                clientDataJSONPost,
-                challangeIndex,
-                typeIndex,
-                r,
-                s
-            )
+        signature = abi.encode(
+            authenticatorData,
+            clientDataJSONPre,
+            clientDataJSONPost,
+            challangeIndex,
+            typeIndex,
+            r,
+            s
         );
     }
 
     function setUp() public {
-        sessionValidator = new WebAuthnGroups();
-        vm.label(address(sessionValidator), "WebAuthnGroups");
+        sessionValidator = new WebAuthnValidator();
+        vm.label(address(sessionValidator), "WebAuthnValidator");
+
+        spendingLimitPolicy = new IntervalSpendingLimitPolicy();
+        vm.label(address(spendingLimitPolicy), "IntervalSpendingLimitPolicy");
     }
 }
