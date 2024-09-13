@@ -2,10 +2,10 @@
 pragma solidity ^0.8.23;
 
 import { ISessionValidator } from "smart-sessions/interfaces/ISessionValidator.sol";
-import { P256PublicKey, P256PublicKeyLib } from "src/signers/P256PublicKey.sol";
+import { P256Credentials, P256CredentialsLib } from "src/signers/P256Credentials.sol";
 
 contract WebAuthnValidator is ISessionValidator {
-    using P256PublicKeyLib for P256PublicKey;
+    using P256CredentialsLib for P256Credentials;
 
     function validateSignatureWithData(
         bytes32 hash,
@@ -17,7 +17,7 @@ contract WebAuthnValidator is ISessionValidator {
         returns (bool validSig)
     {
         (uint256 x, uint256 y) = abi.decode(data, (uint256, uint256));
-        return P256PublicKey(x, y).verifyWebAuthnSignature(hash, sig);
+        return P256Credentials(x, y).verifyWebAuthnSignature(hash, sig);
     }
 
     function supportsInterface(bytes4 interfaceID) external pure returns (bool) {

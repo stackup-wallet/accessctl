@@ -5,16 +5,16 @@ import { WebAuthn } from "webauthn-sol/WebAuthn.sol";
 import { Base64 } from "openzeppelin-contracts/contracts/utils/Base64.sol";
 import { LibString } from "solady/utils/LibString.sol";
 
-struct P256PublicKey {
+struct P256Credentials {
     uint256 x;
     uint256 y;
 }
 
-library P256PublicKeyLib {
+library P256CredentialsLib {
     using LibString for string;
 
     function verifyWebAuthnSignature(
-        P256PublicKey calldata signer,
+        P256Credentials calldata signer,
         bytes32 hash,
         bytes calldata signature
     )
