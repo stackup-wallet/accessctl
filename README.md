@@ -8,7 +8,7 @@ AccessControl (or `AccessCtl` for short) builds of the [Smart Sessions module](h
 
 AccessCtl is deployed using the [deterministic deployment proxy](https://github.com/Arachnid/deterministic-deployment-proxy) and has the same address on all chains.
 
-### `v0.1.0` (WIP)
+### `v0.1.x` (WIP)
 
 _Note: `SmartSession.sol` and `SudoPolicy.sol` deployed directly from [erc7579/smartsessions](https://github.com/erc7579/smartsessions)._
 
@@ -23,9 +23,9 @@ _Note: `SmartSession.sol` and `SudoPolicy.sol` deployed directly from [erc7579/s
 
 A "✅" means that AccessCtl has been end to end tested with the following Smart Account versions and confirmed compatible.
 
-|         | Kernel `v3.1` | Safe7579 `v1.0.2` | Nexus |
-| ------- | ------------- | ----------------- | ----- |
-| `0.1.0` | ✅            | ❌                | ❌    |
+| Kernel `v3.1` | Safe7579 `v1.0.2` | Nexus |
+| ------------- | ----------------- | ----- |
+| ✅            | ❌                | ❌    |
 
 # Architecture
 
