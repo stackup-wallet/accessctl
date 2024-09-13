@@ -2,7 +2,7 @@
 
 > **⚠️ This module is still in early development. It is not yet recommended for production.**
 
-AccessControl (or `AccessCtl` for short) builds of the [Smart Sessions module](https://github.com/erc7579/smartsessions) to enable role-based access control (RBAC) for ERC-7579 smart accounts.
+AccessControl (or `AccessCtl` for short) builds of the [Smart Sessions module](https://github.com/erc7579/smartsessions) to enable attribute-based access control (RBAC) for ERC-7579 smart accounts.
 
 ## Module status
 
