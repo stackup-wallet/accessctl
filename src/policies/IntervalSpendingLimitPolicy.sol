@@ -20,8 +20,8 @@ enum Intervals {
 
 /**
  * This contract is a fork of SpendingLimitPolicy.sol from erc7579/smartsessions.
- * The difference is the inclusion of an added function to reset the accrued spend
- * after a defined interval.
+ * The difference is the inclusion of added logic to reset the accrued spend after
+ * a defined interval.
  *
  * Note: This Policy relies on the TIMESTAMP opcode during validation which is not
  * compliant with the canonical mempool. This is required to ensure time intervals
