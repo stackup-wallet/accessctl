@@ -14,7 +14,7 @@ library P256CredentialsLib {
     using LibString for string;
 
     function verifyWebAuthnSignature(
-        P256Credentials calldata signer,
+        P256Credentials calldata credential,
         bytes32 hash,
         bytes calldata signature
     )
@@ -24,7 +24,7 @@ library P256CredentialsLib {
     {
         bytes memory challenge = abi.encode(hash);
         WebAuthn.WebAuthnAuth memory auth = _getWebAuthnAuth(signature, challenge);
-        return WebAuthn.verify(challenge, true, auth, signer.x, signer.y);
+        return WebAuthn.verify(challenge, true, auth, credential.x, credential.y);
     }
 
     function _getWebAuthnAuth(
