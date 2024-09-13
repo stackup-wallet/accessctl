@@ -8,9 +8,10 @@ AccessControl (or `AccessCtl` for short) builds of the [Smart Sessions module](h
 
 AccessCtl is deployed using the [deterministic deployment proxy](https://github.com/Arachnid/deterministic-deployment-proxy) and has the same address on all chains.
 
-| Contract                                                       | Version | Address | Commit | Audit |
-| -------------------------------------------------------------- | ------- | ------- | ------ | ----- |
-| [`WebAuthnValidator.sol`](./src/signers/WebAuthnValidator.sol) | `0.1.0` | ``      | []()   | N/A   |
+| Contract                                                                            | Version | Address | Commit | Audit |
+| ----------------------------------------------------------------------------------- | ------- | ------- | ------ | ----- |
+| [`WebAuthnValidator.sol`](./src/signers/WebAuthnValidator.sol)                      | `0.1.0` | ``      | []()   | N/A   |
+| [`IntervalSpendingLimitPolicy.sol`](./src/policies/IntervalSpendingLimitPolicy.sol) | `0.1.0` | ``      | []()   | N/A   |
 
 ## Compatibility status
 
@@ -69,6 +70,12 @@ sequenceDiagram
 ### `WebAuthnValidator.sol`
 
 The [WebAuthnValidator.sol](./src/signers/WebAuthnValidator.sol) is a minimal wrapper around [webauthn-sol](https://github.com/base-org/webauthn-sol) to enable compatibility with the required smart session interface. This allows sessions to be authenticated directly with an end user's passkey.
+
+### `IntervalSpendingLimitPolicy.sol`
+
+the [IntervalSpendingLimitPolicy](./src/policies/IntervalSpendingLimitPolicy.sol) is fork of [SpendingLimitPolicy.sol](https://github.com/erc7579/smartsessions/blob/main/contracts/external/policies/SpendingLimitPolicy.sol). The difference is the inclusion of added logic to reset the accrued spend after a defined interval.
+
+> **Note that this policy relies on the `TIMESTAMP` opcode during validation which is not compliant with the canonical mempool. This is required to ensure time intervals work as expected.**
 
 # Contributing
 
