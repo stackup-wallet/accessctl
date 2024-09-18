@@ -128,7 +128,7 @@ contract IntervalSpendingLimitPolicyTest is TestHelper {
         assertEq(vd, VALIDATION_FAILED);
     }
 
-    function testCheckActionMontlyForERC20() public {
+    function testCheckActionMonthlyForERC20() public {
         assertForInterval({
             isNative: false,
             isErc20Payable: false,
@@ -158,7 +158,7 @@ contract IntervalSpendingLimitPolicyTest is TestHelper {
         });
     }
 
-    function testCheckActionMontlyForERC20Payable() public {
+    function testCheckActionMonthlyForERC20Payable() public {
         assertForInterval({
             isNative: false,
             isErc20Payable: true,
@@ -188,7 +188,7 @@ contract IntervalSpendingLimitPolicyTest is TestHelper {
         });
     }
 
-    function testCheckActionMontlyForNativeTransfer() public {
+    function testCheckActionMonthlyForNativeTransfer() public {
         assertForInterval({
             isNative: true,
             isErc20Payable: false,
