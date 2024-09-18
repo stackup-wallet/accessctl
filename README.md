@@ -4,6 +4,13 @@
 
 AccessControl (or `AccessCtl` for short) builds of the [Smart Sessions module](https://github.com/erc7579/smartsessions) to enable attribute-based access control (ABAC) for ERC-7579 smart accounts.
 
+**Remaining items (pending a finalized smart sessions audit):**
+
+- Update current dependency to the audited commit.
+- Switch to the canonical `SmartSession.sol` and `SudoPolicy.sol`.
+- Pull in any upstream changes from `SpendingLimitPolicy.sol` to `IntervalSpendingLimitPolicy.sol`.
+- Audit `WebAuthnValidator.sol` and `IntervalSpendingLimitPolicy.sol`.
+
 ## Module status
 
 AccessCtl is deployed using the [deterministic deployment proxy](https://github.com/Arachnid/deterministic-deployment-proxy) and has the same address on all chains.
