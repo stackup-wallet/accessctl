@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.23;
 
-import "smart-sessions/DataTypes.sol";
+import { ConfigId, ERC7579_MODULE_TYPE_POLICY } from "smart-sessions/DataTypes.sol";
 import { IActionPolicy } from "smart-sessions/interfaces/IPolicy.sol";
 
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import { DateTimeLib } from "solady/utils/DateTimeLib.sol";
 
-address constant NATIVE_TOKEN = address(0);
+address constant NATIVE_TOKEN = address(type(uint160).max);
 
 uint256 constant VALIDATION_SUCCESS = 0;
 uint256 constant VALIDATION_FAILED = 1;
@@ -21,7 +21,7 @@ enum Intervals {
 /**
  * This contract is a fork of SpendingLimitPolicy.sol from erc7579/smartsessions.
  * The difference is the inclusion of added logic to reset the accrued spend after
- * a defined interval.
+ * a defined interval and include native token transfers.
  *
  * Note: This policy relies on the TIMESTAMP opcode during validation which is not
  * compliant with the canonical mempool. This is required to ensure time intervals
@@ -134,24 +134,34 @@ contract IntervalSpendingLimitPolicy is IActionPolicy {
         returns (bool)
     { }
 
-    function _isTokenTransfer(bytes calldata callData)
+    function _isTokenTransfer(
+        address target,
+        uint256 value,
+        bytes calldata callData
+    )
         internal
         pure
-        returns (bool isTransfer, uint256 amount)
+        returns (bool isTransfer, address token, uint256 amount)
     {
+        // Detect a native ETH transfer. We don't check that value is more than
+        // 0 since we assume a 0 ETH transfer is a valid use case.
+        if (callData.length == 0) return (true, NATIVE_TOKEN, value);
+
+        // Assuming callData is not nil, then value has to be 0.
+        if (value != 0) return (false, address(0), 0);
         bytes4 functionSelector = bytes4(callData[0:4]);
 
         if (functionSelector == IERC20.approve.selector) {
             (, amount) = abi.decode(callData[4:], (address, uint256));
-            return (true, amount);
+            return (true, target, amount);
         } else if (functionSelector == IERC20.transfer.selector) {
             (, amount) = abi.decode(callData[4:], (address, uint256));
-            return (true, amount);
+            return (true, target, amount);
         } else if (functionSelector == IERC20.transferFrom.selector) {
             (,, amount) = abi.decode(callData[4:], (address, address, uint256));
-            return (true, amount);
+            return (true, target, amount);
         }
-        return (false, 0);
+        return (false, address(0), 0);
     }
 
     function _getNextIntervalTimestamp(Intervals interval)
@@ -198,6 +208,31 @@ contract IntervalSpendingLimitPolicy is IActionPolicy {
         }
     }
 
+    function _check(
+        TokenPolicyData storage $,
+        ConfigId id,
+        address token,
+        address account,
+        uint256 amount
+    )
+        internal
+        returns (uint256)
+    {
+        uint256 spendingLimit = $.spendingLimit;
+        uint256 alreadySpent = $.alreadySpent;
+
+        uint256 newAmount = alreadySpent + amount;
+
+        if (newAmount > spendingLimit) {
+            return VALIDATION_FAILED;
+        } else {
+            $.alreadySpent = newAmount;
+
+            emit TokenSpent(id, msg.sender, token, account, amount, spendingLimit - newAmount);
+            return VALIDATION_SUCCESS;
+        }
+    }
+
     function checkAction(
         ConfigId id,
         address account,
@@ -209,25 +244,12 @@ contract IntervalSpendingLimitPolicy is IActionPolicy {
         override
         returns (uint256)
     {
-        if (value != 0) return VALIDATION_FAILED;
-        (bool isTokenTransfer, uint256 amount) = _isTokenTransfer(callData);
+        (bool isTokenTransfer, address token, uint256 amount) =
+            _isTokenTransfer(target, value, callData);
         if (!isTokenTransfer) return VALIDATION_FAILED;
 
-        TokenPolicyData storage $ = _getPolicy({ id: id, userOpSender: account, token: target });
-        _resetIntervalIfNeeded($, id, target, account);
-
-        uint256 spendingLimit = $.spendingLimit;
-        uint256 alreadySpent = $.alreadySpent;
-
-        uint256 newAmount = alreadySpent + amount;
-
-        if (newAmount > spendingLimit) {
-            return VALIDATION_FAILED;
-        } else {
-            $.alreadySpent = newAmount;
-
-            emit TokenSpent(id, msg.sender, target, account, amount, spendingLimit - newAmount);
-            return VALIDATION_SUCCESS;
-        }
+        TokenPolicyData storage $ = _getPolicy({ id: id, userOpSender: account, token: token });
+        _resetIntervalIfNeeded($, id, token, account);
+        return _check($, id, token, account, amount);
     }
 }

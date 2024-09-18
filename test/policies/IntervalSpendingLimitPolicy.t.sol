@@ -6,6 +6,7 @@ import { TestHelper } from "test/TestHelper.sol";
 import {
     IntervalSpendingLimitPolicy,
     Intervals,
+    NATIVE_TOKEN,
     VALIDATION_SUCCESS,
     VALIDATION_FAILED
 } from "src/policies/IntervalSpendingLimitPolicy.sol";
@@ -39,6 +40,7 @@ contract IntervalSpendingLimitPolicyTest is TestHelper {
     uint256 internal constant dummyNextDailyIntervalEnd = 1_726_444_800;
 
     address[] internal dummyTokens;
+    address[] internal nativeTokens;
     uint256[] internal dummyValues;
 
     event TokenSpent(
@@ -61,43 +63,63 @@ contract IntervalSpendingLimitPolicyTest is TestHelper {
 
     constructor() {
         dummyTokens.push(address(0xcafe));
+        nativeTokens.push(NATIVE_TOKEN);
         dummyValues.push(1 ether);
     }
 
     function assertForInterval(
+        bool isNative,
+        bool isErc20Payable,
         Intervals interval,
         uint256 currentIntervalEnd,
         uint256 nextIntervalEnd
     )
         public
     {
+        address[] memory tokens;
+        address target;
+        uint256 value;
+        bytes memory callData;
+        if (isNative) {
+            tokens = nativeTokens;
+            target = address(0);
+            value = 1 ether;
+        } else if (isErc20Payable) {
+            tokens = dummyTokens;
+            target = dummyTokens[0];
+            value = 1 ether;
+            callData = abi.encodeWithSelector(IERC20.transfer.selector, address(0), 1 ether);
+        } else {
+            // ERC20 base case
+            tokens = dummyTokens;
+            target = dummyTokens[0];
+            value = 0;
+            callData = abi.encodeWithSelector(IERC20.transfer.selector, address(0), 1 ether);
+        }
+
         // Initialize policy
         vm.warp(dummyCurrentTimestamp);
         spendingLimitPolicy.initializeWithMultiplexer(
-            dummyAccount, dummyConfigId, abi.encode(interval, dummyTokens, dummyValues)
+            dummyAccount, dummyConfigId, abi.encode(interval, tokens, dummyValues)
         );
 
         // Spend up to the max
+        uint256 vd;
+        if (isErc20Payable) {
+            vd = spendingLimitPolicy.checkAction(
+                dummyConfigId, dummyAccount, target, value, callData
+            );
+            assertEq(vd, VALIDATION_FAILED);
+            return;
+        }
         vm.expectEmit(true, true, true, true, address(spendingLimitPolicy));
-        emit TokenSpent(dummyConfigId, address(this), dummyTokens[0], dummyAccount, 1 ether, 0);
-        uint256 vd = spendingLimitPolicy.checkAction(
-            dummyConfigId,
-            dummyAccount,
-            dummyTokens[0],
-            0,
-            abi.encodeWithSelector(IERC20.transfer.selector, address(0), 1 ether)
-        );
+        emit TokenSpent(dummyConfigId, address(this), tokens[0], dummyAccount, 1 ether, 0);
+        vd = spendingLimitPolicy.checkAction(dummyConfigId, dummyAccount, target, value, callData);
         assertEq(vd, VALIDATION_SUCCESS);
 
         // Over spend should fail even a second before new time interval
         vm.warp(DateTimeLib.subSeconds(currentIntervalEnd, 1));
-        vd = spendingLimitPolicy.checkAction(
-            dummyConfigId,
-            dummyAccount,
-            dummyTokens[0],
-            0,
-            abi.encodeWithSelector(IERC20.transfer.selector, address(0), 1 ether)
-        );
+        vd = spendingLimitPolicy.checkAction(dummyConfigId, dummyAccount, target, value, callData);
         assertEq(vd, VALIDATION_FAILED);
 
         // Spend is reset right at the new time interval
@@ -106,45 +128,107 @@ contract IntervalSpendingLimitPolicyTest is TestHelper {
         emit IntervalUpdated(
             dummyConfigId,
             address(this),
-            dummyTokens[0],
+            tokens[0],
             dummyAccount,
             currentIntervalEnd,
             nextIntervalEnd
         );
-        vd = spendingLimitPolicy.checkAction(
-            dummyConfigId,
-            dummyAccount,
-            dummyTokens[0],
-            0,
-            abi.encodeWithSelector(IERC20.transfer.selector, address(0), 1 ether)
-        );
+        vd = spendingLimitPolicy.checkAction(dummyConfigId, dummyAccount, target, value, callData);
         assertEq(vd, VALIDATION_SUCCESS);
 
         // Over spend should fail again in the new time interval
         vm.warp(DateTimeLib.addSeconds(currentIntervalEnd, 1));
-        vd = spendingLimitPolicy.checkAction(
-            dummyConfigId,
-            dummyAccount,
-            dummyTokens[0],
-            0,
-            abi.encodeWithSelector(IERC20.transfer.selector, address(0), 1 ether)
-        );
+        vd = spendingLimitPolicy.checkAction(dummyConfigId, dummyAccount, target, value, callData);
         assertEq(vd, VALIDATION_FAILED);
     }
 
-    function testCheckActionMontly() public {
-        assertForInterval(
-            Intervals.Monthly, dummyCurrentMonthlyIntervalEnd, dummyNextMonthlyIntervalEnd
-        );
+    function testCheckActionMonthlyForERC20() public {
+        assertForInterval({
+            isNative: false,
+            isErc20Payable: false,
+            interval: Intervals.Monthly,
+            currentIntervalEnd: dummyCurrentMonthlyIntervalEnd,
+            nextIntervalEnd: dummyNextMonthlyIntervalEnd
+        });
     }
 
-    function testCheckActionWeekly() public {
-        assertForInterval(
-            Intervals.Weekly, dummyCurrentWeeklyIntervalEnd, dummyNextWeeklyIntervalEnd
-        );
+    function testCheckActionWeeklyForERC20() public {
+        assertForInterval({
+            isNative: false,
+            isErc20Payable: false,
+            interval: Intervals.Weekly,
+            currentIntervalEnd: dummyCurrentWeeklyIntervalEnd,
+            nextIntervalEnd: dummyNextWeeklyIntervalEnd
+        });
     }
 
-    function testCheckActionDaily() public {
-        assertForInterval(Intervals.Daily, dummyCurrentDailyIntervalEnd, dummyNextDailyIntervalEnd);
+    function testCheckActionDailyForERC20() public {
+        assertForInterval({
+            isNative: false,
+            isErc20Payable: false,
+            interval: Intervals.Daily,
+            currentIntervalEnd: dummyCurrentDailyIntervalEnd,
+            nextIntervalEnd: dummyNextDailyIntervalEnd
+        });
+    }
+
+    function testCheckActionMonthlyForERC20Payable() public {
+        assertForInterval({
+            isNative: false,
+            isErc20Payable: true,
+            interval: Intervals.Monthly,
+            currentIntervalEnd: dummyCurrentMonthlyIntervalEnd,
+            nextIntervalEnd: dummyNextMonthlyIntervalEnd
+        });
+    }
+
+    function testCheckActionWeeklyForERC20Payable() public {
+        assertForInterval({
+            isNative: false,
+            isErc20Payable: true,
+            interval: Intervals.Weekly,
+            currentIntervalEnd: dummyCurrentWeeklyIntervalEnd,
+            nextIntervalEnd: dummyNextWeeklyIntervalEnd
+        });
+    }
+
+    function testCheckActionDailyForERC20Payable() public {
+        assertForInterval({
+            isNative: false,
+            isErc20Payable: true,
+            interval: Intervals.Daily,
+            currentIntervalEnd: dummyCurrentDailyIntervalEnd,
+            nextIntervalEnd: dummyNextDailyIntervalEnd
+        });
+    }
+
+    function testCheckActionMonthlyForNativeTransfer() public {
+        assertForInterval({
+            isNative: true,
+            isErc20Payable: false,
+            interval: Intervals.Monthly,
+            currentIntervalEnd: dummyCurrentMonthlyIntervalEnd,
+            nextIntervalEnd: dummyNextMonthlyIntervalEnd
+        });
+    }
+
+    function testCheckActionWeeklyForNativeTransfer() public {
+        assertForInterval({
+            isNative: true,
+            isErc20Payable: false,
+            interval: Intervals.Weekly,
+            currentIntervalEnd: dummyCurrentWeeklyIntervalEnd,
+            nextIntervalEnd: dummyNextWeeklyIntervalEnd
+        });
+    }
+
+    function testCheckActionDailyForNativeTransfer() public {
+        assertForInterval({
+            isNative: true,
+            isErc20Payable: false,
+            interval: Intervals.Daily,
+            currentIntervalEnd: dummyCurrentDailyIntervalEnd,
+            nextIntervalEnd: dummyNextDailyIntervalEnd
+        });
     }
 }
