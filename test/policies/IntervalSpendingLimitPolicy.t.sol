@@ -76,12 +76,26 @@ contract IntervalSpendingLimitPolicyTest is TestHelper {
     )
         public
     {
-        address[] memory tokens = isNative ? nativeTokens : dummyTokens;
-        address target = isNative ? address(0) : dummyTokens[0];
-        uint256 value = isNative ? 1 ether : isErc20Payable ? 1 ether : 0;
-        bytes memory callData = isNative
-            ? abi.encode()
-            : abi.encodeWithSelector(IERC20.transfer.selector, address(0), 1 ether);
+        address[] memory tokens;
+        address target;
+        uint256 value;
+        bytes memory callData;
+        if (isNative) {
+            tokens = nativeTokens;
+            target = address(0);
+            value = 1 ether;
+        } else if (isErc20Payable) {
+            tokens = dummyTokens;
+            target = dummyTokens[0];
+            value = 1 ether;
+            callData = abi.encodeWithSelector(IERC20.transfer.selector, address(0), 1 ether);
+        } else {
+            // ERC20 base case
+            tokens = dummyTokens;
+            target = dummyTokens[0];
+            value = 0;
+            callData = abi.encodeWithSelector(IERC20.transfer.selector, address(0), 1 ether);
+        }
 
         // Initialize policy
         vm.warp(dummyCurrentTimestamp);
