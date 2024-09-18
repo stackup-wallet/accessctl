@@ -15,7 +15,8 @@ AccessControl (or `AccessCtl` for short) builds of the [Smart Sessions module](h
 
 AccessCtl is deployed using the [deterministic deployment proxy](https://github.com/Arachnid/deterministic-deployment-proxy) and has the same address on all chains.
 
-### `v0.1.x` (WIP)
+<details>
+  <summary><b>`v0.1.x` (WIP)</b></summary>
 
 | Contracts                                                                                                                                                                   | Address                                      | Commit                                                                                                   | Audit |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ----- |
@@ -24,13 +25,7 @@ AccessCtl is deployed using the [deterministic deployment proxy](https://github.
 | [`WebAuthnValidator.sol`](https://github.com/stackup-wallet/accessctl/blob/c83029d4bacc6dd8a4d7133f58a278d9b12e374e/src/signers/WebAuthnValidator.sol)                      | `0xcB6D0D07f8304db1bfa06D75bD4F9a9F559b312e` | [c83029d](https://github.com/stackup-wallet/accessctl/tree/c83029d4bacc6dd8a4d7133f58a278d9b12e374e)     | N/A   |
 | [`IntervalSpendingLimitPolicy.sol`](https://github.com/stackup-wallet/accessctl/blob/c83029d4bacc6dd8a4d7133f58a278d9b12e374e/src/policies/IntervalSpendingLimitPolicy.sol) | `0xa9C63723e9070B5d2a534fE3D25e2e403F09860A` | [c83029d](https://github.com/stackup-wallet/accessctl/tree/c83029d4bacc6dd8a4d7133f58a278d9b12e374e)     | N/A   |
 
-#### Compatibility status
-
-A "✅" means that AccessCtl has been end to end tested with the following Smart Account versions and confirmed compatible.
-
-| Kernel `v3.1` | Safe7579 `v1.0.2` | Nexus |
-| ------------- | ----------------- | ----- |
-| ✅            | ❌                | ❌    |
+</details>
 
 # Architecture
 
