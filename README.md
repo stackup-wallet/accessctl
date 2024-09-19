@@ -55,17 +55,13 @@ sequenceDiagram
     Note over EntryPoint,Smart Account: Validation done, execution next...
 ```
 
-## Authentication modules
-
-These are `SessionValidator` modules made for the Smart Sessions standard.
+## `SessionValidator` modules
 
 ### [WebAuthnValidator.sol](./src/signers/WebAuthnValidator.sol)
 
 A minimal wrapper around [webauthn-sol](https://github.com/base-org/webauthn-sol) to enable compatibility with the required smart session interface. This allows sessions to be authenticated directly with an end user's passkey.
 
-## Authorization modules
-
-These are `Policy` modules made for the Smart Sessions standard.
+## `Policy` modules
 
 ### [IntervalSpendingLimitPolicy.sol](./src/policies/IntervalSpendingLimitPolicy.sol)
 
