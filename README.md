@@ -9,7 +9,7 @@ These modules power [Stackup's onchain financial platform]() and are built to be
 AccessCtl modules are deployed using the [deterministic deployment proxy](https://github.com/Arachnid/deterministic-deployment-proxy) and have the same address on all chains.
 
 <details>
-  <summary><b>`v1.0.0 (WIP)`</b></summary>
+  <summary><b>v1.0.0 (WIP)</b></summary>
 
 | Contract                                                                            | Address                                      | Type              |
 | ----------------------------------------------------------------------------------- | -------------------------------------------- | ----------------- |
