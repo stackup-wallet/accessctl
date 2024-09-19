@@ -26,7 +26,7 @@ The remaining section will assume knowledge on ERC-4337 (Account Abstraction), E
 - [erc7579.com](https://erc7579.com/)
 - [Smart Sessions](https://github.com/erc7579/smartsessions)
 
-The following is a sequence diagram is a summary of the end to end flow for a `UserOperation` under the ERC-7579 + Smart Sessions standard. AccessCtl is a collection of modules for the _Session Validator_ and _Policy_ entities which are concerned with authentication and authorization.
+The following sequence diagram is a summary of the end to end flow for a `UserOperation` under the ERC-7579 + Smart Sessions standard. AccessCtl is a collection of modules for the _Session Validator_ and _Policy_ entities which are concerned with authentication and authorization.
 
 ```mermaid
 sequenceDiagram
