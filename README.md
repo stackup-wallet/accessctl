@@ -75,7 +75,7 @@ A fork of [SpendingLimitPolicy.sol](https://github.com/erc7579/smartsessions/blo
    - `Daily`: on midnight everyday.
    - `Weekly`: on Monday every week.
    - `Monthly`: on the first day of every month.
-2. Track both native token transfers and ERC20 tokens.
+2. Track both native and ERC20 tokens.
 
 > **Note that this policy relies on the `TIMESTAMP` opcode during validation and requires an alternative mempool. This is needed to ensure time intervals work as expected.**
 
