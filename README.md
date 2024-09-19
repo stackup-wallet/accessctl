@@ -1,50 +1,32 @@
 # AccessControl
 
-> **⚠️ This module is still in early development. It is not yet recommended for production.**
+**AccessControl (or `AccessCtl` for short) is a collection of modules for enabling IAM capabilities for modular smart accounts.**
 
-AccessControl (or `AccessCtl` for short) builds of the [Smart Sessions module](https://github.com/erc7579/smartsessions) to enable attribute-based access control (ABAC) for ERC-7579 smart accounts.
+These modules power [Stackup's onchain financial platform]() and are built to be interoperable with ERC-7579 and the [Smart Sessions](https://github.com/erc7579/smartsessions) standard.
 
-**Remaining items (pending a finalized smart sessions audit):**
+## Summary of modules
 
-- Update current dependency to the audited commit.
-- Switch to the canonical `SmartSession.sol` and `SudoPolicy.sol`.
-- Pull in any upstream changes from `SpendingLimitPolicy.sol` to `IntervalSpendingLimitPolicy.sol`.
-- Audit `WebAuthnValidator.sol` and `IntervalSpendingLimitPolicy.sol`.
-
-## Module status
-
-AccessCtl is deployed using the [deterministic deployment proxy](https://github.com/Arachnid/deterministic-deployment-proxy) and has the same address on all chains.
+AccessCtl modules are deployed using the [deterministic deployment proxy](https://github.com/Arachnid/deterministic-deployment-proxy) and have the same address on all chains.
 
 <details>
-  <summary><b>`v0.1.x` (WIP)</b></summary>
+  <summary><b>`v1.0.0 (WIP)`</b></summary>
 
-| Contracts                                                                                                                                                                   | Address                                      | Commit                                                                                                   | Audit |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ----- |
-| [`SmartSession.sol`](https://github.com/stackup-wallet/smartsessions/blob/2029142a1ac2253fbb2344725a2b68a7688673bc/contracts/SmartSession.sol)                              | `0x12e89F48303494e36BCED5e772c72C8e29571AC9` | [2029142](https://github.com/stackup-wallet/smartsessions/tree/2029142a1ac2253fbb2344725a2b68a7688673bc) | N/A   |
-| [`SudoPolicy.sol`](https://github.com/erc7579/smartsessions/blob/b1624f851f56ec67cc677dce129e9caa12fcafd9/contracts/external/policies/SudoPolicy.sol)                       | `0xbA37a0Dc3f059cDAdEF5cc97F92191d14AC9ee39` | [b1624f8](https://github.com/erc7579/smartsessions/tree/b1624f851f56ec67cc677dce129e9caa12fcafd9)        | N/A   |
-| [`WebAuthnValidator.sol`](https://github.com/stackup-wallet/accessctl/blob/e6c23661752186d26ca283a40a73dcb9c9662320/src/signers/WebAuthnValidator.sol)                      | `0xcB6D0D07f8304db1bfa06D75bD4F9a9F559b312e` | [e6c2366](https://github.com/stackup-wallet/accessctl/tree/e6c23661752186d26ca283a40a73dcb9c9662320)     | N/A   |
-| [`IntervalSpendingLimitPolicy.sol`](https://github.com/stackup-wallet/accessctl/blob/e6c23661752186d26ca283a40a73dcb9c9662320/src/policies/IntervalSpendingLimitPolicy.sol) | `0xe72ae3a8F17471396cD8E33572de662792C6Cf42` | [e6c2366](https://github.com/stackup-wallet/accessctl/tree/e6c23661752186d26ca283a40a73dcb9c9662320)     | N/A   |
+| Contract                                                                            | Address                                      | Type              |
+| ----------------------------------------------------------------------------------- | -------------------------------------------- | ----------------- |
+| [`WebAuthnValidator.sol`](./src/signers/WebAuthnValidator.sol)                      | `0xcB6D0D07f8304db1bfa06D75bD4F9a9F559b312e` | Session validator |
+| [`IntervalSpendingLimitPolicy.sol`](./src/policies/IntervalSpendingLimitPolicy.sol) | `0xe72ae3a8F17471396cD8E33572de662792C6Cf42` | Action policy     |
 
 </details>
 
-# Architecture
+# Modules
 
-This project refers to a collection of signer and policy contracts to extend the ERC-7579 Smart Sessions module. The extensions are built with the following design goals in mind to support onchain organizations at every scale:
-
-- **Authentication**: support for adding users (or bots) under an ABAC model.
-- **Authorization**: support for adding custom attributes to each user.
-- **Gas optimized**: can scale for a large number of active users and attributes.
-- **Easily auditable**: allows verifiable changelogs for tracking every access control update.
-
-The remaining documentation will assume knowledge on ERC-4337 (Account Abstraction), ERC-7579 (Minimal Modular Smart Accounts), and Smart Sessions. If you are unfamiliar, we recommend the following resources to get started:
+The remaining section will assume knowledge on ERC-4337 (Account Abstraction), ERC-7579 (Minimal Modular Smart Accounts), and Smart Sessions. If you are unfamiliar, we recommend the following resources to get started:
 
 - [erc4337.io](https://www.erc4337.io/docs)
 - [erc7579.com](https://erc7579.com/)
 - [Smart Sessions](https://github.com/erc7579/smartsessions)
 
-## End to end transaction flow
-
-The following is a sequence diagram to illustrate the end to end flow of a `UserOperation`.
+The following is a sequence diagram is a summary of the end to end flow for a `UserOperation` under the ERC-7579 + Smart Sessions standard. AccessCtl is a collection of modules for the _Session Validator_ and _Policy_ entities which are concerned with authentication and authorization.
 
 ```mermaid
 sequenceDiagram
@@ -64,24 +46,38 @@ sequenceDiagram
         end
     end
     Smart Sessions->>Smart Sessions: Calculates intersected validation data
-    Smart Sessions->>WebAuthn Validator: Calls validateSignatureWithData
-    Note over WebAuthn Validator: Authentication check
-    WebAuthn Validator->>WebAuthn Validator: Verifies webAuthn signature
-    WebAuthn Validator->>Smart Sessions: Returns success response
+    Smart Sessions->>Session Validator: Calls validateSignatureWithData
+    Note over Session Validator: Authentication check
+    Session Validator->>Session Validator: Verifies webAuthn signature
+    Session Validator->>Smart Sessions: Returns success response
     Smart Sessions->>Smart Account: Returns success response
     Smart Account->>EntryPoint: Pay prefund
     Note over EntryPoint,Smart Account: Validation done, execution next...
 ```
 
-### `WebAuthnValidator.sol`
+## Authentication modules
 
-The [WebAuthnValidator.sol](./src/signers/WebAuthnValidator.sol) is a minimal wrapper around [webauthn-sol](https://github.com/base-org/webauthn-sol) to enable compatibility with the required smart session interface. This allows sessions to be authenticated directly with an end user's passkey.
+These are `SessionValidator` modules made for the Smart Sessions standard.
 
-### `IntervalSpendingLimitPolicy.sol`
+### [WebAuthnValidator.sol](./src/signers/WebAuthnValidator.sol)
 
-the [IntervalSpendingLimitPolicy](./src/policies/IntervalSpendingLimitPolicy.sol) is fork of [SpendingLimitPolicy.sol](https://github.com/erc7579/smartsessions/blob/main/contracts/external/policies/SpendingLimitPolicy.sol). The difference is the inclusion of added logic to reset the accrued spend after a defined interval.
+A minimal wrapper around [webauthn-sol](https://github.com/base-org/webauthn-sol) to enable compatibility with the required smart session interface. This allows sessions to be authenticated directly with an end user's passkey.
 
-> **Note that this policy relies on the `TIMESTAMP` opcode during validation which is not compliant with the canonical mempool. This is required to ensure time intervals work as expected.**
+## Authorization modules
+
+These are `Policy` modules made for the Smart Sessions standard.
+
+### [IntervalSpendingLimitPolicy](./src/policies/IntervalSpendingLimitPolicy.sol)
+
+A fork of [SpendingLimitPolicy.sol](https://github.com/erc7579/smartsessions/blob/main/contracts/external/policies/SpendingLimitPolicy.sol). The difference is the inclusion of two additional features:
+
+1. Resetting the accrued spend at defined intervals set by the end user during initialization.
+   - `Daily`: on midnight everyday.
+   - `Weekly`: on Monday every week.
+   - `Monthly`: on the first day of every month.
+2. Track both native token transfers and ERC20 tokens.
+
+> **Note that this policy relies on the `TIMESTAMP` opcode during validation and requires an alternative mempool. This is needed to ensure time intervals work as expected.**
 
 # Contributing
 
