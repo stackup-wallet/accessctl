@@ -67,11 +67,11 @@ A minimal wrapper around [webauthn-sol](https://github.com/base-org/webauthn-sol
 
 A fork of [SpendingLimitPolicy.sol](https://github.com/erc7579/smartsessions/blob/main/contracts/external/policies/SpendingLimitPolicy.sol). The difference is the inclusion of two additional features:
 
-1. Resetting the accrued spend at defined intervals set by the end user during initialization.
+1. Efficiently resetting the accrued spend at defined intervals set during initialization.
    - `Daily`: on midnight everyday.
    - `Weekly`: on Monday every week.
    - `Monthly`: on the first day of every month.
-2. Track both native and ERC20 tokens.
+2. Ability to track both native and ERC20 tokens.
 
 > **Note that this policy relies on the `TIMESTAMP` opcode during validation and requires an alternative mempool. This is needed to ensure time intervals work as expected.**
 
