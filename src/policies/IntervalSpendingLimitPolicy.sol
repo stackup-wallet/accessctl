@@ -189,18 +189,20 @@ contract IntervalSpendingLimitPolicy is IActionPolicy {
         }
     }
 
-    function _resetIntervalIfNeeded(
+    function _getSpentAmountForInterval(
         TokenPolicyData storage $,
         ConfigId id,
         address target,
         address account
     )
         internal
+        returns (uint256 alreadySpent)
     {
         uint256 nextIntervalEnd = _getNextIntervalTimestamp($.interval);
         uint256 currentIntervalEnd = $.currentIntervalEnd;
+        alreadySpent = $.alreadySpent;
         if (nextIntervalEnd > currentIntervalEnd) {
-            $.alreadySpent = 0;
+            alreadySpent = 0;
             $.currentIntervalEnd = nextIntervalEnd;
             emit IntervalUpdated(
                 id, msg.sender, target, account, currentIntervalEnd, nextIntervalEnd
@@ -213,14 +215,13 @@ contract IntervalSpendingLimitPolicy is IActionPolicy {
         ConfigId id,
         address token,
         address account,
-        uint256 amount
+        uint256 amount,
+        uint256 alreadySpent
     )
         internal
         returns (uint256)
     {
         uint256 spendingLimit = $.spendingLimit;
-        uint256 alreadySpent = $.alreadySpent;
-
         uint256 newAmount = alreadySpent + amount;
 
         if (newAmount > spendingLimit) {
@@ -249,7 +250,7 @@ contract IntervalSpendingLimitPolicy is IActionPolicy {
         if (!isTokenTransfer) return VALIDATION_FAILED;
 
         TokenPolicyData storage $ = _getPolicy({ id: id, userOpSender: account, token: token });
-        _resetIntervalIfNeeded($, id, token, account);
-        return _check($, id, token, account, amount);
+        uint256 alreadySpent = _getSpentAmountForInterval($, id, token, account);
+        return _check($, id, token, account, amount, alreadySpent);
     }
 }
