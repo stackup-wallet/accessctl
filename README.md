@@ -1,6 +1,6 @@
 # AccessControl
 
-**AccessControl (or `AccessCtl` for short) is a collection of modules for enabling IAM capabilities for modular smart accounts.**
+**AccessControl (or `AccessCtl` for short) is a collection of modules to enable IAM capabilities for modular smart accounts.**
 
 These modules power [Stackup's onchain financial platform]() and are built to be interoperable with ERC-7579 and the [Smart Sessions](https://github.com/erc7579/smartsessions) standard.
 
@@ -67,7 +67,7 @@ A minimal wrapper around [webauthn-sol](https://github.com/base-org/webauthn-sol
 
 These are `Policy` modules made for the Smart Sessions standard.
 
-### [IntervalSpendingLimitPolicy](./src/policies/IntervalSpendingLimitPolicy.sol)
+### [IntervalSpendingLimitPolicy.sol](./src/policies/IntervalSpendingLimitPolicy.sol)
 
 A fork of [SpendingLimitPolicy.sol](https://github.com/erc7579/smartsessions/blob/main/contracts/external/policies/SpendingLimitPolicy.sol). The difference is the inclusion of two additional features:
 
