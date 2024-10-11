@@ -13,8 +13,8 @@ AccessCtl modules are deployed using the [deterministic deployment proxy](https:
 
 | Contract                                                                            | Address                                      | Type              |
 | ----------------------------------------------------------------------------------- | -------------------------------------------- | ----------------- |
-| [`WebAuthnValidator.sol`](./src/signers/WebAuthnValidator.sol)                      | `0xcB6D0D07f8304db1bfa06D75bD4F9a9F559b312e` | Session validator |
-| [`IntervalSpendingLimitPolicy.sol`](./src/policies/IntervalSpendingLimitPolicy.sol) | `0x69D212Ac223b96F1b01510f132A8c76E1C3a5d93` | Action policy     |
+| [`WebAuthnValidator.sol`](./src/signers/WebAuthnValidator.sol)                      | `0x1B0696411bF73C01Bfdf7bcFee1282189D8C7FFf` | Session validator |
+| [`IntervalSpendingLimitPolicy.sol`](./src/policies/IntervalSpendingLimitPolicy.sol) | `0xDd2a9575952fA08B327A28c46FC314E7A86C5A99` | Action policy     |
 
 </details>
 
