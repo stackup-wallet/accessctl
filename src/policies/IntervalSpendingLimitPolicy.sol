@@ -1,16 +1,19 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.23;
 
-import { ConfigId, ERC7579_MODULE_TYPE_POLICY } from "smart-sessions/DataTypes.sol";
-import { IActionPolicy } from "smart-sessions/interfaces/IPolicy.sol";
+import { ConfigId } from "smart-sessions/DataTypes.sol";
+import {
+    IActionPolicy,
+    IPolicy,
+    VALIDATION_SUCCESS,
+    VALIDATION_FAILED
+} from "smart-sessions/interfaces/IPolicy.sol";
 
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
+import { IERC165 } from "forge-std/interfaces/IERC165.sol";
 import { DateTimeLib } from "solady/utils/DateTimeLib.sol";
 
 address constant NATIVE_TOKEN = address(type(uint160).max);
-
-uint256 constant VALIDATION_SUCCESS = 0;
-uint256 constant VALIDATION_FAILED = 1;
 
 enum Intervals {
     Daily,
@@ -77,17 +80,11 @@ contract IntervalSpendingLimitPolicy is IActionPolicy {
     }
 
     function supportsInterface(bytes4 interfaceID) external pure override returns (bool) {
-        if (interfaceID == type(IActionPolicy).interfaceId) {
-            return true;
-        }
-        if (interfaceID == IActionPolicy.checkAction.selector) {
-            return true;
-        }
-
-        return false;
+        return (
+            interfaceID == type(IERC165).interfaceId || interfaceID == type(IPolicy).interfaceId
+                || interfaceID == type(IActionPolicy).interfaceId
+        );
     }
-
-    function onInstall(bytes calldata data) external override { }
 
     function initializeWithMultiplexer(
         address account,
@@ -111,28 +108,8 @@ contract IntervalSpendingLimitPolicy is IActionPolicy {
             $.currentIntervalEnd = _getNextIntervalTimestamp(interval);
             $.interval = interval;
         }
+        emit IPolicy.PolicySet(configId, msg.sender, account);
     }
-
-    function onUninstall(bytes calldata data) external override { }
-
-    function isModuleType(uint256 id) external pure returns (bool) {
-        return id == ERC7579_MODULE_TYPE_POLICY;
-    }
-
-    function isInitialized(address smartAccount) external view override returns (bool) { }
-
-    function isInitialized(address account, ConfigId id) external view override returns (bool) { }
-
-    function isInitialized(
-        address account,
-        address multiplexer,
-        ConfigId id
-    )
-        external
-        view
-        override
-        returns (bool)
-    { }
 
     function _isTokenTransfer(
         address target,

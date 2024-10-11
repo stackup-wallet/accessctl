@@ -24,3 +24,4 @@ FreshCryptoLib/=lib/webauthn-sol/lib/FreshCryptoLib/solidity/src/
 openzeppelin-contracts/contracts/=lib/webauthn-sol/lib/openzeppelin-contracts/contracts/
 @openzeppelin/contracts/=lib/webauthn-sol/lib/openzeppelin-contracts/contracts/
 smart-sessions/=lib/smartsessions/contracts/
+flatbytes/=node_modules/@rhinestone/flatbytes/src/
