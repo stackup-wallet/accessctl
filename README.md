@@ -1,6 +1,6 @@
 # Account Modules
 
-A collection of ERC-7579 and smart session modules built and maintained by the Stackup team.
+A collection of ERC-7579 and smart session modules built by Stackup.
 
 ## Summary of modules
 

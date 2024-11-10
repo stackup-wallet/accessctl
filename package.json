@@ -1,7 +1,7 @@
 {
   "name": "account-modules",
   "version": "0.1.0",
-  "description": "A collection of modules built and maintained by the Stackup team.",
+  "description": "A collection of ERC-7579 and smart session modules built by Stackup.",
   "license": "GPL-3.0",
   "author": {
     "name": "Stackup",
