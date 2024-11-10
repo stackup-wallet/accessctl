@@ -5,7 +5,7 @@ import "forge-std/Script.sol";
 import { RegistryDeployer } from "modulekit/deployment/RegistryDeployer.sol";
 
 // Import modules here
-import { WebAuthnValidator } from "src/signers/WebAuthnValidator.sol";
+import { WebAuthnValidator } from "src/session-validators/WebAuthnValidator.sol";
 import { IntervalSpendingLimitPolicy } from "src/policies/IntervalSpendingLimitPolicy.sol";
 
 /// @title DeployModuleScript
