@@ -1,7 +1,7 @@
 {
-  "name": "accessctl",
+  "name": "account-modules",
   "version": "0.1.0",
-  "description": "A scalable identity and access management layer for ERC-7579 compliant smart accounts.",
+  "description": "A collection of ERC-7579 and smart session modules built by Stackup.",
   "license": "GPL-3.0",
   "author": {
     "name": "Stackup",
@@ -36,13 +36,13 @@
     "foundry.toml",
     "remappings.txt"
   ],
-  "homepage": "https://github.com/stackup-wallet/accessctl",
+  "homepage": "https://github.com/stackup-wallet/account-modules",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/stackup-wallet/accessctl.git"
+    "url": "git+https://github.com/stackup-wallet/account-modules.git"
   },
   "bugs": {
-    "url": "https://github.com/stackup-wallet/accessctl/issues"
+    "url": "https://github.com/stackup-wallet/account-modules/issues"
   },
   "keywords": [
     "account abstraction",

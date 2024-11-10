@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 import { TestHelper } from "test/TestHelper.sol";
-import { WebAuthnValidator } from "src/signers/WebAuthnValidator.sol";
+import { WebAuthnValidator } from "src/session-validators/WebAuthnValidator.sol";
 
 contract WebAuthnValidatorTest is TestHelper {
     bytes32 internal constant dummyHash = bytes32(uint256(0xdead));

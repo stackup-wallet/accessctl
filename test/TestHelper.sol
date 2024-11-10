@@ -5,7 +5,7 @@ import { Test } from "forge-std/Test.sol";
 import { LibString } from "solady/utils/LibString.sol";
 import { Base64 } from "openzeppelin-contracts/contracts/utils/Base64.sol";
 import { FCL_Elliptic_ZZ } from "FreshCryptoLib/FCL_elliptic.sol";
-import { WebAuthnValidator } from "src/signers/WebAuthnValidator.sol";
+import { WebAuthnValidator } from "src/session-validators/WebAuthnValidator.sol";
 import { IntervalSpendingLimitPolicy } from "src/policies/IntervalSpendingLimitPolicy.sol";
 
 abstract contract TestHelper is Test {

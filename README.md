@@ -1,67 +1,36 @@
-# AccessControl
+# Account Modules
 
-**AccessControl (or `AccessCtl` for short) is a collection of modules to enable IAM capabilities for modular smart accounts.**
-
-These modules power [Stackup's onchain financial platform]() and are built to be interoperable with ERC-7579 and the [Smart Sessions](https://github.com/erc7579/smartsessions) standard.
+A collection of ERC-7579 and smart session modules built by Stackup.
 
 ## Summary of modules
 
-AccessCtl modules are deployed using the [deterministic deployment proxy](https://github.com/Arachnid/deterministic-deployment-proxy) and have the same address on all chains.
+All modules are deployed using the [deterministic deployment proxy](https://github.com/Arachnid/deterministic-deployment-proxy) and have the same address on all chains.
 
 <details>
   <summary><b>v1.0.0 (WIP)</b></summary>
 
-| Contract                                                                            | Address                                      | Type              |
-| ----------------------------------------------------------------------------------- | -------------------------------------------- | ----------------- |
-| [`WebAuthnValidator.sol`](./src/signers/WebAuthnValidator.sol)                      | `0x1B0696411bF73C01Bfdf7bcFee1282189D8C7FFf` | Session validator |
-| [`IntervalSpendingLimitPolicy.sol`](./src/policies/IntervalSpendingLimitPolicy.sol) | `0xDd2a9575952fA08B327A28c46FC314E7A86C5A99` | Action policy     |
+| Contract                                                                            | Address                                      | Type                |
+| ----------------------------------------------------------------------------------- | -------------------------------------------- | ------------------- |
+| [`WebAuthnValidator.sol`](./src/session-validators/WebAuthnValidator.sol)           | `0x1B0696411bF73C01Bfdf7bcFee1282189D8C7FFf` | `ISessionValidator` |
+| [`IntervalSpendingLimitPolicy.sol`](./src/policies/IntervalSpendingLimitPolicy.sol) | `0xDd2a9575952fA08B327A28c46FC314E7A86C5A99` | `IActionPolicy`     |
 
 </details>
 
 # Modules
 
-The remaining section will assume knowledge on ERC-4337 (Account Abstraction), ERC-7579 (Minimal Modular Smart Accounts), and Smart Sessions. If you are unfamiliar, we recommend the following resources to get started:
+The remaining section will assume knowledge on **ERC-4337 (Account Abstraction)**, **ERC-7579 (Minimal Modular Smart Accounts)**, and **Smart Sessions**. If you are unfamiliar, we recommend the following resources to get started:
 
 - [erc4337.io](https://www.erc4337.io/docs)
 - [erc7579.com](https://erc7579.com/)
-- [Smart Sessions](https://github.com/erc7579/smartsessions)
+- [Smart Sessions wiki](https://github.com/erc7579/smartsessions/wiki/Smart-Sessions)
 
-The following sequence diagram is a summary of the end to end flow for a `UserOperation` under the ERC-7579 + Smart Sessions standard. AccessCtl is a collection of modules for the _Session Validator_ and _Policy_ entities which are concerned with authentication and authorization.
+## `ISessionValidator`
 
-```mermaid
-sequenceDiagram
-    Wallet->>EntryPoint:Send UserOp
-    EntryPoint->>Smart Account: Calls validateUserOp
-    Smart Account->>Smart Sessions: Proxy request
-    Note over Policy: Authorization check
-    loop for each policy in session
-        alt is userOp Policy
-            Smart Sessions->>Policy: Calls checkUserOpPolicy
-            Policy->>Policy: Verifies userOp
-            Policy->>Smart Sessions: Returns validation data
-        else is action
-            Smart Sessions->>Policy: Calls checkAction
-            Policy->>Policy: Verifies action
-            Policy->>Smart Sessions: Returns validation data
-        end
-    end
-    Smart Sessions->>Smart Sessions: Calculates intersected validation data
-    Smart Sessions->>Session Validator: Calls validateSignatureWithData
-    Note over Session Validator: Authentication check
-    Session Validator->>Session Validator: Verifies webAuthn signature
-    Session Validator->>Smart Sessions: Returns success response
-    Smart Sessions->>Smart Account: Returns success response
-    Smart Account->>EntryPoint: Pay prefund
-    Note over EntryPoint,Smart Account: Validation done, execution next...
-```
+### [WebAuthnValidator.sol](./src/session-validators/WebAuthnValidator.sol)
 
-## `SessionValidator` modules
+A minimal wrapper around [webauthn-sol](https://github.com/base-org/webauthn-sol) to enable compatibility with smart sessions. This allows sessions to be authenticated directly with an end user's passkey.
 
-### [WebAuthnValidator.sol](./src/signers/WebAuthnValidator.sol)
-
-A minimal wrapper around [webauthn-sol](https://github.com/base-org/webauthn-sol) to enable compatibility with the required smart session interface. This allows sessions to be authenticated directly with an end user's passkey.
-
-## `Policy` modules
+## `IActionPolicy`
 
 ### [IntervalSpendingLimitPolicy.sol](./src/policies/IntervalSpendingLimitPolicy.sol)
 

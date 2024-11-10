@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 import { ERC7579_MODULE_TYPE_STATELESS_VALIDATOR } from "smart-sessions/DataTypes.sol";
 import { ISessionValidator } from "smart-sessions/interfaces/ISessionValidator.sol";
-import { P256Credentials, P256CredentialsLib } from "src/signers/P256Credentials.sol";
+import { P256Credentials, P256CredentialsLib } from "src/session-validators/lib/P256Credentials.sol";
 
 contract WebAuthnValidator is ISessionValidator {
     using P256CredentialsLib for P256Credentials;
