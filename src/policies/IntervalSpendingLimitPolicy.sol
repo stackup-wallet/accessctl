@@ -8,9 +8,9 @@ import {
     VALIDATION_SUCCESS,
     VALIDATION_FAILED
 } from "smart-sessions/interfaces/IPolicy.sol";
-
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import { IERC165 } from "forge-std/interfaces/IERC165.sol";
+import { EnumerableSet } from "smart-sessions/utils/EnumerableSet4337.sol";
 import { DateTimeLib } from "solady/utils/DateTimeLib.sol";
 
 address constant NATIVE_TOKEN = address(type(uint160).max);
@@ -22,7 +22,7 @@ enum Intervals {
 }
 
 /**
- * This contract is a fork of SpendingLimitPolicy.sol from erc7579/smartsessions.
+ * This contract is a fork of ERC20SpendingLimitPolicy.sol from erc7579/smartsessions.
  * The difference is the inclusion of added logic to reset the accrued spend after
  * a defined interval and include native token transfers.
  *
@@ -31,6 +31,8 @@ enum Intervals {
  * work as expected.
  */
 contract IntervalSpendingLimitPolicy is IActionPolicy {
+    using EnumerableSet for EnumerableSet.AddressSet;
+
     event TokenSpent(
         ConfigId id,
         address multiplexer,
@@ -58,6 +60,8 @@ contract IntervalSpendingLimitPolicy is IActionPolicy {
         Intervals interval;
     }
 
+    mapping(ConfigId id => mapping(address multiplexer => EnumerableSet.AddressSet tokensEnabled))
+        internal $tokens;
     mapping(
         ConfigId id
             => mapping(
@@ -95,6 +99,21 @@ contract IntervalSpendingLimitPolicy is IActionPolicy {
     {
         (Intervals interval, address[] memory tokens, uint256[] memory limits) =
             abi.decode(initData, (Intervals, address[], uint256[]));
+        EnumerableSet.AddressSet storage $t = $tokens[configId][msg.sender];
+
+        uint256 length_i = $t.length(account);
+
+        if (length_i > 0) {
+            for (uint256 i; i < length_i; i++) {
+                address token = $t.at(account, i);
+                TokenPolicyData storage $ =
+                    _getPolicy({ id: configId, userOpSender: account, token: token });
+                $.spendingLimit = 0;
+                $.alreadySpent = 0;
+            }
+
+            $t.removeAll(account);
+        }
 
         for (uint256 i; i < tokens.length; i++) {
             address token = tokens[i];
@@ -103,10 +122,12 @@ contract IntervalSpendingLimitPolicy is IActionPolicy {
             if (limit == 0) revert InvalidLimit(limit);
             TokenPolicyData storage $ =
                 _getPolicy({ id: configId, userOpSender: account, token: token });
-            $.spendingLimit = limit;
 
+            $.spendingLimit = limit;
             $.currentIntervalEnd = _getNextIntervalTimestamp(interval);
             $.interval = interval;
+
+            $t.add(account, token);
         }
         emit IPolicy.PolicySet(configId, msg.sender, account);
     }
