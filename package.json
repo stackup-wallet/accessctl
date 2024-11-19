@@ -22,11 +22,15 @@
     "prettier:write": "prettier --write \"**/*.{json,md,svg,yml}\"",
     "test": "forge test",
     "test:lite": "FOUNDRY_PROFILE=lite forge test",
-    "test:optimized": "pnpm run build:optimized && FOUNDRY_PROFILE=test-optimized forge test"
+    "test:optimized": "pnpm run build:optimized && FOUNDRY_PROFILE=test-optimized forge test",
+    "registry:attest": "tsx script/registry/attest.ts",
+    "registry:revoke": "tsx script/registry/revoke.ts"
   },
   "dependencies": {
     "@rhinestone/flatbytes": "github:rhinestonewtf/flatbytes",
-    "@rhinestone/modulekit": "^0.4.10"
+    "@rhinestone/modulekit": "^0.4.17",
+    "tsx": "^4.19.2",
+    "viem": "^2.21.48"
   },
   "files": [
     "src",
