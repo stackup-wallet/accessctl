@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.23;
 
-import "smart-sessions/DataTypes.sol";
+import { ConfigId } from "smart-sessions/DataTypes.sol";
 import {
     IUserOpPolicy,
     IActionPolicy,
