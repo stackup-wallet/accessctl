@@ -36,7 +36,7 @@ const ERC7579_MODULE_TYPE_STATELESS_VALIDATOR = BigInt(7);
 
           // SudoPolicy
           {
-            moduleAddress: "0x763a48b60b8426e2df3933e4a47d57e0d9803e9d",
+            moduleAddress: "0x18aCF4AD3cBb7ca77743a5bEDd2597a42Bac4B7B",
             expirationTime: MAX_TIMESTAMP,
             data: "0x",
             moduleTypes: [],
