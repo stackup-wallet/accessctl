@@ -8,7 +8,6 @@ const JSON_RPC = "http://127.0.0.1:1248";
 
 const SCHEMA_ID =
   "0x93d46fcca4ef7d66a413c7bde08bb1ff14bacbd04c4069bb24cd7c21729d7bf1";
-const MAX_TIMESTAMP = 281474976710655;
 const ERC7579_MODULE_TYPE_STATELESS_VALIDATOR = BigInt(7);
 
 (async () => {
@@ -29,7 +28,7 @@ const ERC7579_MODULE_TYPE_STATELESS_VALIDATOR = BigInt(7);
           // WebAuthnValidator
           {
             moduleAddress: "0x12433894c552fc8fa16a20859df119319b71cc17",
-            expirationTime: MAX_TIMESTAMP,
+            expirationTime: 0,
             data: "0x",
             moduleTypes: [ERC7579_MODULE_TYPE_STATELESS_VALIDATOR],
           },
@@ -37,7 +36,7 @@ const ERC7579_MODULE_TYPE_STATELESS_VALIDATOR = BigInt(7);
           // SudoPolicy
           {
             moduleAddress: "0x18aCF4AD3cBb7ca77743a5bEDd2597a42Bac4B7B",
-            expirationTime: MAX_TIMESTAMP,
+            expirationTime: 0,
             data: "0x",
             moduleTypes: [],
           },
@@ -45,7 +44,7 @@ const ERC7579_MODULE_TYPE_STATELESS_VALIDATOR = BigInt(7);
           // IntervalSpendingLimitPolicy
           {
             moduleAddress: "0xad8508e62bcf4bfbc6b092e5e9e54508c4936555",
-            expirationTime: MAX_TIMESTAMP,
+            expirationTime: 0,
             data: "0x",
             moduleTypes: [],
           },
