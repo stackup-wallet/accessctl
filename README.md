@@ -9,10 +9,11 @@ All modules are deployed using the [deterministic deployment proxy](https://gith
 <details>
   <summary><b>v1.0.0 (WIP)</b></summary>
 
-| Contract                                                                            | Address                                      | Type                |
-| ----------------------------------------------------------------------------------- | -------------------------------------------- | ------------------- |
-| [`WebAuthnValidator.sol`](./src/session-validators/WebAuthnValidator.sol)           | `0x1B0696411bF73C01Bfdf7bcFee1282189D8C7FFf` | `ISessionValidator` |
-| [`IntervalSpendingLimitPolicy.sol`](./src/policies/IntervalSpendingLimitPolicy.sol) | `0xDd2a9575952fA08B327A28c46FC314E7A86C5A99` | `IActionPolicy`     |
+| Contract                                                                            | Address | Type                |
+| ----------------------------------------------------------------------------------- | ------- | ------------------- |
+| [`WebAuthnValidator.sol`](./src/session-validators/WebAuthnValidator.sol)           | `0x`    | Stateless validator |
+| [`SudoPolicy.sol`](./src/policies/SudoPolicy.sol)                                   | `0x`    | Policy              |
+| [`IntervalSpendingLimitPolicy.sol`](./src/policies/IntervalSpendingLimitPolicy.sol) | `0x`    | Policy              |
 
 </details>
 
@@ -24,13 +25,19 @@ The remaining section will assume knowledge on **ERC-4337 (Account Abstraction)*
 - [erc7579.com](https://erc7579.com/)
 - [Smart Sessions wiki](https://github.com/erc7579/smartsessions/wiki/Smart-Sessions)
 
-## `ISessionValidator`
+## Stateless validators
 
 ### [WebAuthnValidator.sol](./src/session-validators/WebAuthnValidator.sol)
 
 A minimal wrapper around [webauthn-sol](https://github.com/base-org/webauthn-sol) to enable compatibility with smart sessions. This allows sessions to be authenticated directly with an end user's passkey.
 
-## `IActionPolicy`
+## Policies
+
+### [SudoPolicy.sol](./src/policies/SudoPolicy.sol)
+
+A fork of the original [SudoPolicy.sol](https://github.com/erc7579/smartsessions/blob/main/contracts/external/policies/SudoPolicy.sol), but with the added support for a `IUserOpPolicy`.
+
+> _See [here](https://github.com/erc7579/smartsessions/pull/145) for details on why this is required._
 
 ### [IntervalSpendingLimitPolicy.sol](./src/policies/IntervalSpendingLimitPolicy.sol)
 
