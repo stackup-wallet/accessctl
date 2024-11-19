@@ -8,11 +8,9 @@ import {
     IActionPolicy,
     I1271Policy,
     IPolicy,
-    VALIDATION_SUCCESS,
-    VALIDATION_FAILED
+    VALIDATION_SUCCESS
 } from "smart-sessions/interfaces/IPolicy.sol";
 import { IERC165 } from "forge-std/interfaces/IERC165.sol";
-import { SubModuleLib } from "smart-sessions/lib/SubModuleLib.sol";
 import { EnumerableSet } from "smart-sessions/utils/EnumerableSet4337.sol";
 import { PackedUserOperation } from "modulekit/external/ERC4337.sol";
 
