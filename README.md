@@ -103,6 +103,27 @@ If the verification fails, you can manually verify it on Etherscan using the fol
 source .env && forge verify-contract --chain-id [YOUR_CHAIN_ID] --watch --etherscan-api-key $ETHERSCAN_API_KEY [YOUR_MODULE_ADDRESS] src/[PATH_TO_MODULE].sol:[MODULE_CONTRACT_NAME]
 ```
 
+## Generating the module address
+
+This is a read-only script to generate the counterfactual module addresses:
+
+```shell
+source .env && forge script script/GetModuleAddress.s.sol:GetModuleAddressScript --rpc-url $DEPLOYMENT_RPC
+```
+
+## Module registry attestations
+
+This command connects with a local wallet interface in order to submit and revoke module attestations.
+
+> _Note that you will need to edit the `CHAIN` and module addresses in [script/registry](./script/registry) to their correct values._
+
+```shell
+yarn registry:attest
+
+# If a revoke is necessary...
+yarn registry:revoke
+```
+
 # License
 
 Distributed under the GPL-3.0 License. See [LICENSE](./LICENSE) for more information.
