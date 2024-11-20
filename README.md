@@ -115,7 +115,7 @@ source .env && forge script script/GetModuleAddress.s.sol:GetModuleAddressScript
 
 This command connects with a local wallet interface in order to submit and revoke module attestations.
 
-> _Note that you will need to edit the `CHAIN` and module addresses in [script/registry](./script/registry) to their correct values._
+> _Note that you will need to edit the `CHAIN` and module addresses in [`script/registry`](./script/registry) to their correct values._
 
 ```shell
 yarn registry:attest
