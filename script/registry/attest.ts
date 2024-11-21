@@ -27,7 +27,7 @@ const ERC7579_MODULE_TYPE_STATELESS_VALIDATOR = BigInt(7);
         [
           // WebAuthnValidator
           {
-            moduleAddress: "0x12433894c552fc8fa16a20859df119319b71cc17",
+            moduleAddress: "0x6140DB7a66a18A7741ED2687409ef471235b4Df0",
             expirationTime: 0,
             data: "0x",
             moduleTypes: [ERC7579_MODULE_TYPE_STATELESS_VALIDATOR],
@@ -35,7 +35,7 @@ const ERC7579_MODULE_TYPE_STATELESS_VALIDATOR = BigInt(7);
 
           // SudoPolicy
           {
-            moduleAddress: "0x18aCF4AD3cBb7ca77743a5bEDd2597a42Bac4B7B",
+            moduleAddress: "0x8032214D4082714742Ba137eBfbf05e3a9a5bCfC",
             expirationTime: 0,
             data: "0x",
             moduleTypes: [],
@@ -43,7 +43,7 @@ const ERC7579_MODULE_TYPE_STATELESS_VALIDATOR = BigInt(7);
 
           // IntervalSpendingLimitPolicy
           {
-            moduleAddress: "0xad8508e62bcf4bfbc6b092e5e9e54508c4936555",
+            moduleAddress: "0xAd8508E62BCf4bFBC6b092E5e9e54508c4936555",
             expirationTime: 0,
             data: "0x",
             moduleTypes: [],

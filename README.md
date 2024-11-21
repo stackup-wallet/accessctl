@@ -7,13 +7,13 @@ A collection of ERC-7579 and smart session modules built by Stackup.
 All modules are deployed using the [deterministic deployment proxy](https://github.com/Arachnid/deterministic-deployment-proxy) and have the same address on all chains.
 
 <details>
-  <summary><b>v1.0.0 (WIP)</b></summary>
+  <summary><b>v1.0.0</b></summary>
 
-| Contract                                                                            | Address | Type                |
-| ----------------------------------------------------------------------------------- | ------- | ------------------- |
-| [`WebAuthnValidator.sol`](./src/session-validators/WebAuthnValidator.sol)           | `0x`    | Stateless validator |
-| [`SudoPolicy.sol`](./src/policies/SudoPolicy.sol)                                   | `0x`    | Policy              |
-| [`IntervalSpendingLimitPolicy.sol`](./src/policies/IntervalSpendingLimitPolicy.sol) | `0x`    | Policy              |
+| Contract                                                                            | Address                                      | Type                |
+| ----------------------------------------------------------------------------------- | -------------------------------------------- | ------------------- |
+| [`WebAuthnValidator.sol`](./src/session-validators/WebAuthnValidator.sol)           | `0x6140DB7a66a18A7741ED2687409ef471235b4Df0` | Stateless validator |
+| [`SudoPolicy.sol`](./src/policies/SudoPolicy.sol)                                   | `0x8032214D4082714742Ba137eBfbf05e3a9a5bCfC` | Policy              |
+| [`IntervalSpendingLimitPolicy.sol`](./src/policies/IntervalSpendingLimitPolicy.sol) | `0xAd8508E62BCf4bFBC6b092E5e9e54508c4936555` | Policy              |
 
 </details>
 
