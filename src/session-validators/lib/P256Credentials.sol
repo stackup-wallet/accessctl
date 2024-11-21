@@ -29,7 +29,7 @@ library P256CredentialsLib {
 
     function _getWebAuthnAuth(
         bytes calldata data,
-        bytes memory challange
+        bytes memory challenge
     )
         internal
         pure
@@ -46,7 +46,7 @@ library P256CredentialsLib {
         ) = abi.decode(data, (bytes, string, string, uint256, uint256, uint256, uint256));
         auth = WebAuthn.WebAuthnAuth({
             authenticatorData: authenticatorData,
-            clientDataJSON: clientDataJSONPre.concat(Base64.encodeURL(challange)).concat(
+            clientDataJSON: clientDataJSONPre.concat(Base64.encodeURL(challenge)).concat(
                 clientDataJSONPost
             ),
             challengeIndex: challengeIndex,

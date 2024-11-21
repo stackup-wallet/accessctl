@@ -20,20 +20,6 @@ import { PackedUserOperation } from "modulekit/external/ERC4337.sol";
  * See https://github.com/erc7579/smartsessions/pull/145 for details.
  */
 contract SudoPolicy is IUserOpPolicy, IActionPolicy, I1271Policy {
-    using EnumerableSet for EnumerableSet.Bytes32Set;
-
-    event SudoPolicyInstalledMultiplexer(
-        address indexed account, address indexed multiplexer, ConfigId indexed id
-    );
-    event SudoPolicyUninstalledAllAccount(address indexed account);
-    event SudoPolicySet(address indexed account, address indexed multiplexer, ConfigId indexed id);
-    event SudoPolicyRemoved(
-        address indexed account, address indexed multiplexer, ConfigId indexed id
-    );
-
-    mapping(address account => bool isInitialized) internal $initialized;
-    mapping(address multiplexer => EnumerableSet.Bytes32Set configIds) internal $enabledConfigs;
-
     function initializeWithMultiplexer(
         address account,
         ConfigId configId,
@@ -41,7 +27,6 @@ contract SudoPolicy is IUserOpPolicy, IActionPolicy, I1271Policy {
     )
         external
     {
-        $enabledConfigs[msg.sender].add(account, ConfigId.unwrap(configId));
         emit IPolicy.PolicySet(configId, msg.sender, account);
     }
 
